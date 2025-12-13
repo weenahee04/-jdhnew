@@ -2,6 +2,19 @@
 const SOLANA_TOKEN_LIST_URL = 'https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json';
 const JUPITER_TOKEN_LIST_URL = 'https://token.jup.ag/all';
 
+// Hardcoded metadata for specific tokens not in token lists
+// These tokens may not be in Jupiter/Solana token lists but are commonly used
+const HARDCODED_TOKEN_METADATA: Record<string, TokenMetadata> = {
+  'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR': {
+    address: 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR',
+    name: 'OKX Token',
+    symbol: 'OKX',
+    decimals: 9,
+    logoURI: 'https://static.okx.com/cdn/oksupport/okx/logo.png', // OKX official logo
+    tags: [],
+  },
+};
+
 export interface TokenMetadata {
   address: string;
   name: string;
@@ -73,6 +86,12 @@ export const fetchTokenList = async (): Promise<TokenMetadata[]> => {
 // Get token metadata by mint address
 export const getTokenMetadata = async (mintAddress: string): Promise<TokenMetadata | null> => {
   try {
+    // Check hardcoded metadata first
+    const hardcoded = HARDCODED_TOKEN_METADATA[mintAddress];
+    if (hardcoded) {
+      return hardcoded;
+    }
+
     const tokenList = await fetchTokenList();
     const token = tokenList.find(t => t.address.toLowerCase() === mintAddress.toLowerCase());
     
@@ -90,6 +109,11 @@ export const getTokenMetadata = async (mintAddress: string): Promise<TokenMetada
     };
   } catch (error) {
     console.error('Error fetching token metadata:', error);
+    // Check hardcoded metadata as fallback
+    const hardcoded = HARDCODED_TOKEN_METADATA[mintAddress];
+    if (hardcoded) {
+      return hardcoded;
+    }
     return {
       address: mintAddress,
       name: `Token ${mintAddress.slice(0, 8)}`,
@@ -107,6 +131,13 @@ export const getMultipleTokenMetadata = async (mintAddresses: string[]): Promise
     const metadataMap: Record<string, TokenMetadata> = {};
 
     mintAddresses.forEach(mint => {
+      // Check hardcoded metadata first
+      const hardcoded = HARDCODED_TOKEN_METADATA[mint];
+      if (hardcoded) {
+        metadataMap[mint] = hardcoded;
+        return;
+      }
+
       const token = tokenList.find(t => t.address.toLowerCase() === mint.toLowerCase());
       if (token) {
         metadataMap[mint] = token;
@@ -124,16 +155,21 @@ export const getMultipleTokenMetadata = async (mintAddresses: string[]): Promise
     return metadataMap;
   } catch (error) {
     console.error('Error fetching multiple token metadata:', error);
-    // Return fallback metadata
+    // Return fallback metadata with hardcoded check
     const metadataMap: Record<string, TokenMetadata> = {};
     mintAddresses.forEach(mint => {
-      metadataMap[mint] = {
-        address: mint,
-        name: `Token ${mint.slice(0, 8)}`,
-        symbol: mint.slice(0, 4).toUpperCase(),
-        decimals: 9,
-        logoURI: undefined,
-      };
+      const hardcoded = HARDCODED_TOKEN_METADATA[mint];
+      if (hardcoded) {
+        metadataMap[mint] = hardcoded;
+      } else {
+        metadataMap[mint] = {
+          address: mint,
+          name: `Token ${mint.slice(0, 8)}`,
+          symbol: mint.slice(0, 4).toUpperCase(),
+          decimals: 9,
+          logoURI: undefined,
+        };
+      }
     });
     return metadataMap;
   }
