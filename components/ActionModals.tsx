@@ -276,16 +276,17 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
           </>
         );
       case 'receive':
-        // For SPL tokens, we need to show the Associated Token Address
-        // For SOL, we show the wallet address directly
-        const displayAddress = selectedCoin.symbol === 'SOL' 
-          ? receiveAddress 
-          : receiveAddress; // For now, show wallet address (user needs to create ATA on recipient side)
+        // For all Solana tokens (SOL and SPL tokens like JDH), we show the wallet address
+        // Solana will automatically create Associated Token Account (ATA) when tokens are sent
+        const displayAddress = receiveAddress;
+        const isJDH = selectedCoin.symbol === 'JDH';
         
         return (
           <div className="flex flex-col items-center text-center">
             <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">รับเหรียญ (Receive)</h2>
-            <p className="text-zinc-400 text-xs sm:text-sm mb-4 sm:mb-6 px-2">สแกน QR Code เพื่อรับเงิน</p>
+            <p className="text-zinc-400 text-xs sm:text-sm mb-4 sm:mb-6 px-2">
+              {isJDH ? 'รับ JDH Token' : 'สแกน QR Code เพื่อรับเงิน'}
+            </p>
             
             <div className="bg-white p-3 sm:p-4 rounded-xl sm:rounded-2xl mb-4 sm:mb-6 shadow-lg shadow-white/5">
                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${displayAddress || selectedCoin.symbol + '-wallet-address'}`} alt="QR Code" className="w-40 h-40 sm:w-48 sm:h-48 mix-blend-multiply" />
@@ -311,16 +312,34 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
             </div>
 
             <div className="text-xs text-zinc-500 max-w-[280px] mb-3 sm:mb-4 space-y-2 px-2">
-               <p className="font-medium text-zinc-400 text-xs">
-                  ✅ ที่อยู่นี้สามารถรับได้:
-               </p>
-               <ul className="text-zinc-500 text-[10px] sm:text-[11px] space-y-1 list-disc list-inside ml-2">
-                  <li>SOL (Solana native token)</li>
-                  <li>SPL tokens ทั้งหมด (USDC, USDT, JDH, และอื่นๆ)</li>
-               </ul>
-               <p className="text-emerald-400/80 text-[9px] sm:text-[10px] mt-2">
-                  💡 ระบบจะสร้าง Associated Token Account อัตโนมัติเมื่อมีการส่ง SPL token มา
-               </p>
+               {isJDH ? (
+                 <>
+                   <div className="bg-emerald-500/10 border border-emerald-500/20 p-2.5 sm:p-3 rounded-lg mb-2">
+                      <p className="font-medium text-emerald-400 text-xs mb-1">
+                         ✅ รับ JDH Token ได้เลย!
+                      </p>
+                      <p className="text-zinc-400 text-[10px] sm:text-[11px] leading-relaxed">
+                         ส่ง JDH token มาที่ address นี้ได้เลย ระบบจะสร้าง Associated Token Account อัตโนมัติเมื่อมีการส่ง token มา
+                      </p>
+                   </div>
+                   <p className="text-emerald-400/80 text-[9px] sm:text-[10px]">
+                      💡 ไม่ต้องทำอะไรเพิ่มเติม แค่ส่ง JDH token มา address นี้
+                   </p>
+                </>
+               ) : (
+                 <>
+                   <p className="font-medium text-zinc-400 text-xs">
+                      ✅ ที่อยู่นี้สามารถรับได้:
+                   </p>
+                   <ul className="text-zinc-500 text-[10px] sm:text-[11px] space-y-1 list-disc list-inside ml-2">
+                      <li>SOL (Solana native token)</li>
+                      <li>SPL tokens ทั้งหมด (USDC, USDT, JDH, และอื่นๆ)</li>
+                   </ul>
+                   <p className="text-emerald-400/80 text-[9px] sm:text-[10px] mt-2">
+                      💡 ระบบจะสร้าง Associated Token Account อัตโนมัติเมื่อมีการส่ง SPL token มา
+                   </p>
+                </>
+               )}
                <p className="text-red-400/80 text-[9px] sm:text-[10px] mt-2 border-t border-white/5 pt-2">
                   ⚠️ อย่าส่งเหรียญจาก blockchain อื่น (Bitcoin, Ethereum, BSC) มายังที่อยู่นี้ เพราะจะสูญหายถาวร
                </p>
