@@ -3,6 +3,60 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Support both GET for stats and block explorer queries
+  const blockHeight = req.query.height ? parseInt(req.query.height as string) : null;
+  const blockHash = req.query.hash as string | undefined;
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+  const offset = req.query.offset ? parseInt(req.query.offset as string) : undefined;
+
+  // Block explorer mode: return block details
+  if (blockHeight !== null || blockHash) {
+    if (req.method !== 'GET') {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return res.status(500).json({ error: 'Database configuration error' });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    let query = supabase
+      .from('blocks')
+      .select('*')
+      .order('block_height', { ascending: false });
+
+    if (blockHeight !== null) {
+      query = query.eq('block_height', blockHeight);
+    } else if (blockHash) {
+      query = query.eq('block_hash', blockHash);
+    }
+
+    const { data: block, error } = await query.single();
+
+    if (error || !block) {
+      return res.status(404).json({ error: 'Block not found' });
+    }
+
+    // Get transactions (mining events) for this block
+    const { data: transactions } = await supabase
+      .from('mining_events')
+      .select('*')
+      .eq('block_id', block.id)
+      .order('created_at', { ascending: true });
+
+    return res.status(200).json({
+      ...block,
+      transactions: transactions || [],
+    });
+  }
+
+  // Normal stats mode
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -86,7 +140,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .select('points')
         .eq('wallet_address', walletAddress)
         .eq('date', today)
-        .single();
+        .maybeSingle(); // Use maybeSingle to avoid error if no data
 
       const dailyPoints = todayPoints?.points || 0;
 
@@ -116,13 +170,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       };
     }
 
-    // Get latest block info
+    // Get latest block info (use maybeSingle to handle if blocks table doesn't exist yet)
     const { data: latestBlock } = await supabase
       .from('blocks')
       .select('block_height, block_hash, mined_at, block_reward, transaction_count, block_time_seconds')
       .order('block_height', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle(); // Use maybeSingle to avoid error if table doesn't exist or is empty
 
     // Get uncommitted transactions count (mempool size)
     const { data: mempool } = await supabase

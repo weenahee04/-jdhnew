@@ -77,14 +77,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Check daily cap (get from user deposit or default)
     const today = new Date().toISOString().split('T')[0];
-    const todayPoints = await supabase
+    const { data: todayPointsData, error: todayPointsError } = await supabase
       .from('mining_points')
       .select('points')
       .eq('wallet_address', walletAddress)
       .eq('date', today)
-      .single();
+      .maybeSingle(); // Use maybeSingle() instead of single() to avoid error if no data
 
-    const currentPoints = todayPoints.data?.points || 0;
+    const currentPoints = todayPointsData?.points || 0;
     
     // Get user tier (from on-chain data or cache)
     // For now, use default tier (Bronze: 1000 points/day)
@@ -102,7 +102,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Award points
     const newPoints = currentPoints + pointsPerSolution;
-    await supabase.from('mining_points').upsert({
+    const { error: pointsError } = await supabase.from('mining_points').upsert({
       wallet_address: walletAddress,
       date: today,
       points: newPoints,
@@ -111,8 +111,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       onConflict: 'wallet_address,date',
     });
 
+    if (pointsError) {
+      console.error('Error updating mining points:', pointsError);
+      throw new Error(`Failed to update mining points: ${pointsError.message}`);
+    }
+
     // Log successful solution
-    await supabase.from('mining_audit_logs').insert({
+    const { error: auditError } = await supabase.from('mining_audit_logs').insert({
       wallet_address: walletAddress,
       action: 'solution_accepted',
       challenge_id: challengeId,
@@ -120,8 +125,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       difficulty: challenge.difficulty,
     } as any);
 
+    if (auditError) {
+      console.error('Error logging audit:', auditError);
+      // Don't throw - logging is non-critical
+    }
+
     // Store mining event for Merkle tree
-    await supabase.from('mining_events').insert({
+    const { error: eventError } = await supabase.from('mining_events').insert({
       wallet_address: walletAddress,
       challenge_id: challengeId,
       solution_hash: solution,
@@ -129,30 +139,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       difficulty: challenge.difficulty,
     } as any);
 
+    if (eventError) {
+      console.error('Error storing mining event:', eventError);
+      // Don't throw - event storage is non-critical for basic flow
+    }
+
     // Update mining session
-    const { data: session } = await supabase
+    const { data: session, error: sessionError } = await supabase
       .from('mining_sessions')
       .select('*')
       .eq('wallet_address', walletAddress)
       .eq('is_active', true)
-      .single();
+      .maybeSingle(); // Use maybeSingle() instead of single() to avoid error if no data
 
-    if (session) {
-      await supabase
+    if (session && !sessionError) {
+      const { error: updateError } = await supabase
         .from('mining_sessions')
         .update({
           last_activity: new Date().toISOString(),
-          total_solutions: session.total_solutions + 1,
-          total_points: session.total_points + pointsPerSolution,
+          total_solutions: (session.total_solutions || 0) + 1,
+          total_points: (session.total_points || 0) + pointsPerSolution,
         })
         .eq('id', session.id);
+
+      if (updateError) {
+        console.error('Error updating mining session:', updateError);
+        // Don't throw - session update is non-critical
+      }
     } else {
-      await supabase.from('mining_sessions').insert({
+      const { error: insertError } = await supabase.from('mining_sessions').insert({
         wallet_address: walletAddress,
         total_solutions: 1,
         total_points: pointsPerSolution,
         is_active: true,
       } as any);
+
+      if (insertError) {
+        console.error('Error creating mining session:', insertError);
+        // Don't throw - session creation is non-critical
+      }
     }
 
     // Get total points across all dates for this wallet
