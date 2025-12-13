@@ -449,15 +449,53 @@ const App: React.FC = () => {
     console.log('🔍 Current user:', currentUser ? { id: currentUser.id, email: currentUser.email } : 'null');
     
     try {
-      await loadFromMnemonic(mnemonic);
-      console.log('✅ Wallet loaded from mnemonic');
+      // Load wallet from mnemonic
+      const keypair = await loadFromMnemonic(mnemonic);
+      console.log('✅ Wallet loaded from mnemonic, keypair:', keypair ? 'Present' : 'Missing');
       
-      // Wait a bit for wallet state to update
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Wait longer for wallet state to update (React state update is async)
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Get wallet public key
-      const walletPublicKey = wallet.publicKey || publicKey?.toBase58();
-      console.log('🔍 Wallet public key:', walletPublicKey);
+      // Get wallet public key - try multiple sources
+      let walletPublicKey: string | null = null;
+      
+      // Method 1: From keypair directly (most reliable)
+      if (keypair && keypair.publicKey) {
+        walletPublicKey = keypair.publicKey.toBase58();
+        console.log('🔍 Got publicKey from keypair:', walletPublicKey);
+      }
+      
+      // Method 2: From wallet state
+      if (!walletPublicKey && wallet.publicKey) {
+        walletPublicKey = wallet.publicKey;
+        console.log('🔍 Got publicKey from wallet state:', walletPublicKey);
+      }
+      
+      // Method 3: From publicKey hook
+      if (!walletPublicKey && publicKey) {
+        walletPublicKey = publicKey.toBase58();
+        console.log('🔍 Got publicKey from publicKey hook:', walletPublicKey);
+      }
+      
+      // Method 4: Derive from mnemonic directly
+      if (!walletPublicKey) {
+        try {
+          const { mnemonicToKeypair, getPublicKeyBase58 } = await import('./services/solanaClient');
+          const kp = mnemonicToKeypair(mnemonic);
+          walletPublicKey = getPublicKeyBase58(kp);
+          console.log('🔍 Got publicKey by deriving from mnemonic:', walletPublicKey);
+        } catch (error) {
+          console.error('❌ Failed to derive publicKey from mnemonic:', error);
+        }
+      }
+      
+      console.log('🔍 Final wallet public key:', walletPublicKey);
+      console.log('🔍 Wallet state check:', {
+        hasCurrentUser: !!currentUser,
+        hasWalletPublicKey: !!walletPublicKey,
+        walletState: { hasPublicKey: !!wallet.publicKey, publicKey: wallet.publicKey },
+        publicKeyHook: publicKey ? publicKey.toBase58() : null
+      });
       
       // Save wallet to user account
       if (currentUser && walletPublicKey) {
@@ -513,9 +551,11 @@ const App: React.FC = () => {
       } else {
         console.error('❌ Cannot save wallet: currentUser or walletPublicKey is missing', {
           hasCurrentUser: !!currentUser,
-          hasWalletPublicKey: !!walletPublicKey
+          hasWalletPublicKey: !!walletPublicKey,
+          walletState: { hasPublicKey: !!wallet.publicKey, publicKey: wallet.publicKey },
+          publicKeyHook: publicKey ? publicKey.toBase58() : null
         });
-        setAuthError('ไม่สามารถบันทึก wallet ได้ กรุณาลองอีกครั้ง');
+        setAuthError('ไม่สามารถบันทึก wallet ได้: ไม่พบ public key กรุณาลองอีกครั้ง');
         return;
       }
       
