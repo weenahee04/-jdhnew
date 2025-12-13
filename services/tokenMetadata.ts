@@ -30,8 +30,9 @@ const CACHE_DURATION = 1000 * 60 * 60; // 1 hour
 
 // Fetch token list from Jupiter (more comprehensive)
 export const fetchTokenList = async (): Promise<TokenMetadata[]> => {
+  const now = Date.now();
+  
   try {
-    const now = Date.now();
     // Use cache if available and not expired
     if (cachedTokenList && (now - lastFetchTime) < CACHE_DURATION) {
       return cachedTokenList;
