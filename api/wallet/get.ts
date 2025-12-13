@@ -45,16 +45,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(404).json({ error: 'Wallet not found' });
     }
 
+    // Type assertion for wallet
+    const walletData = wallet as any;
+
     // Decrypt mnemonic
-    const decryptedMnemonic = decrypt(wallet.mnemonic_encrypted, ENCRYPTION_KEY);
+    const decryptedMnemonic = decrypt(walletData.mnemonic_encrypted, ENCRYPTION_KEY);
 
     return res.status(200).json({
       success: true,
       wallet: {
-        id: wallet.id,
-        public_key: wallet.public_key,
+        id: walletData.id,
+        public_key: walletData.public_key,
         mnemonic: decryptedMnemonic, // Return decrypted mnemonic
-        created_at: wallet.created_at,
+        created_at: walletData.created_at,
       },
     });
   } catch (error: any) {
