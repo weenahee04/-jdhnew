@@ -85,3 +85,5 @@ Anchor.toml         # Anchor config
 - ต้อง update `JDH_CHAIN_PROGRAM_ID` ใน client หลัง deploy
 - Test thoroughly บน devnet ก่อน mainnet
 
+
+

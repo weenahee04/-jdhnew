@@ -3,11 +3,13 @@ use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 
 pub mod staking;
 pub mod governance;
+pub mod mining;
 
 pub use staking::*;
 pub use governance::*;
+pub use mining::*;
 
-declare_id!("JDHChaiN111111111111111111111111111111111");
+declare_id!("JDHChaiN11111111111111111111111111111111111");
 
 #[program]
 pub mod jdh_chain {
@@ -16,7 +18,7 @@ pub mod jdh_chain {
     // ========== Token Operations ==========
 
     // Initialize JDH Token Mint
-    pub fn initialize_mint(ctx: Context<InitializeMint>, decimals: u8) -> Result<()> {
+    pub fn initialize_mint(_ctx: Context<InitializeMint>, decimals: u8) -> Result<()> {
         msg!("Initializing JDH Token Mint with {} decimals", decimals);
         Ok(())
     }
@@ -146,6 +148,31 @@ pub mod jdh_chain {
     pub fn execute_proposal(ctx: Context<ExecuteProposal>) -> Result<()> {
         governance::execute_proposal(ctx)
     }
+
+    // ========== Mining Operations ==========
+
+    // Initialize Mining Vault
+    pub fn initialize_mining_vault(
+        ctx: Context<InitializeVault>,
+        entry_fee_cap: u64,
+    ) -> Result<()> {
+        mining::initialize_vault(ctx, entry_fee_cap)
+    }
+
+    // Deposit JDH into Mining Vault
+    pub fn deposit_mining(ctx: Context<Deposit>, amount: u64) -> Result<()> {
+        mining::deposit(ctx, amount)
+    }
+
+    // Withdraw JDH from Mining Vault
+    pub fn withdraw_mining(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+        mining::withdraw(ctx, amount)
+    }
+
+    // Pay Entry Fee for Mining Session
+    pub fn pay_mining_entry_fee(ctx: Context<PayEntryFee>, fee: u64) -> Result<()> {
+        mining::pay_entry_fee(ctx, fee)
+    }
 }
 
 // ========== Token Account Structs ==========
@@ -207,6 +234,7 @@ pub struct InitializeStakingPool<'info> {
     pub system_program: Program<'info, System>,
 }
 
-// Re-export staking and governance structs
+// Re-export staking, governance, and mining structs
 pub use staking::{Stake, Unstake, ClaimRewards, StakingPool, UserStake, JdhChainError as StakingError};
 pub use governance::{CreateProposal, Vote, ExecuteProposal, Proposal, Vote as VoteAccount, VoteType, JdhChainError as GovernanceError};
+pub use mining::{InitializeVault, Deposit, Withdraw, PayEntryFee, MiningVault, UserMiningDeposit, MiningTier, MiningError};

@@ -83,3 +83,5 @@ echo "https://kwxgpxmxhbtqbrupbluj.supabase.co" | vercel env add SUPABASE_URL pr
 
 **Status:** ⚠️ **Test endpoint created - Check /api/test-supabase**
 
+
+

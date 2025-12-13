@@ -11,7 +11,7 @@ import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from '@solana/spl-token';
 // import { IDL } from '../target/types/jdh_chain';
 
 // Program ID (will be updated after deployment)
-export const JDH_CHAIN_PROGRAM_ID = new PublicKey('JDHChaiN111111111111111111111111111111111');
+export const JDH_CHAIN_PROGRAM_ID = new PublicKey('JDHChaiN11111111111111111111111111111111111');
 
 export interface JdhChainClientConfig {
   connection: Connection;

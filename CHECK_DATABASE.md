@@ -129,3 +129,5 @@ LIMIT 10;
 4. ✅ ตรวจสอบ RLS policies (ถ้ามี)
 5. ✅ ตรวจสอบ Vercel logs สำหรับ API errors
 
+
+

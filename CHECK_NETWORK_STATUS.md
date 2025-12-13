@@ -145,3 +145,5 @@ const cluster = process.env.SOLANA_CLUSTER || 'devnet';
 
 **สรุป:** ระบบพร้อมใช้ Mainnet แล้ว! ✅
 
+
+

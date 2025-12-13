@@ -108,3 +108,5 @@ solana balance <AIRDROP_WALLET_PUBLIC_KEY>
 - แต่ละ claim ใช้ SOL ~0.000005 สำหรับ gas fee
 - ตรวจสอบ balance เป็นประจำและเติม JDH token เมื่อจำเป็น
 
+
+

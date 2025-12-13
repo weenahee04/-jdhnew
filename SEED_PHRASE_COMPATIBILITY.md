@@ -195,3 +195,5 @@ m/44'/501'/0'/0'
 3. Import seed phrase
 4. ได้ wallet address เดียวกัน ✅
 
+
+

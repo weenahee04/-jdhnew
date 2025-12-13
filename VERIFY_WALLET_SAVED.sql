@@ -51,3 +51,5 @@ FROM wallets w
 LEFT JOIN users u ON w.user_id = u.id
 WHERE u.id IS NULL;
 
+
+

@@ -23,6 +23,7 @@ export enum NavTab {
   REWARDS = 'rewards',
   STAKING = 'staking',
   AIRDROP = 'airdrop',
+  MINING = 'mining',
   SETTINGS = 'settings',
   HELP = 'help'
 }

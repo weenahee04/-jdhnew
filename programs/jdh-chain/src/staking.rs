@@ -229,7 +229,7 @@ pub struct Unstake<'info> {
     #[account(
         mut,
         seeds = [b"user-stake", user.key().as_ref(), pool.key().as_ref()],
-        bump = user_stake.bump
+        bump
     )]
     pub user_stake: Account<'info, UserStake>,
     #[account(mut)]
@@ -240,7 +240,7 @@ pub struct Unstake<'info> {
     pub rewards_vault: Account<'info, TokenAccount>,
     #[account(
         seeds = [b"staking-pool", pool.mint.as_ref()],
-        bump = pool.bump
+        bump
     )]
     pub pool_authority: Account<'info, StakingPool>,
     #[account(mut)]
@@ -255,7 +255,7 @@ pub struct ClaimRewards<'info> {
     #[account(
         mut,
         seeds = [b"user-stake", user.key().as_ref(), pool.key().as_ref()],
-        bump = user_stake.bump
+        bump
     )]
     pub user_stake: Account<'info, UserStake>,
     #[account(mut)]
@@ -264,7 +264,7 @@ pub struct ClaimRewards<'info> {
     pub rewards_vault: Account<'info, TokenAccount>,
     #[account(
         seeds = [b"staking-pool", pool.mint.as_ref()],
-        bump = pool.bump
+        bump
     )]
     pub pool_authority: Account<'info, StakingPool>,
     #[account(mut)]

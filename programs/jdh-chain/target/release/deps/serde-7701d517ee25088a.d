@@ -1,0 +1,14 @@
+/mnt/c/Users/ADMIN/Downloads/jjdh a/programs/jdh-chain/target/release/deps/libserde-7701d517ee25088a.rmeta: /home/wee22471/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.228/src/lib.rs /home/wee22471/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.228/src/integer128.rs /home/wee22471/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.228/src/private/mod.rs /home/wee22471/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.228/src/private/de.rs /home/wee22471/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.228/src/private/ser.rs /mnt/c/Users/ADMIN/Downloads/jjdh\ a/programs/jdh-chain/target/release/build/serde-7b503291191e9703/out/private.rs
+
+/mnt/c/Users/ADMIN/Downloads/jjdh a/programs/jdh-chain/target/release/deps/libserde-7701d517ee25088a.rlib: /home/wee22471/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.228/src/lib.rs /home/wee22471/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.228/src/integer128.rs /home/wee22471/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.228/src/private/mod.rs /home/wee22471/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.228/src/private/de.rs /home/wee22471/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.228/src/private/ser.rs /mnt/c/Users/ADMIN/Downloads/jjdh\ a/programs/jdh-chain/target/release/build/serde-7b503291191e9703/out/private.rs
+
+/mnt/c/Users/ADMIN/Downloads/jjdh a/programs/jdh-chain/target/release/deps/serde-7701d517ee25088a.d: /home/wee22471/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.228/src/lib.rs /home/wee22471/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.228/src/integer128.rs /home/wee22471/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.228/src/private/mod.rs /home/wee22471/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.228/src/private/de.rs /home/wee22471/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.228/src/private/ser.rs /mnt/c/Users/ADMIN/Downloads/jjdh\ a/programs/jdh-chain/target/release/build/serde-7b503291191e9703/out/private.rs
+
+/home/wee22471/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.228/src/lib.rs:
+/home/wee22471/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.228/src/integer128.rs:
+/home/wee22471/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.228/src/private/mod.rs:
+/home/wee22471/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.228/src/private/de.rs:
+/home/wee22471/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.228/src/private/ser.rs:
+/mnt/c/Users/ADMIN/Downloads/jjdh\ a/programs/jdh-chain/target/release/build/serde-7b503291191e9703/out/private.rs:
+
+# env-dep:OUT_DIR=/mnt/c/Users/ADMIN/Downloads/jjdh a/programs/jdh-chain/target/release/build/serde-7b503291191e9703/out

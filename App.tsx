@@ -13,6 +13,7 @@ import { NotificationCenter, AnnouncementCenter, BuyCryptoModal, HelpCenter, Tra
 import { SettingsPage } from './components/SettingsPage';
 import { StakingPage } from './components/StakingPage';
 import { AirdropPage } from './components/AirdropPage';
+import { MiningPage } from './components/MiningPage';
 import { ApiPaymentModal } from './components/ApiPaymentModal';
 import { TermsModal, SecurityWarningModal, WelcomeModal } from './components/SecurityModals';
 import { Eye, EyeOff, Bell, User, Sparkles, Wallet, Settings, ArrowRight, Shield, Globe, Award, ChevronRight, ChevronLeft, LogOut, MessageSquare, Loader2, Copy, Check, ExternalLink } from 'lucide-react';
@@ -1340,6 +1341,10 @@ const App: React.FC = () => {
     <AirdropPage publicKey={publicKey} />
   );
 
+  const renderMining = () => (
+    <MiningPage publicKey={publicKey} wallet={wallet} />
+  );
+
   const renderSettings = () => {
     return (
       <SettingsPage
@@ -1498,6 +1503,7 @@ const App: React.FC = () => {
         {activeTab === NavTab.REWARDS && renderRewards()}
         {activeTab === NavTab.STAKING && renderStaking()}
         {activeTab === NavTab.AIRDROP && renderAirdrop()}
+        {activeTab === NavTab.MINING && renderMining()}
         {activeTab === NavTab.SETTINGS && renderSettings()}
         {activeTab === NavTab.HELP && <HelpCenter faqs={FAQS} onClose={() => setActiveTab(NavTab.HOME)} />}
         {activeTab === NavTab.SWAP && (

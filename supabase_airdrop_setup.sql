@@ -16,3 +16,5 @@ CREATE INDEX IF NOT EXISTS idx_airdrop_claims_wallet ON airdrop_claims(wallet_ad
 -- Add comment
 COMMENT ON TABLE airdrop_claims IS 'Records of airdrop code claims';
 
+
+
