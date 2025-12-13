@@ -1421,7 +1421,7 @@ const App: React.FC = () => {
                                 <div className="space-y-3">
                                    <div className="bg-zinc-950 border border-red-500/20 rounded-lg p-4">
                                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-3">
-                                         {displayMnemonic.split(' ').map((word, index) => (
+                                         {displayMnemonic && displayMnemonic.split(' ').map((word, index) => (
                                             <div key={index} className="bg-zinc-900 border border-white/5 rounded px-2 py-1 text-xs text-white font-mono">
                                                {index + 1}. {word}
                                             </div>
