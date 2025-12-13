@@ -35,10 +35,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     // Get uncommitted events (last 100 or all if less)
+    // Prioritize events without block_id, but also check merkle_commitment_id for backward compatibility
     const { data: uncommittedEvents } = await supabase
       .from('mining_events')
       .select('*')
-      .is('merkle_commitment_id', null)
+      .or('block_id.is.null,merkle_commitment_id.is.null')
       .order('created_at', { ascending: true })
       .limit(100);
 
@@ -94,28 +95,92 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // In production, send transaction and get signature
     const transactionSignature = 'placeholder_signature'; // await connection.sendTransaction(transaction, [commitmentKeypair]);
 
-    // Store commitment in database
+    // Get previous block for chain linking
+    const { data: previousBlock } = await supabase
+      .from('blocks')
+      .select('block_hash, block_height')
+      .order('block_height', { ascending: false })
+      .limit(1)
+      .single();
+
+    const previousHash = previousBlock?.block_hash || null;
+    const blockHeight = (previousBlock?.block_height || -1) + 1;
+    
+    // Calculate block time (time since previous block)
+    let blockTimeSeconds = null;
+    if (previousBlock) {
+      const { data: prevBlockData } = await supabase
+        .from('blocks')
+        .select('mined_at')
+        .eq('block_height', previousBlock.block_height)
+        .single();
+      
+      if (prevBlockData?.mined_at) {
+        const prevTime = new Date(prevBlockData.mined_at).getTime();
+        blockTimeSeconds = Math.round((Date.now() - prevTime) / 1000);
+      }
+    }
+
+    // Calculate total block reward (sum of all points)
+    const blockReward = events.reduce((sum, e) => sum + e.pointsAwarded, 0);
+    
+    // Get miner address (wallet of first transaction)
+    const minerAddress = events[0]?.walletAddress || null;
+    
+    // Calculate average difficulty
+    const avgDifficulty = Math.round(events.reduce((sum, e) => sum + e.difficulty, 0) / events.length);
+
+    // Create block hash: sha256(previous_hash + block_height + merkle_root + block_reward + timestamp)
+    const blockHashInput = `${previousHash || 'genesis'}-${blockHeight}-${merkleRoot}-${blockReward}-${Date.now()}`;
+    const blockHash = crypto.createHash('sha256').update(blockHashInput).digest('hex');
+
+    // Store block in database
+    const { data: block, error: blockError } = await supabase
+      .from('blocks')
+      .insert({
+        block_height: blockHeight,
+        block_hash: blockHash,
+        previous_hash: previousHash,
+        merkle_root: merkleRoot,
+        transaction_count: events.length,
+        block_reward: blockReward,
+        difficulty: avgDifficulty,
+        miner_address: minerAddress,
+        block_time_seconds: blockTimeSeconds,
+        solana_signature: transactionSignature,
+      } as any)
+      .select()
+      .single();
+
+    if (blockError) {
+      throw blockError;
+    }
+
+    // Also store in merkle_commitments for backward compatibility
     const { data: commitment, error: commitError } = await supabase
       .from('merkle_commitments')
       .insert({
         merkle_root: merkleRoot,
+        block_height: blockHeight,
         transaction_signature: transactionSignature,
         event_count: events.length,
         events_hash: crypto.createHash('sha256').update(JSON.stringify(events)).digest('hex'),
+        block_id: block.id,
       } as any)
       .select()
       .single();
 
     if (commitError) {
-      throw commitError;
+      console.warn('Warning: Could not create merkle_commitment:', commitError);
     }
 
-    // Update events with commitment ID and proofs
+    // Update events with block ID and proofs
     for (let i = 0; i < uncommittedEvents.length; i++) {
       await supabase
         .from('mining_events')
         .update({
-          merkle_commitment_id: commitment.id,
+          block_id: block.id,
+          merkle_commitment_id: commitment?.id || null,
           merkle_proof: JSON.stringify(eventsWithProofs[i].proof),
         } as any)
         .eq('id', uncommittedEvents[i].id);
@@ -123,10 +188,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({
       success: true,
+      blockHeight,
+      blockHash,
+      previousHash,
       merkleRoot,
       transactionSignature,
       eventCount: events.length,
-      commitmentId: commitment.id,
+      blockReward,
+      blockTimeSeconds,
+      blockId: block.id,
     });
 
   } catch (error: any) {

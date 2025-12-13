@@ -6,31 +6,31 @@ import { activeChallenges } from './challenge';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
   try {
     const { challengeId, walletAddress, nonce, solution } = req.body;
 
     if (!challengeId || !walletAddress || !nonce || !solution) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
 
     // Get challenge
     const challenge = activeChallenges.get(challengeId);
     if (!challenge) {
-      return res.status(404).json({ error: 'Challenge not found or expired' });
+      return res.status(404).json({ success: false, error: 'Challenge not found or expired' });
     }
 
     // Check expiry
     if (Date.now() > challenge.expiresAt) {
       activeChallenges.delete(challengeId);
-      return res.status(410).json({ error: 'Challenge expired' });
+      return res.status(410).json({ success: false, error: 'Challenge expired' });
     }
 
     // Check wallet address matches
     if (challenge.walletAddress !== walletAddress) {
-      return res.status(403).json({ error: 'Wallet address mismatch' });
+      return res.status(403).json({ success: false, error: 'Wallet address mismatch' });
     }
 
     // Verify solution: sha256(seed + walletAddress + nonce + salt)
@@ -51,13 +51,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           challenge_id: challengeId,
         } as any);
       }
-      return res.status(400).json({ error: 'Invalid solution' });
+      return res.status(400).json({ success: false, error: 'Invalid solution' });
     }
 
     // Check difficulty (leading zeros)
     const targetPrefix = '0'.repeat(challenge.difficulty);
     if (!solution.startsWith(targetPrefix)) {
-      return res.status(400).json({ error: 'Solution does not meet difficulty requirement' });
+      return res.status(400).json({ success: false, error: 'Solution does not meet difficulty requirement' });
     }
 
     // Solution is valid - remove challenge (one-time use)
@@ -68,7 +68,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      return res.status(500).json({ error: 'Database configuration error' });
+      return res.status(500).json({ success: false, error: 'Database configuration error' });
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
@@ -93,6 +93,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (currentPoints + pointsPerSolution > dailyCap) {
       return res.status(429).json({ 
+        success: false,
         error: 'Daily points cap reached',
         currentPoints,
         dailyCap,
@@ -175,7 +176,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   } catch (error: any) {
     console.error('Solution verification error:', error);
-    return res.status(500).json({ error: error.message || 'Internal server error' });
+    const errorMessage = error?.message || error?.toString() || 'Internal server error';
+    return res.status(500).json({ 
+      success: false,
+      error: errorMessage 
+    });
   }
 }
 

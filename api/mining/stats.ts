@@ -116,11 +116,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       };
     }
 
+    // Get latest block info
+    const { data: latestBlock } = await supabase
+      .from('blocks')
+      .select('block_height, block_hash, mined_at, block_reward, transaction_count, block_time_seconds')
+      .order('block_height', { ascending: false })
+      .limit(1)
+      .single();
+
+    // Get uncommitted transactions count (mempool size)
+    const { data: mempool } = await supabase
+      .from('mining_events')
+      .select('id')
+      .or('block_id.is.null,merkle_commitment_id.is.null');
+
+    const mempoolSize = mempool?.length || 0;
+
+    // Get total blocks count
+    const totalBlocks = latestBlock?.block_height || 0;
+
     return res.status(200).json({
       minersOnline,
       hashrateEstimate,
       leaderboard: leaderboard || [],
       recentAccepted: recentAccepted || [],
+      latestBlock: latestBlock || null,
+      totalBlocks,
+      mempoolSize,
       ...userStats,
     });
 

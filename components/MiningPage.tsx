@@ -26,7 +26,17 @@ interface MiningStats {
     wallet_address: string;
     points: number;
   }>;
-  latestCommitment: {
+  latestBlock: {
+    block_height: number;
+    block_hash: string;
+    mined_at: string;
+    block_reward: number;
+    transaction_count: number;
+    block_time_seconds: number | null;
+  } | null;
+  totalBlocks: number;
+  mempoolSize: number;
+  latestCommitment?: {
     merkle_root: string;
     transaction_signature: string;
     committed_at: string;
@@ -350,9 +360,21 @@ export const MiningPage: React.FC<MiningPageProps> = ({ publicKey, wallet }) => 
         }),
       });
 
-      const result = await response.json();
+      // Check if response is ok and is JSON
+      let result;
+      try {
+        const text = await response.text();
+        try {
+          result = JSON.parse(text);
+        } catch (jsonError) {
+          // If not JSON, it's probably an HTML error page
+          throw new Error(`Server error: ${text.substring(0, 200).replace(/\s+/g, ' ')}`);
+        }
+      } catch (parseError: any) {
+        throw new Error(parseError.message || 'Failed to parse server response');
+      }
 
-      if (result.success) {
+      if (result && result.success) {
         setSolutionsFound(prev => prev + 1);
         setUserPoints(result.totalPoints || userPoints);
         setDailyPoints(result.dailyPoints || dailyPoints);
@@ -868,10 +890,110 @@ export const MiningPage: React.FC<MiningPageProps> = ({ publicKey, wallet }) => 
                   >
                     {stats.latestCommitment.transaction_signature.slice(0, 16)}...
                   </a>
+                  <p className="text-zinc-500 text-xs mt-2">
+                    {new Date(stats.latestCommitment.committed_at).toLocaleString()}
+                  </p>
                 </div>
               </div>
             </div>
           )}
+
+          {/* Latest Block */}
+          {stats?.latestBlock && (
+            <div className="bg-gradient-to-br from-zinc-900/40 to-zinc-950/40 border border-white/5 rounded-2xl p-6 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500"></div>
+              <div className="flex items-center gap-3 mb-4 mt-2 relative z-10">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
+                  <Activity size={18} className="text-emerald-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white">Latest Block</h3>
+                <div className="ml-auto bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/30">
+                  <span className="text-emerald-400 text-xs font-semibold">#{stats.latestBlock.block_height}</span>
+                </div>
+              </div>
+              <div className="space-y-4 relative z-10">
+                <div className="bg-gradient-to-br from-emerald-500/5 to-teal-500/5 border border-emerald-500/20 rounded-xl p-4">
+                  <p className="text-zinc-400 text-xs mb-2 flex items-center gap-1">
+                    <Activity size={12} />
+                    Block Hash
+                  </p>
+                  <div className="text-emerald-300 font-mono text-xs break-all bg-zinc-950/70 p-3 rounded-lg border border-emerald-500/10">
+                    {stats.latestBlock.block_hash.slice(0, 32)}...
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-gradient-to-br from-blue-500/5 to-cyan-500/5 border border-blue-500/20 rounded-xl p-3">
+                    <p className="text-zinc-400 text-xs mb-1">Transactions</p>
+                    <p className="text-blue-400 font-bold text-lg">{stats.latestBlock.transaction_count}</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-yellow-500/5 to-orange-500/5 border border-yellow-500/20 rounded-xl p-3">
+                    <p className="text-zinc-400 text-xs mb-1">Reward</p>
+                    <p className="text-yellow-400 font-bold text-lg">{stats.latestBlock.block_reward}</p>
+                  </div>
+                </div>
+                {stats.latestBlock.block_time_seconds && (
+                  <div className="bg-gradient-to-br from-purple-500/5 to-pink-500/5 border border-purple-500/20 rounded-xl p-3">
+                    <p className="text-zinc-400 text-xs mb-1">Block Time</p>
+                    <p className="text-purple-400 font-semibold">{stats.latestBlock.block_time_seconds}s</p>
+                  </div>
+                )}
+                <div className="bg-gradient-to-br from-zinc-800/50 to-zinc-900/50 border border-white/5 rounded-xl p-3">
+                  <p className="text-zinc-500 text-xs">
+                    {new Date(stats.latestBlock.mined_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Transaction Pool (Mempool) */}
+          <div className="bg-gradient-to-br from-zinc-900/40 to-zinc-950/40 border border-white/5 rounded-2xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full blur-2xl"></div>
+            <div className="flex items-center gap-3 mb-4 relative z-10">
+              <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center border border-orange-500/30">
+                <Clock size={18} className="text-orange-400" />
+              </div>
+              <h3 className="text-xl font-bold text-white">Transaction Pool</h3>
+              <div className="ml-auto bg-orange-500/10 px-3 py-1 rounded-full border border-orange-500/30">
+                <span className="text-orange-400 text-xs font-semibold">{stats?.mempoolSize || 0} pending</span>
+              </div>
+            </div>
+            <div className="relative z-10">
+              <div className="bg-gradient-to-br from-orange-500/5 to-red-500/5 border border-orange-500/20 rounded-xl p-4">
+                <p className="text-orange-400 text-sm">
+                  {stats?.mempoolSize || 0} transaction{stats?.mempoolSize !== 1 ? 's' : ''} waiting to be included in the next block
+                </p>
+                <p className="text-zinc-500 text-xs mt-2">
+                  Transactions are batched into blocks when committed
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Blockchain Info */}
+          <div className="bg-gradient-to-br from-zinc-900/40 to-zinc-950/40 border border-white/5 rounded-2xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500"></div>
+            <div className="flex items-center gap-3 mb-4 mt-2 relative z-10">
+              <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
+                <TrendingUp size={18} className="text-blue-400" />
+              </div>
+              <h3 className="text-xl font-bold text-white">Blockchain Info</h3>
+            </div>
+            <div className="space-y-3 relative z-10">
+              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-500/5 to-purple-500/5 border border-blue-500/20 rounded-lg">
+                <span className="text-zinc-400 text-sm">Total Blocks</span>
+                <span className="text-blue-400 font-bold">{stats?.totalBlocks || 0}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-500/5 to-pink-500/5 border border-purple-500/20 rounded-lg">
+                <span className="text-zinc-400 text-sm">Network Hashrate</span>
+                <span className="text-purple-400 font-bold">{stats?.hashrateEstimate.toLocaleString() || 0}/hr</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-gradient-to-r from-pink-500/5 to-red-500/5 border border-pink-500/20 rounded-lg">
+                <span className="text-zinc-400 text-sm">Active Miners</span>
+                <span className="text-pink-400 font-bold">{stats?.minersOnline || 0}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
