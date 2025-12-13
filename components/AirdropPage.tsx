@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Gift, CheckCircle, XCircle, Loader2, Copy, ExternalLink } from 'lucide-react';
-import { useSolanaWallet } from '../hooks/useSolanaWallet';
 import { explorerUrl } from '../services/solanaClient';
 
 // JDH Token Mint Address
@@ -19,7 +18,6 @@ export const AirdropPage: React.FC<AirdropPageProps> = ({ publicKey }) => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [txSignature, setTxSignature] = useState<string | null>(null);
-  const { transferToken } = useSolanaWallet();
 
   const validateCode = (inputCode: string): boolean => {
     return inputCode.trim().startsWith(CODE_PREFIX);
@@ -78,33 +76,33 @@ export const AirdropPage: React.FC<AirdropPageProps> = ({ publicKey }) => {
       console.log('Mint:', JDH_MINT_ADDRESS);
       console.log('Code:', trimmedCode);
 
-      // Send 10000 JDH to user's wallet via blockchain
-      // Note: This requires the sender wallet to have JDH tokens
-      // In production, use a dedicated airdrop wallet via backend API
-      const signature = await transferToken(
-        publicKey,
-        JDH_MINT_ADDRESS,
-        AIRDROP_AMOUNT,
-        9 // JDH token decimals (default to 9)
-      );
+      // Call backend API to claim airdrop
+      const response = await fetch('/api/airdrop/claim', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: trimmedCode,
+          walletAddress: publicKey,
+        }),
+      });
 
-      console.log('✅ Airdrop successful! Signature:', signature);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to claim airdrop');
+      }
+
+      console.log('✅ Airdrop successful! Signature:', data.signature);
       
-      setTxSignature(signature);
+      setTxSignature(data.signature);
       setSuccess(true);
       setCode(''); // Clear code after successful claim
     } catch (err: any) {
       console.error('❌ Airdrop error:', err);
       const errorMessage = err.message || 'ไม่สามารถส่ง airdrop ได้';
-      
-      // Provide more helpful error messages
-      if (errorMessage.includes('ไม่มีเหรียญนี้') || errorMessage.includes('token account')) {
-        setError('ระบบ airdrop ต้องมี JDH token ใน wallet สำหรับส่ง กรุณาติดต่อทีมสนับสนุน');
-      } else if (errorMessage.includes('insufficient funds') || errorMessage.includes('balance')) {
-        setError('ยอดเงินไม่เพียงพอสำหรับส่ง airdrop กรุณาติดต่อทีมสนับสนุน');
-      } else {
-        setError(errorMessage + ' กรุณาลองใหม่อีกครั้ง');
-      }
+      setError(errorMessage + ' กรุณาลองใหม่อีกครั้ง');
     } finally {
       setIsProcessing(false);
     }
