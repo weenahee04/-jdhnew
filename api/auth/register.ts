@@ -1,7 +1,10 @@
 // Vercel Serverless Function - User Registration
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -84,9 +87,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Return user (without password_hash)
     const { password_hash, ...userWithoutPassword } = newUser;
 
+    // Generate JWT token (same as login)
+    const token = jwt.sign(
+      { userId: (newUser as any).id, email: (newUser as any).email },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
     return res.status(201).json({
       success: true,
       user: userWithoutPassword,
+      token, // Return JWT token for immediate authentication
     });
   } catch (error: any) {
     console.error('Registration error:', error);

@@ -12,9 +12,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const { walletAddress } = req.body;
-    const token = req.headers.authorization?.replace('Bearer ', '');
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    console.log('🔍 Update wallet API - Request:', {
+      hasAuthHeader: !!authHeader,
+      hasToken: !!token,
+      tokenLength: token?.length,
+      walletAddress: walletAddress?.substring(0, 20) + '...'
+    });
 
     if (!token) {
+      console.error('❌ No token provided');
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
@@ -26,7 +35,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let decoded: any;
     try {
       decoded = jwt.verify(token, JWT_SECRET);
-    } catch (error) {
+      console.log('✅ Token verified, userId:', decoded.userId);
+    } catch (error: any) {
+      console.error('❌ Token verification failed:', error.message);
       return res.status(401).json({ error: 'Invalid token' });
     }
 

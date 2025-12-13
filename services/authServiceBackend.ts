@@ -56,12 +56,29 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+    console.log('🔍 apiRequest - Token present:', token.substring(0, 20) + '...');
+  } else {
+    console.warn('⚠️ apiRequest - No token found for endpoint:', endpoint);
   }
+
+  console.log('🔍 apiRequest - Making request:', {
+    endpoint,
+    method: options.method || 'GET',
+    hasToken: !!token,
+    headers: Object.keys(headers)
+  });
 
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
       headers,
+    });
+
+    console.log('🔍 apiRequest - Response:', {
+      endpoint,
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
     });
 
     if (!response.ok) {
