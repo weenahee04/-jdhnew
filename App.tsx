@@ -564,6 +564,25 @@ const App: React.FC = () => {
       
       // Show welcome modal after wallet creation
       console.log('✅ Wallet creation completed successfully');
+      
+      // Verify wallet was saved by checking database
+      if (USE_BACKEND_API && currentUser) {
+        console.log('🔍 Verifying wallet was saved...');
+        try {
+          const verifyWallet = await getWallet(currentUser.id);
+          if (verifyWallet) {
+            console.log('✅ Wallet verification: Wallet found in database');
+          } else {
+            console.error('❌ Wallet verification: Wallet NOT found in database!');
+            setAuthError('Wallet ไม่ถูกบันทึก กรุณาลองอีกครั้ง');
+            return;
+          }
+        } catch (error) {
+          console.error('❌ Wallet verification error:', error);
+          // Don't block user if verification fails, but log it
+        }
+      }
+      
       setShowWelcomeModal(true);
     } catch (error) {
       console.error('❌ Failed to create wallet:', error);
