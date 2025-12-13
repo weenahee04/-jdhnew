@@ -1,7 +1,7 @@
 // Vercel Serverless Function - Update User Wallet
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import jwt from 'jsonwebtoken';
-import { getSupabaseClient } from '../../lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
@@ -33,7 +33,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const userId = decoded.userId;
 
     // Get Supabase client
-    const supabase = getSupabaseClient();
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return res.status(500).json({ error: 'Database configuration error' });
+    }
+    
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
 
     // Update user
     const { data: user, error } = await supabase

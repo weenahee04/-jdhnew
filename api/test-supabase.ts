@@ -1,6 +1,6 @@
 // Test Supabase Connection
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { getSupabaseClient } from '../lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
@@ -14,13 +14,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Try to get Supabase client
     let supabase;
     try {
-      supabase = getSupabaseClient();
+      if (!envCheck.SUPABASE_URL || !envCheck.SUPABASE_SERVICE_KEY) {
+        return res.status(500).json({
+          success: false,
+          error: 'Missing environment variables',
+          envCheck,
+        });
+      }
+      
+      supabase = createClient(
+        process.env.SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_KEY!,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+          },
+        }
+      );
     } catch (error: any) {
       return res.status(500).json({
         success: false,
         error: 'Failed to initialize Supabase',
         message: error.message,
         envCheck,
+        stack: error.stack,
       });
     }
 

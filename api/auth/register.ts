@@ -1,7 +1,7 @@
 // Vercel Serverless Function - User Registration
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import bcrypt from 'bcryptjs';
-import { getSupabaseClient } from '../../lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -26,13 +26,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Get Supabase client
-    let supabase;
-    try {
-      supabase = getSupabaseClient();
-    } catch (error: any) {
-      console.error('Failed to initialize Supabase:', error.message);
-      return res.status(500).json({ error: `Database connection failed: ${error.message}` });
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Missing Supabase environment variables');
+      return res.status(500).json({ error: 'Database configuration error' });
     }
+    
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
 
     // Check if user already exists
     const { data: existingUser, error: checkError } = await supabase

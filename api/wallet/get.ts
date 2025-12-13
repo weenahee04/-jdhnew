@@ -1,7 +1,7 @@
 // Vercel Serverless Function - Get Wallet (Decrypted)
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
-import { getSupabaseClient } from '../../lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY!;
 
@@ -32,7 +32,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Verify JWT token (simplified - should verify properly)
 
     // Get Supabase client
-    const supabase = getSupabaseClient();
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return res.status(500).json({ error: 'Database configuration error' });
+    }
+    
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
 
     // Get wallet
     const { data: wallet, error } = await supabase

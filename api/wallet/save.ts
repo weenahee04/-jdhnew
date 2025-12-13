@@ -1,7 +1,7 @@
 // Vercel Serverless Function - Save Wallet (Encrypted)
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
-import { getSupabaseClient } from '../../lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY!; // 32-byte key for AES-256
 
@@ -42,7 +42,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // In production, use proper JWT verification
 
     // Get Supabase client
-    const supabase = getSupabaseClient();
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return res.status(500).json({ error: 'Database configuration error' });
+    }
+    
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
 
     // Encrypt mnemonic
     const encryptedMnemonic = encrypt(mnemonic, ENCRYPTION_KEY);
