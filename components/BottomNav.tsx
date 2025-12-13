@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, BarChart2, Repeat, Wallet, Settings } from 'lucide-react';
+import { Home, BarChart2, Repeat, Wallet, Settings, Lock } from 'lucide-react';
 import { NavTab } from '../types';
 
 interface BottomNavProps {
@@ -13,7 +13,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
     { id: NavTab.MARKET, label: 'ตลาด', icon: BarChart2 },
     { id: NavTab.SWAP, label: 'Swap', icon: Repeat }, 
     { id: NavTab.WALLET, label: 'กระเป๋า', icon: Wallet },
-    { id: NavTab.SETTINGS, label: 'ตั้งค่า', icon: Settings },
+    { id: NavTab.STAKING, label: 'Staking', icon: Lock },
   ];
 
   return (

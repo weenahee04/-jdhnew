@@ -21,6 +21,7 @@ export enum NavTab {
   WALLET = 'wallet',
   HISTORY = 'history',
   REWARDS = 'rewards',
+  STAKING = 'staking',
   SETTINGS = 'settings',
   HELP = 'help'
 }

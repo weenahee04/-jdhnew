@@ -13,7 +13,12 @@ export const AssetList: React.FC<AssetListProps> = ({ coins, compact = false, on
   return (
     <div className={`flex flex-col gap-3 ${!compact ? 'pb-24 md:pb-0' : ''}`}>
       <div className="flex justify-between items-end px-1 mb-2">
-        <h3 className="text-xl font-medium text-white tracking-tight">สินทรัพย์ <span className="text-zinc-500 text-sm font-light">(Assets)</span></h3>
+        <div className="flex items-center gap-2">
+          <h3 className="text-xl font-medium text-white tracking-tight">สินทรัพย์ <span className="text-zinc-500 text-sm font-light">(Assets)</span></h3>
+          <span className="text-sm text-emerald-400 font-semibold">
+            ({coins.length} {coins.length === 1 ? 'coin' : 'coins'})
+          </span>
+        </div>
         {!compact && (
           <button className="text-xs text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-1 transition-colors">
             ดูทั้งหมด <ArrowRight size={12} />

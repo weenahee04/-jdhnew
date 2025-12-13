@@ -11,6 +11,7 @@ import { WalletSetup } from './components/WalletSetup';
 import { CoinDetail } from './components/CoinDetail';
 import { NotificationCenter, AnnouncementCenter, BuyCryptoModal, HelpCenter, TransactionDetailModal, LogoutModal } from './components/SecondaryViews';
 import { SettingsPage } from './components/SettingsPage';
+import { StakingPage } from './components/StakingPage';
 import { ApiPaymentModal } from './components/ApiPaymentModal';
 import { TermsModal, SecurityWarningModal, WelcomeModal } from './components/SecurityModals';
 import { Eye, EyeOff, Bell, User, Sparkles, Wallet, Settings, ArrowRight, Shield, Globe, Award, ChevronRight, ChevronLeft, LogOut, MessageSquare, Loader2, Copy, Check, ExternalLink } from 'lucide-react';
@@ -173,6 +174,11 @@ const App: React.FC = () => {
 
   // Use real coins if wallet is connected, otherwise use mock
   const displayCoins = publicKey && walletCoins.length > 0 ? walletCoins : MOCK_COINS;
+  
+  // Debug: Log coin count
+  useEffect(() => {
+    console.log('📊 Display Coins Count:', displayCoins.length, 'coins:', displayCoins.map(c => c.symbol).join(', '));
+  }, [displayCoins.length]);
 
   // Fetch transaction history
   useEffect(() => {
@@ -951,7 +957,12 @@ const App: React.FC = () => {
            {/* Desktop Market List */}
            <div className="hidden md:block">
               <div className="flex justify-between items-center mb-4">
-                 <h3 className="text-xl font-bold text-white">Market Overview</h3>
+                 <div className="flex items-center gap-2">
+                   <h3 className="text-xl font-bold text-white">Market Overview</h3>
+                   <span className="text-sm text-emerald-400 font-semibold">
+                     ({displayCoins.length} {displayCoins.length === 1 ? 'coin' : 'coins'})
+                   </span>
+                 </div>
                  {publicKey && (
                    <button 
                      onClick={refreshBalances}
@@ -995,6 +1006,12 @@ const App: React.FC = () => {
 
            {/* Mobile Asset List */}
            <div className="md:hidden">
+              <div className="flex justify-between items-center mb-4">
+                 <h3 className="text-lg font-bold text-white">Market Overview</h3>
+                 <span className="text-sm text-zinc-400 font-medium">
+                   ({displayCoins.length} {displayCoins.length === 1 ? 'coin' : 'coins'})
+                 </span>
+              </div>
               {balancesLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 size={24} className="animate-spin text-emerald-400" />
@@ -1048,10 +1065,20 @@ const App: React.FC = () => {
   const renderMarket = () => (
     <div className="animate-fade-in space-y-6 pb-24 md:pb-0">
         <header className="flex justify-between items-center py-2 md:hidden">
-            <h2 className="text-2xl font-bold text-white tracking-tight">ตลาด <span className="text-zinc-500 text-lg font-normal">(Market)</span></h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-bold text-white tracking-tight">ตลาด <span className="text-zinc-500 text-lg font-normal">(Market)</span></h2>
+              <span className="text-sm text-zinc-400 font-medium">
+                ({displayCoins.length} {displayCoins.length === 1 ? 'coin' : 'coins'})
+              </span>
+            </div>
         </header>
         <div className="hidden md:block mb-6">
-           <h1 className="text-3xl font-bold text-white">Market Trends</h1>
+           <div className="flex items-center gap-3 mb-2">
+             <h1 className="text-3xl font-bold text-white">Market Trends</h1>
+             <span className="text-base text-zinc-400 font-medium">
+               ({displayCoins.length} {displayCoins.length === 1 ? 'coin' : 'coins'})
+             </span>
+           </div>
            <p className="text-zinc-400">Real-time cryptocurrency prices and charts</p>
         </div>
 
@@ -1076,7 +1103,12 @@ const App: React.FC = () => {
   const renderWallet = () => (
     <div className="animate-fade-in space-y-4 sm:space-y-5 md:space-y-6 pb-24 md:pb-0">
        <div className="flex items-center justify-between mb-3 sm:mb-4">
-          <h2 className="text-xl sm:text-2xl font-bold text-white">พอร์ตการลงทุน <span className="text-zinc-500 text-sm sm:text-base font-normal hidden md:inline">(Portfolio)</span></h2>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <h2 className="text-xl sm:text-2xl font-bold text-white">พอร์ตการลงทุน <span className="text-zinc-500 text-sm sm:text-base font-normal hidden md:inline">(Portfolio)</span></h2>
+            <span className="text-sm sm:text-base text-zinc-400 font-medium">
+              ({displayCoins.length} {displayCoins.length === 1 ? 'coin' : 'coins'})
+            </span>
+          </div>
           {publicKey && (
             <button 
               onClick={refreshBalances}
@@ -1170,7 +1202,12 @@ const App: React.FC = () => {
            {/* Your Assets */}
            <div>
               <div className="flex justify-between items-center mb-3 sm:mb-4">
-                 <h3 className="text-lg sm:text-xl font-bold text-white">สินทรัพย์ของคุณ</h3>
+                 <div className="flex items-center gap-2">
+                   <h3 className="text-lg sm:text-xl font-bold text-white">สินทรัพย์ของคุณ</h3>
+                   <span className="text-sm text-zinc-400 font-medium">
+                     ({walletCoins.filter(c => c.balance > 0).length} {walletCoins.filter(c => c.balance > 0).length === 1 ? 'coin' : 'coins'})
+                   </span>
+                 </div>
                  <button className="text-xs text-emerald-400 hover:text-emerald-300 font-medium">ดูทั้งหมด</button>
               </div>
               {walletCoins.length > 0 ? (
@@ -1292,6 +1329,10 @@ const App: React.FC = () => {
           ))}
        </div>
     </div>
+  );
+
+  const renderStaking = () => (
+    <StakingPage coins={displayCoins} publicKey={publicKey} />
   );
 
   const renderSettings = () => {
@@ -1450,6 +1491,7 @@ const App: React.FC = () => {
         {activeTab === NavTab.WALLET && renderWallet()}
         {activeTab === NavTab.HISTORY && renderHistory()}
         {activeTab === NavTab.REWARDS && renderRewards()}
+        {activeTab === NavTab.STAKING && renderStaking()}
         {activeTab === NavTab.SETTINGS && renderSettings()}
         {activeTab === NavTab.HELP && <HelpCenter faqs={FAQS} onClose={() => setActiveTab(NavTab.HOME)} />}
         {activeTab === NavTab.SWAP && (
