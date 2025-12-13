@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, CreditCard, AlertCircle } from 'lucide-react';
+import { X, AlertCircle } from 'lucide-react';
 
 interface ApiPaymentModalProps {
   isOpen: boolean;
@@ -21,40 +21,17 @@ export const ApiPaymentModal: React.FC<ApiPaymentModalProps> = ({ isOpen, onClos
         </button>
 
         <div className="text-center mb-6">
-          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center border-2 border-emerald-500/30">
-            <CreditCard size={40} className="text-emerald-400" />
+          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-blue-500/20 flex items-center justify-center border-2 border-blue-500/30">
+            <AlertCircle size={40} className="text-blue-400" />
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-            ชำระค่าบริการ API
+            API Service Payment
           </h2>
-          <p className="text-zinc-400 text-sm sm:text-base">
-            เพื่อใช้งานฟีเจอร์ Send Token
-          </p>
         </div>
 
-        <div className="bg-zinc-950/50 border border-zinc-800 rounded-xl p-4 sm:p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-zinc-400 text-sm">แพ็กเกจ API</span>
-            <span className="text-white font-semibold">Premium Plan</span>
-          </div>
-          
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-zinc-300 text-sm">ราคา</span>
-              <span className="text-2xl font-bold text-emerald-400">1,200 USDT</span>
-            </div>
-            
-            <div className="flex items-center justify-between pt-3 border-t border-zinc-800">
-              <span className="text-zinc-300 text-sm">รวมทั้งหมด</span>
-              <span className="text-xl font-bold text-white">1,200 USDT</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-6 flex items-start gap-3">
+        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 sm:p-6 mb-6 flex items-start gap-3">
           <AlertCircle size={20} className="text-blue-400 flex-shrink-0 mt-0.5" />
-          <div className="text-blue-200 text-xs sm:text-sm">
-            <p className="font-semibold mb-1">Note:</p>
+          <div className="text-blue-200 text-sm sm:text-base">
             <p>Solana Chain API payment required to use send/receive services</p>
           </div>
         </div>
@@ -64,16 +41,7 @@ export const ApiPaymentModal: React.FC<ApiPaymentModalProps> = ({ isOpen, onClos
             onClick={onClose}
             className="flex-1 py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-xl transition-colors"
           >
-            ยกเลิก
-          </button>
-          <button
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
-            className="flex-1 py-3 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20"
-          >
-            ชำระเงิน
+            Close
           </button>
         </div>
       </div>
