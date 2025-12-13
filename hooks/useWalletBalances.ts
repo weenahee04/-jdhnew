@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { PublicKey } from '@solana/web3.js';
 import { getBalanceSol, getTokenBalances, TokenBalance } from '../services/solanaClient';
 import { getTokenPrices, TOKEN_MINTS, TokenPrice, convertUsdToThb } from '../services/priceService';
+import { getMultipleTokenMetadata, TokenMetadata } from '../services/tokenMetadata';
 import { Coin } from '../types';
 
 export const useWalletBalances = (publicKey: PublicKey | null) => {
@@ -14,6 +15,7 @@ export const useWalletBalances = (publicKey: PublicKey | null) => {
   const [prices, setPrices] = useState<Record<string, TokenPrice>>({});
   const [previousTokenMints, setPreviousTokenMints] = useState<Set<string>>(new Set());
   const [newTokens, setNewTokens] = useState<TokenBalance[]>([]);
+  const [tokenMetadata, setTokenMetadata] = useState<Record<string, TokenMetadata>>({});
 
   const fetchBalances = useCallback(async () => {
     if (!publicKey) {
@@ -35,13 +37,28 @@ export const useWalletBalances = (publicKey: PublicKey | null) => {
       // Fetch SPL token balances
       const tokens = await getTokenBalances(publicKey);
       
+      // Fetch token metadata (name, symbol, logo) for all tokens
+      const mintAddresses = tokens.map(t => t.mint);
+      const metadata = await getMultipleTokenMetadata(mintAddresses);
+      setTokenMetadata(metadata);
+      
+      // Enrich tokens with metadata
+      const enrichedTokens = tokens.map(token => {
+        const meta = metadata[token.mint];
+        return {
+          ...token,
+          symbol: meta?.symbol || token.symbol || token.mint.slice(0, 4).toUpperCase(),
+          name: meta?.name || token.name || `Token ${token.mint.slice(0, 8)}`,
+        };
+      });
+      
       // Detect new tokens by comparing with previous token mints
       const currentTokenMints = new Set(tokens.map(t => t.mint));
       const newTokenMints = new Set<string>();
       
       // Find tokens that are new (not in previousTokenMints)
       const detectedNewTokens: TokenBalance[] = [];
-      tokens.forEach(token => {
+      enrichedTokens.forEach(token => {
         if (!previousTokenMints.has(token.mint) && token.uiAmount > 0) {
           newTokenMints.add(token.mint);
           detectedNewTokens.push(token);
@@ -51,12 +68,17 @@ export const useWalletBalances = (publicKey: PublicKey | null) => {
       // Update new tokens if any were detected
       if (detectedNewTokens.length > 0) {
         setNewTokens(detectedNewTokens);
-        console.log('🆕 New tokens detected:', detectedNewTokens.map(t => t.mint));
+        console.log('🆕 New tokens detected:', detectedNewTokens.map(t => ({
+          mint: t.mint,
+          symbol: t.symbol,
+          name: t.name,
+          amount: t.uiAmount,
+        })));
       }
       
       // Update previous token mints for next comparison
       setPreviousTokenMints(currentTokenMints);
-      setTokenBalances(tokens);
+      setTokenBalances(enrichedTokens);
 
       // Fetch prices for all tokens
       const allMints = [TOKEN_MINTS.SOL, ...tokens.map(t => t.mint)];
@@ -96,14 +118,18 @@ export const useWalletBalances = (publicKey: PublicKey | null) => {
       // Add SPL tokens - skip if price not available (non-critical)
       for (const token of tokens) {
         const priceInfo = priceData[token.mint];
+        const meta = tokenMetadata[token.mint];
+        
         // Only add token if we have price data OR if balance > 0 (show even without price)
         if (token.uiAmount > 0) {
           // Use fallback price if not available
           const effectivePrice = priceInfo?.price || 0;
           const effectiveChange24h = priceInfo?.priceChange24h || 0;
-          // Try to get symbol/name from priceInfo, otherwise use mint address short form
-          const effectiveSymbol = priceInfo?.symbol || token.mint.slice(0, 4).toUpperCase() + '...';
-          const effectiveName = priceInfo?.name || `Token ${token.mint.slice(0, 8)}`;
+          
+          // Priority: metadata > priceInfo > fallback
+          const effectiveSymbol = meta?.symbol || priceInfo?.symbol || token.symbol || token.mint.slice(0, 4).toUpperCase();
+          const effectiveName = meta?.name || priceInfo?.name || token.name || `Token ${token.mint.slice(0, 8)}`;
+          const logoURI = meta?.logoURI;
           
           // Store symbol and name in token balance for new token detection
           token.symbol = effectiveSymbol;
@@ -122,6 +148,7 @@ export const useWalletBalances = (publicKey: PublicKey | null) => {
               ? [{ value: effectivePrice }, { value: effectivePrice * 1.01 }, { value: effectivePrice * 0.99 }, { value: effectivePrice }]
               : [{ value: 0 }, { value: 0 }, { value: 0 }, { value: 0 }],
             about: `${effectiveName} (${effectiveSymbol}) token on Solana.`,
+            logoURI: logoURI, // Add logo URI to coin object
           });
         }
       }
@@ -159,8 +186,9 @@ export const useWalletBalances = (publicKey: PublicKey | null) => {
     error,
     prices,
     refresh: fetchBalances,
-    newTokens, // New tokens detected in the last fetch
+    newTokens, // New tokens detected in the last fetch (includes metadata: name, symbol, logoURI)
     clearNewTokens: () => setNewTokens([]), // Function to clear new tokens after notification
+    tokenMetadata, // Token metadata map (mint address -> metadata)
   };
 };
 

@@ -168,6 +168,7 @@ const App: React.FC = () => {
     refresh: refreshBalances,
     newTokens,
     clearNewTokens,
+    tokenMetadata,
   } = useWalletBalances(publicKey);
 
   // Use real coins if wallet is connected, otherwise use mock

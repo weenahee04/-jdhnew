@@ -11,6 +11,7 @@ export interface Coin {
   color: string;
   chartData: { value: number }[];
   about?: string; // Description for Coin Detail
+  logoURI?: string; // Token logo URL
 }
 
 export enum NavTab {
