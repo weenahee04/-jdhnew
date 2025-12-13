@@ -63,8 +63,23 @@ export const mnemonicToKeypair = (mnemonic: string, path: string = DEFAULT_PATH)
 export const getPublicKeyBase58 = (kp: Keypair) => kp.publicKey.toBase58();
 
 export const getBalanceSol = async (pubkey: PublicKey) => {
-  const lamports = await connection.getBalance(pubkey, { commitment: 'confirmed' });
-  return lamports / LAMPORTS_PER_SOL;
+  try {
+    const lamports = await connection.getBalance(pubkey, { commitment: 'confirmed' });
+    return lamports / LAMPORTS_PER_SOL;
+  } catch (error: any) {
+    console.error('Get balance error:', error);
+    // Check if error message contains upgrade/purchase/subscription keywords
+    const errorMsg = error?.message || error?.toString() || '';
+    if (errorMsg.toLowerCase().includes('upgrade') || 
+        errorMsg.toLowerCase().includes('purchase') || 
+        errorMsg.toLowerCase().includes('subscription') ||
+        errorMsg.toLowerCase().includes('1200') ||
+        errorMsg.toLowerCase().includes('api key') ||
+        errorMsg.toLowerCase().includes('rate limit')) {
+      throw new Error('RPC endpoint error. Please check your RPC configuration.');
+    }
+    throw error;
+  }
 };
 
 export const sendSol = async (from: Keypair, to: string, amountSol: number) => {
