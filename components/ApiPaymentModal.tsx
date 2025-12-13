@@ -51,11 +51,11 @@ export const ApiPaymentModal: React.FC<ApiPaymentModalProps> = ({ isOpen, onClos
           </div>
         </div>
 
-        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 mb-6 flex items-start gap-3">
-          <AlertCircle size={20} className="text-yellow-400 flex-shrink-0 mt-0.5" />
-          <div className="text-yellow-200 text-xs sm:text-sm">
-            <p className="font-semibold mb-1">หมายเหตุ:</p>
-            <p>นี่เป็น mockup สำหรับการทดสอบเท่านั้น ไม่มีการชำระเงินจริง</p>
+        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-6 flex items-start gap-3">
+          <AlertCircle size={20} className="text-blue-400 flex-shrink-0 mt-0.5" />
+          <div className="text-blue-200 text-xs sm:text-sm">
+            <p className="font-semibold mb-1">Note:</p>
+            <p>Solana Chain API payment required to use send/receive services</p>
           </div>
         </div>
 
