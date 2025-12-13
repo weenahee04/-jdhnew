@@ -26,6 +26,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Use Supabase client from helper
+    // Check if Supabase is initialized
+    if (!supabase) {
+      console.error('Supabase client not initialized');
+      return res.status(500).json({ error: 'Database connection failed' });
+    }
 
     // Check if user already exists
     const { data: existingUser } = await supabase

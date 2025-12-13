@@ -290,6 +290,7 @@ const App: React.FC = () => {
             setCurrentView('WALLET_CREATE');
           }
         } else {
+          console.error('Registration failed:', result);
           setAuthError(result.error || 'เกิดข้อผิดพลาดในการสมัครสมาชิก');
         }
       } else {

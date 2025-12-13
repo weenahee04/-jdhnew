@@ -58,17 +58,40 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-    throw new Error(error.error || `HTTP ${response.status}`);
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+        console.error('API Error:', errorData);
+      } catch (e) {
+        // If response is not JSON, try to get text
+        try {
+          const text = await response.text();
+          console.error('API Error (text):', text);
+          errorMessage = text || errorMessage;
+        } catch (e2) {
+          console.error('API Error (no body):', response.status, response.statusText);
+        }
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  } catch (error: any) {
+    // Network error or other fetch errors
+    if (error.message && !error.message.startsWith('HTTP')) {
+      console.error('Network error:', error);
+      throw new Error(`ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์: ${error.message}`);
+    }
+    throw error;
   }
-
-  return response.json();
 };
 
 // Register new user
