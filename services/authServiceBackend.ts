@@ -300,17 +300,30 @@ export const saveWallet = async (userId: string, mnemonic: string, publicKey: st
 // Get wallet (decrypted mnemonic)
 export const getWallet = async (userId: string): Promise<string | null> => {
   try {
+    console.log('🔍 getWallet called for userId:', userId);
     const result = await apiRequest(`/wallet/get?userId=${userId}`, {
       method: 'GET',
     });
 
-    if (result.success && result.wallet) {
+    console.log('🔍 getWallet API response:', {
+      success: result.success,
+      hasWallet: !!result.wallet,
+      hasMnemonic: !!(result.wallet?.mnemonic)
+    });
+
+    if (result.success && result.wallet && result.wallet.mnemonic) {
+      console.log('✅ Wallet mnemonic retrieved successfully');
       return result.wallet.mnemonic;
     }
 
+    console.warn('⚠️ Wallet not found or missing mnemonic:', {
+      success: result.success,
+      hasWallet: !!result.wallet,
+      error: result.error
+    });
     return null;
   } catch (error) {
-    console.error('Failed to get wallet:', error);
+    console.error('❌ Failed to get wallet:', error);
     return null;
   }
 };

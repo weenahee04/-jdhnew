@@ -313,6 +313,12 @@ const App: React.FC = () => {
           setCurrentUser(result.user);
           
           // Check if user has wallet
+          console.log('🔍 Login - User wallet check:', {
+            hasWallet: result.user.hasWallet,
+            walletAddress: result.user.walletAddress,
+            userId: result.user.id
+          });
+          
           if (result.user.hasWallet && result.user.walletAddress) {
             // Try to load wallet
             try {
@@ -320,30 +326,37 @@ const App: React.FC = () => {
               
               if (USE_BACKEND_API) {
                 // Load from backend API (decrypted)
+                console.log('🔍 Loading wallet from backend API for user:', result.user.id);
                 storedMnemonic = await getWallet(result.user.id);
+                console.log('🔍 Backend wallet result:', storedMnemonic ? 'Found' : 'Not found');
               } else {
                 // Load from localStorage
+                console.log('🔍 Loading wallet from localStorage for user:', result.user.id);
                 storedMnemonic = localStorage.getItem(`jdh_wallet_${result.user.id}`);
+                console.log('🔍 LocalStorage wallet result:', storedMnemonic ? 'Found' : 'Not found');
               }
               
               if (storedMnemonic) {
+                console.log('🔍 Loading wallet from mnemonic...');
                 await loadFromMnemonic(storedMnemonic);
+                console.log('✅ Wallet loaded successfully, going to APP');
                 // Wallet loaded successfully, go to APP
                 setCurrentView('APP');
               } else {
                 // Wallet should exist but not found - this is an error state
-                console.error('Wallet not found for user:', result.user.id);
+                console.error('❌ Wallet not found for user:', result.user.id, 'but hasWallet flag is true');
                 setAuthError('ไม่พบ wallet ของคุณ กรุณาติดต่อผู้ดูแลระบบ');
                 // Don't go to WALLET_CREATE if user already has wallet flag set
                 // Instead, show error and let user retry
               }
             } catch (error) {
-              console.error('Failed to load wallet:', error);
+              console.error('❌ Failed to load wallet:', error);
               setAuthError('ไม่สามารถโหลด wallet ได้ กรุณาลองอีกครั้ง');
               // Don't go to WALLET_CREATE on error - user already has wallet
             }
           } else {
             // User doesn't have wallet yet, go to create/import
+            console.log('🔍 User does not have wallet, going to WALLET_CREATE');
             setCurrentView('WALLET_CREATE');
           }
         } else {
