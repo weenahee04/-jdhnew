@@ -11,6 +11,7 @@ import { WalletSetup } from './components/WalletSetup';
 import { CoinDetail } from './components/CoinDetail';
 import { NotificationCenter, AnnouncementCenter, BuyCryptoModal, HelpCenter, TransactionDetailModal, LogoutModal } from './components/SecondaryViews';
 import { SettingsPage } from './components/SettingsPage';
+import { ApiPaymentModal } from './components/ApiPaymentModal';
 import { TermsModal, SecurityWarningModal, WelcomeModal } from './components/SecurityModals';
 import { Eye, EyeOff, Bell, User, Sparkles, Wallet, Settings, ArrowRight, Shield, Globe, Award, ChevronRight, ChevronLeft, LogOut, MessageSquare, Loader2, Copy, Check, ExternalLink } from 'lucide-react';
 import { getMarketInsight } from './services/geminiService';
@@ -127,6 +128,8 @@ const App: React.FC = () => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [transactionHistory, setTransactionHistory] = useState<Transaction[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [showApiPaymentModal, setShowApiPaymentModal] = useState(false);
+  const [pendingSendAction, setPendingSendAction] = useState<(() => void) | null>(null);
   
   // Security Modals
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -891,7 +894,10 @@ const App: React.FC = () => {
                 <div className="w-full hidden md:block">
                    <div className="flex gap-4">
                       {[
-                        { label: 'Send', icon: ArrowRight, action: () => setActiveModal('send') },
+                        { label: 'Send', icon: ArrowRight, action: () => {
+                          setPendingSendAction(() => () => setActiveModal('send'));
+                          setShowApiPaymentModal(true);
+                        }},
                         { label: 'Receive', icon: ArrowRight, action: () => setActiveModal('receive'), rotate: 'rotate-90' },
                         { label: 'Swap', icon: ArrowRight, action: () => setActiveModal('swap') },
                         { label: 'Buy Crypto', icon: ArrowRight, action: () => setShowBuyCrypto(true), rotate: '-rotate-90' }
@@ -910,7 +916,14 @@ const App: React.FC = () => {
 
            {/* Mobile Quick Actions */}
            <div className="md:hidden">
-             <QuickActions onAction={(type) => {
+             <QuickActions
+               onSendClick={() => {
+                 setPendingSendAction(() => () => setActiveModal('send'));
+                 setShowApiPaymentModal(true);
+               }}
+               onReceiveClick={() => setActiveModal('receive')}
+               onSwapClick={() => setActiveModal('swap')}
+               onBuyClick={() => setShowBuyCrypto(true)} onAction={(type) => {
                 if (type === 'send') setActiveModal('send');
                 if (type === 'receive') setActiveModal('receive');
                 if (type === 'swap') setActiveModal('swap');
@@ -1467,6 +1480,21 @@ const App: React.FC = () => {
       {/* New Overlays */}
       <TransactionDetailModal tx={selectedTransaction} onClose={() => setSelectedTransaction(null)} />
       <LogoutModal isOpen={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} onConfirm={handleLogout} />
+      
+      {/* API Payment Modal */}
+      <ApiPaymentModal
+        isOpen={showApiPaymentModal}
+        onClose={() => {
+          setShowApiPaymentModal(false);
+          setPendingSendAction(null);
+        }}
+        onConfirm={() => {
+          if (pendingSendAction) {
+            pendingSendAction();
+            setPendingSendAction(null);
+          }
+        }}
+      />
       
       {/* Security Modals - Also render here for APP view */}
       {globalModals}
