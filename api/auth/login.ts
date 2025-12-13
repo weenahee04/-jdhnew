@@ -63,6 +63,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Return user (without password_hash) and token
     const { password_hash, ...userWithoutPassword } = userData;
 
+    // Ensure has_wallet and wallet_address are properly set
+    // Check if wallet exists in wallets table
+    const { data: wallet } = await supabase
+      .from('wallets')
+      .select('public_key')
+      .eq('user_id', userData.id)
+      .single();
+
+    // If wallet exists but has_wallet is false, update it
+    if (wallet && (!userWithoutPassword.has_wallet || !userWithoutPassword.wallet_address)) {
+      await supabase
+        .from('users')
+        .update({
+          has_wallet: true,
+          wallet_address: wallet.public_key,
+          updated_at: new Date().toISOString(),
+        } as any)
+        .eq('id', userData.id);
+
+      // Update userWithoutPassword
+      userWithoutPassword.has_wallet = true;
+      userWithoutPassword.wallet_address = wallet.public_key;
+    }
+
     return res.status(200).json({
       success: true,
       user: userWithoutPassword,

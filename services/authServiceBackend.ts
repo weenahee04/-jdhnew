@@ -154,12 +154,23 @@ export const loginUser = async (email: string, password: string): Promise<AuthRe
       }
 
       // Convert backend user format to frontend format
+      // Check if has_wallet is explicitly false or null/undefined
+      const hasWallet = result.user.has_wallet === true || result.user.has_wallet === 'true';
+      const walletAddress = result.user.wallet_address || null;
+      
+      console.log('🔍 Login - Backend user data:', {
+        has_wallet: result.user.has_wallet,
+        wallet_address: result.user.wallet_address,
+        hasWallet,
+        walletAddress
+      });
+
       const user: User = {
         id: result.user.id,
         email: result.user.email,
         createdAt: new Date(result.user.created_at).getTime(),
-        hasWallet: result.user.has_wallet || false,
-        walletAddress: result.user.wallet_address || null,
+        hasWallet,
+        walletAddress,
         displayName: result.user.display_name,
       };
 
