@@ -22,6 +22,7 @@ export enum NavTab {
   HISTORY = 'history',
   REWARDS = 'rewards',
   STAKING = 'staking',
+  AIRDROP = 'airdrop',
   SETTINGS = 'settings',
   HELP = 'help'
 }

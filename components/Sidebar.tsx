@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, BarChart2, Repeat, Wallet, Settings, Clock, Award, User, LogOut, HelpCircle, Lock } from 'lucide-react';
+import { Home, BarChart2, Repeat, Wallet, Settings, Clock, Award, User, LogOut, HelpCircle, Lock, Gift } from 'lucide-react';
 import { NavTab } from '../types';
 
 interface SidebarProps {
@@ -21,6 +21,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLog
   const secondaryNav = [
     { id: NavTab.REWARDS, label: 'รางวัล (Rewards)', icon: Award },
     { id: NavTab.STAKING, label: 'Staking (สเตค)', icon: Lock },
+    { id: NavTab.AIRDROP, label: 'Airdrop', icon: Gift },
     { id: NavTab.SETTINGS, label: 'ตั้งค่า (Settings)', icon: Settings },
     { id: NavTab.HELP, label: 'ช่วยเหลือ (Help)', icon: HelpCircle },
   ];
