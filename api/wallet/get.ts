@@ -53,35 +53,57 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .eq('user_id', userId)
       .single();
 
+    console.log('🔍 Get wallet API - Query result:', {
+      userId,
+      hasWallet: !!wallet,
+      error: error?.message,
+      errorCode: error?.code
+    });
+
     if (error) {
-      console.error('Supabase wallet query error:', error);
+      console.error('❌ Supabase wallet query error:', error);
       // Check if it's a "not found" error (PGRST116) or other error
-      if (error.code === 'PGRST116' || error.message?.includes('No rows')) {
+      if (error.code === 'PGRST116' || error.message?.includes('No rows') || error.message?.includes('not found')) {
+        console.log('⚠️ Wallet not found for user:', userId);
         return res.status(404).json({ error: 'Wallet not found' });
       }
       return res.status(500).json({ error: 'Database query error' });
     }
 
     if (!wallet) {
-      console.log('Wallet not found for user:', userId);
+      console.log('⚠️ Wallet not found for user:', userId);
       return res.status(404).json({ error: 'Wallet not found' });
     }
+
+    console.log('✅ Wallet found for user:', userId, 'public_key:', wallet.public_key?.substring(0, 20) + '...');
 
     // Type assertion for wallet
     const walletData = wallet as any;
 
-    // Decrypt mnemonic
-    const decryptedMnemonic = decrypt(walletData.mnemonic_encrypted, ENCRYPTION_KEY);
+    // Check if mnemonic_encrypted exists
+    if (!walletData.mnemonic_encrypted) {
+      console.error('❌ Wallet found but mnemonic_encrypted is missing for user:', userId);
+      return res.status(500).json({ error: 'Wallet data is incomplete' });
+    }
 
-    return res.status(200).json({
-      success: true,
-      wallet: {
-        id: walletData.id,
-        public_key: walletData.public_key,
-        mnemonic: decryptedMnemonic, // Return decrypted mnemonic
-        created_at: walletData.created_at,
-      },
-    });
+    // Decrypt mnemonic
+    try {
+      const decryptedMnemonic = decrypt(walletData.mnemonic_encrypted, ENCRYPTION_KEY);
+      console.log('✅ Wallet mnemonic decrypted successfully for user:', userId);
+
+      return res.status(200).json({
+        success: true,
+        wallet: {
+          id: walletData.id,
+          public_key: walletData.public_key,
+          mnemonic: decryptedMnemonic, // Return decrypted mnemonic
+          created_at: walletData.created_at,
+        },
+      });
+    } catch (decryptError: any) {
+      console.error('❌ Failed to decrypt mnemonic for user:', userId, 'error:', decryptError.message);
+      return res.status(500).json({ error: 'Failed to decrypt wallet data' });
+    }
   } catch (error: any) {
     console.error('Get wallet error:', error);
     return res.status(500).json({ error: error.message || 'Internal server error' });

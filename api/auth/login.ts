@@ -65,26 +65,49 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Ensure has_wallet and wallet_address are properly set
     // Check if wallet exists in wallets table
-    const { data: wallet } = await supabase
+    const { data: wallet, error: walletError } = await supabase
       .from('wallets')
       .select('public_key')
       .eq('user_id', userData.id)
       .single();
 
-    // If wallet exists but has_wallet is false, update it
-    if (wallet && (!userWithoutPassword.has_wallet || !userWithoutPassword.wallet_address)) {
-      await supabase
-        .from('users')
-        .update({
-          has_wallet: true,
-          wallet_address: wallet.public_key,
-          updated_at: new Date().toISOString(),
-        } as any)
-        .eq('id', userData.id);
+    console.log('🔍 Login - Wallet check:', {
+      userId: userData.id,
+      hasWallet: !!wallet,
+      walletError: walletError?.message,
+      currentHasWallet: userWithoutPassword.has_wallet,
+      currentWalletAddress: userWithoutPassword.wallet_address
+    });
 
-      // Update userWithoutPassword
-      userWithoutPassword.has_wallet = true;
-      userWithoutPassword.wallet_address = wallet.public_key;
+    // If wallet exists but has_wallet is false, update it
+    if (wallet && wallet.public_key) {
+      if (!userWithoutPassword.has_wallet || !userWithoutPassword.wallet_address || userWithoutPassword.wallet_address !== wallet.public_key) {
+        console.log('🔍 Updating has_wallet flag for user:', userData.id);
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({
+            has_wallet: true,
+            wallet_address: wallet.public_key,
+            updated_at: new Date().toISOString(),
+          } as any)
+          .eq('id', userData.id);
+
+        if (updateError) {
+          console.error('❌ Failed to update has_wallet flag:', updateError);
+        } else {
+          console.log('✅ Updated has_wallet flag successfully');
+        }
+
+        // Update userWithoutPassword
+        userWithoutPassword.has_wallet = true;
+        userWithoutPassword.wallet_address = wallet.public_key;
+      }
+    } else if (!wallet && userWithoutPassword.has_wallet) {
+      // Wallet doesn't exist but has_wallet flag is true - this is inconsistent
+      console.warn('⚠️ Wallet not found but has_wallet flag is true for user:', userData.id);
+      // Set has_wallet to false to prevent going to WALLET_CREATE
+      userWithoutPassword.has_wallet = false;
+      userWithoutPassword.wallet_address = null;
     }
 
     return res.status(200).json({
