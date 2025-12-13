@@ -159,9 +159,12 @@ export const loginUser = async (email: string, password: string): Promise<AuthRe
         email: result.user.email,
         createdAt: new Date(result.user.created_at).getTime(),
         hasWallet: result.user.has_wallet || false,
-        walletAddress: result.user.wallet_address,
+        walletAddress: result.user.wallet_address || null,
         displayName: result.user.display_name,
       };
+
+      // Store user in session
+      setCurrentUser(user);
 
       return { success: true, user, token: result.token };
     }

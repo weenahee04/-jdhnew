@@ -322,11 +322,20 @@ const App: React.FC = () => {
               
               if (storedMnemonic) {
                 await loadFromMnemonic(storedMnemonic);
+                // Wallet loaded successfully, go to APP
+                setCurrentView('APP');
+              } else {
+                // Wallet should exist but not found - this is an error state
+                console.error('Wallet not found for user:', result.user.id);
+                setAuthError('ไม่พบ wallet ของคุณ กรุณาติดต่อผู้ดูแลระบบ');
+                // Don't go to WALLET_CREATE if user already has wallet flag set
+                // Instead, show error and let user retry
               }
             } catch (error) {
               console.error('Failed to load wallet:', error);
+              setAuthError('ไม่สามารถโหลด wallet ได้ กรุณาลองอีกครั้ง');
+              // Don't go to WALLET_CREATE on error - user already has wallet
             }
-            setCurrentView('APP');
           } else {
             // User doesn't have wallet yet, go to create/import
             setCurrentView('WALLET_CREATE');
