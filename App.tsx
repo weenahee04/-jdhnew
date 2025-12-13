@@ -1135,7 +1135,6 @@ const App: React.FC = () => {
 
   const renderSettings = () => (
     <div className="animate-fade-in space-y-4 sm:space-y-5 md:space-y-6 pb-24 md:pb-0">
-    <div className="animate-fade-in pb-24 md:pb-0">
        <h2 className="text-2xl font-bold text-white mb-6">ตั้งค่า (Settings)</h2>
        <div className="space-y-6">
           <div className="flex items-center gap-4 bg-zinc-900 p-4 rounded-2xl border border-white/5">
