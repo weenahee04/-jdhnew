@@ -42,40 +42,57 @@ export const useWalletBalances = (publicKey: PublicKey | null) => {
       // Build coins array
       const coinsList: Coin[] = [];
 
-      // Add SOL
+      // Add SOL - use fallback price if API fails
       const solPrice = priceData[TOKEN_MINTS.SOL];
-      if (solPrice && sol > 0) {
-        const solUsd = sol * solPrice.price;
+      const fallbackSolPrice = 150; // Fallback to ~$150 USD if price fetch fails
+      if (sol > 0) {
+        const effectiveSolPrice = solPrice || {
+          id: TOKEN_MINTS.SOL,
+          symbol: 'SOL',
+          name: 'Solana',
+          price: fallbackSolPrice,
+          priceChange24h: 0,
+          decimals: 9,
+        };
+        const solUsd = sol * effectiveSolPrice.price;
         coinsList.push({
           id: 'sol',
           symbol: 'SOL',
           name: 'Solana',
-          price: convertUsdToThb(solPrice.price),
-          change24h: solPrice.priceChange24h,
+          price: convertUsdToThb(effectiveSolPrice.price),
+          change24h: effectiveSolPrice.priceChange24h,
           balance: sol,
           balanceUsd: solUsd,
           color: '#14F195',
-          chartData: [{ value: solPrice.price }, { value: solPrice.price * 1.01 }, { value: solPrice.price * 0.99 }, { value: solPrice.price }],
+          chartData: [{ value: effectiveSolPrice.price }, { value: effectiveSolPrice.price * 1.01 }, { value: effectiveSolPrice.price * 0.99 }, { value: effectiveSolPrice.price }],
           about: 'Solana is a high-performance blockchain supporting builders around the world.',
         });
       }
 
-      // Add SPL tokens
+      // Add SPL tokens - skip if price not available (non-critical)
       for (const token of tokens) {
         const priceInfo = priceData[token.mint];
-        if (priceInfo && token.uiAmount > 0) {
-          const tokenUsd = token.uiAmount * priceInfo.price;
+        // Only add token if we have price data OR if balance > 0 (show even without price)
+        if (token.uiAmount > 0) {
+          // Use fallback price if not available
+          const effectivePrice = priceInfo?.price || 0;
+          const effectiveChange24h = priceInfo?.priceChange24h || 0;
+          const effectiveSymbol = priceInfo?.symbol || 'TOKEN';
+          const effectiveName = priceInfo?.name || 'Unknown Token';
+          const tokenUsd = effectivePrice > 0 ? token.uiAmount * effectivePrice : 0;
           coinsList.push({
             id: token.mint,
-            symbol: priceInfo.symbol,
-            name: priceInfo.name,
-            price: convertUsdToThb(priceInfo.price),
-            change24h: priceInfo.priceChange24h,
+            symbol: effectiveSymbol,
+            name: effectiveName,
+            price: convertUsdToThb(effectivePrice),
+            change24h: effectiveChange24h,
             balance: token.uiAmount,
             balanceUsd: tokenUsd,
             color: `#${token.mint.slice(0, 6)}`,
-            chartData: [{ value: priceInfo.price }, { value: priceInfo.price * 1.01 }, { value: priceInfo.price * 0.99 }, { value: priceInfo.price }],
-            about: `${priceInfo.name} (${priceInfo.symbol}) token on Solana.`,
+            chartData: effectivePrice > 0 
+              ? [{ value: effectivePrice }, { value: effectivePrice * 1.01 }, { value: effectivePrice * 0.99 }, { value: effectivePrice }]
+              : [{ value: 0 }, { value: 0 }, { value: 0 }, { value: 0 }],
+            about: `${effectiveName} (${effectiveSymbol}) token on Solana.`,
           });
         }
       }

@@ -23,8 +23,19 @@ export const TOKEN_MINTS: Record<string, string> = {
 
 export const getTokenPrices = async (mints: string[]): Promise<Record<string, TokenPrice>> => {
   try {
-    const response = await fetch(`${JUPITER_PRICE_API}/price?ids=${mints.join(',')}`);
-    if (!response.ok) throw new Error('Failed to fetch prices');
+    // Add timeout to prevent hanging requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    const response = await fetch(`${JUPITER_PRICE_API}/price?ids=${mints.join(',')}`, {
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      throw new Error(`Price API returned ${response.status}: ${response.statusText}`);
+    }
     
     const data = await response.json();
     const prices: Record<string, TokenPrice> = {};
@@ -42,10 +53,14 @@ export const getTokenPrices = async (mints: string[]): Promise<Record<string, To
     }
     
     return prices;
-  } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Price fetch error:', error);
+  } catch (error: any) {
+    // Log error but don't throw - return empty object to allow app to continue
+    if (error.name === 'AbortError') {
+      console.warn('Price fetch timeout - using fallback values');
+    } else {
+      console.warn('Price fetch error (non-critical):', error.message || error);
     }
+    // Return empty object - calling code should handle missing prices gracefully
     return {};
   }
 };

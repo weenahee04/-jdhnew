@@ -51,6 +51,12 @@ export class ErrorBoundary extends Component<Props, State> {
       error: null,
       errorInfo: null,
     });
+    // Reload the page to ensure clean state
+    window.location.reload();
+  }
+
+  handleRefresh = () => {
+    window.location.reload();
   };
 
   render() {
@@ -59,6 +65,19 @@ export class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
+      // Check if error is network-related
+      const errorMessage = this.state.error?.message || '';
+      const isNetworkError = errorMessage.includes('fetch') || 
+                            errorMessage.includes('network') ||
+                            errorMessage.includes('Failed to load resource') ||
+                            errorMessage.includes('price.jup.ag') ||
+                            this.state.error?.name === 'TypeError' ||
+                            this.state.error?.name === 'AbortError';
+
+      const displayMessage = isNetworkError 
+        ? 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต'
+        : 'เกิดข้อผิดพลาดที่ไม่คาดคิด กรุณาลองรีเฟรชหน้าหรือติดต่อทีมสนับสนุน';
+
       return (
         <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
           <div className="max-w-md w-full bg-zinc-900 border border-red-500/20 rounded-2xl p-6 text-center">
@@ -66,9 +85,14 @@ export class ErrorBoundary extends Component<Props, State> {
               <AlertTriangle size={48} className="text-red-500" />
             </div>
             <h2 className="text-2xl font-bold text-white mb-2">เกิดข้อผิดพลาด</h2>
-            <p className="text-zinc-400 mb-6">
-              เกิดข้อผิดพลาดที่ไม่คาดคิด กรุณาลองรีเฟรชหน้าหรือติดต่อทีมสนับสนุน
+            <p className="text-zinc-400 mb-2 text-sm">
+              {displayMessage}
             </p>
+            {isNetworkError && (
+              <p className="text-zinc-500 mb-6 text-xs">
+                หมายเหตุ: ปัญหาอาจเกิดจาก API ภายนอก (price.jup.ag) ไม่สามารถเข้าถึงได้ ระบบจะใช้ราคาเริ่มต้นแทน
+              </p>
+            )}
             
             {process.env.NODE_ENV === 'development' && this.state.error && (
               <details className="mb-4 text-left">
@@ -84,17 +108,17 @@ export class ErrorBoundary extends Component<Props, State> {
 
             <div className="flex gap-3 justify-center">
               <button
-                onClick={this.handleReset}
+                onClick={this.handleRefresh}
                 className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl flex items-center gap-2"
               >
                 <RefreshCw size={16} />
-                ลองใหม่
+                รีเฟรชหน้า
               </button>
               <button
-                onClick={() => window.location.reload()}
+                onClick={this.handleReset}
                 className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl"
               >
-                รีเฟรชหน้า
+                ลองใหม่
               </button>
             </div>
           </div>
