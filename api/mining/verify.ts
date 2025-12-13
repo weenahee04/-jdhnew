@@ -100,10 +100,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Award points
+    const newPoints = currentPoints + pointsPerSolution;
     await supabase.from('mining_points').upsert({
       wallet_address: walletAddress,
       date: today,
-      points: currentPoints + pointsPerSolution,
+      points: newPoints,
       last_updated: new Date().toISOString(),
     } as any, {
       onConflict: 'wallet_address,date',
@@ -153,13 +154,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       } as any);
     }
 
+    // Get total points across all dates for this wallet
+    const { data: allPoints } = await supabase
+      .from('mining_points')
+      .select('points')
+      .eq('wallet_address', walletAddress);
+
+    const totalPoints = allPoints?.reduce((sum: number, row: any) => sum + (row.points || 0), 0) || 0;
+
     // Broadcast to WebSocket clients (via Redis pub/sub or similar)
     // For now, return success
 
     return res.status(200).json({
       success: true,
       points: pointsPerSolution,
-      totalPoints: currentPoints + pointsPerSolution,
+      totalPoints,
+      dailyPoints: newPoints,
       dailyCap,
     });
 

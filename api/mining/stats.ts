@@ -79,18 +79,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const totalUserPoints = userPointsData?.reduce((sum: number, row: any) => sum + (row.points || 0), 0) || 0;
 
+      // Get today's points
+      const today = new Date().toISOString().split('T')[0];
+      const { data: todayPoints } = await supabase
+        .from('mining_points')
+        .select('points')
+        .eq('wallet_address', walletAddress)
+        .eq('date', today)
+        .single();
+
+      const dailyPoints = todayPoints?.points || 0;
+
       // Determine tier based on deposit (would come from on-chain, default to Bronze)
       // For now, use a placeholder - in production, fetch from Solana
       const depositAmount = 0; // TODO: Fetch from on-chain UserMiningDeposit
       let userTier: 'Bronze' | 'Silver' | 'Gold' | 'Platinum' = 'Bronze';
-      if (depositAmount >= 100000) userTier = 'Platinum';
-      else if (depositAmount >= 10000) userTier = 'Gold';
-      else if (depositAmount >= 1000) userTier = 'Silver';
+      let dailyCap = 1000;
+      
+      if (depositAmount >= 100000) {
+        userTier = 'Platinum';
+        dailyCap = 100000;
+      } else if (depositAmount >= 10000) {
+        userTier = 'Gold';
+        dailyCap = 25000;
+      } else if (depositAmount >= 1000) {
+        userTier = 'Silver';
+        dailyCap = 5000;
+      }
 
       userStats = {
         userPoints: totalUserPoints,
         userTier,
         depositAmount,
+        dailyPoints,
+        dailyCap,
       };
     }
 

@@ -42,8 +42,23 @@ export const MiningPage: React.FC<MiningPageProps> = ({ publicKey, wallet }) => 
   const [depositAmount, setDepositAmount] = useState(0);
   const [solutionsFound, setSolutionsFound] = useState(0);
   const [hashrate, setHashrate] = useState(0);
+  const [dailyPoints, setDailyPoints] = useState(0);
+  const [dailyCap, setDailyCap] = useState(1000);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [pointsEarned, setPointsEarned] = useState(0);
+  const [miningTime, setMiningTime] = useState(0);
+  const [currentNonce, setCurrentNonce] = useState(0);
+  const [currentHash, setCurrentHash] = useState<string | null>(null);
+  const [hashAttempts, setHashAttempts] = useState(0);
+  const [hashHistory, setHashHistory] = useState<Array<{ nonce: number; hash: string; time: number }>>([]);
+  const [lastSolutionTime, setLastSolutionTime] = useState<number | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const miningStartTimeRef = useRef<number | null>(null);
+  const statsRefreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const hashHistoryRef = useRef<Array<{ nonce: number; hash: string; time: number }>>([]);
 
   // Connect to real-time stats
   useEffect(() => {
@@ -68,40 +83,66 @@ export const MiningPage: React.FC<MiningPageProps> = ({ publicKey, wallet }) => 
     };
   }, []);
 
-  // Load user stats on mount
-  useEffect(() => {
+  // Load user stats on mount and refresh periodically
+  const loadUserStats = async () => {
     if (!publicKey) return;
 
-    const loadUserStats = async () => {
-      try {
-        // Get today's points
-        const today = new Date().toISOString().split('T')[0];
-        const response = await fetch(`/api/mining/stats?wallet=${publicKey}`);
-        const data = await response.json();
-        
-        if (data.userPoints) {
-          setUserPoints(data.userPoints);
-        }
-        if (data.userTier) {
-          setUserTier(data.userTier);
-        }
-        if (data.depositAmount) {
-          setDepositAmount(data.depositAmount);
-        }
-      } catch (error) {
-        console.error('Error loading user stats:', error);
+    try {
+      const response = await fetch(`/api/mining/stats?wallet=${publicKey}`);
+      const data = await response.json();
+      
+      if (data.userPoints !== undefined) {
+        setUserPoints(data.userPoints);
+      }
+      if (data.userTier) {
+        setUserTier(data.userTier);
+      }
+      if (data.depositAmount !== undefined) {
+        setDepositAmount(data.depositAmount);
+      }
+      if (data.dailyPoints !== undefined) {
+        setDailyPoints(data.dailyPoints);
+      }
+      if (data.dailyCap !== undefined) {
+        setDailyCap(data.dailyCap);
+      }
+    } catch (error) {
+      console.error('Error loading user stats:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadUserStats();
+    
+    // Auto-refresh stats every 5 seconds
+    statsRefreshIntervalRef.current = setInterval(loadUserStats, 5000);
+    
+    return () => {
+      if (statsRefreshIntervalRef.current) {
+        clearInterval(statsRefreshIntervalRef.current);
       }
     };
-
-    loadUserStats();
   }, [publicKey]);
 
   // Start mining session
   const startMining = async () => {
     if (!publicKey) {
-      alert('กรุณาเชื่อมต่อกระเป๋าก่อน');
+      setError('กรุณาเชื่อมต่อกระเป๋าก่อน');
+      setTimeout(() => setError(null), 5000);
       return;
     }
+
+    // Check if daily cap reached
+    if (dailyPoints >= dailyCap) {
+      setError(`Daily cap reached (${dailyCap} points). Please try again tomorrow.`);
+      setTimeout(() => setError(null), 5000);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setMiningTime(0);
+    miningStartTimeRef.current = Date.now();
 
     try {
       // Request challenge
@@ -115,19 +156,38 @@ export const MiningPage: React.FC<MiningPageProps> = ({ publicKey, wallet }) => 
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to get challenge');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to get challenge');
       }
 
       const challengeData = await response.json();
       setChallenge(challengeData);
       setIsMining(true);
+      setIsLoading(false);
       setSolutionsFound(0);
+      setPointsEarned(0);
+      setHashAttempts(0);
+      setCurrentNonce(0);
+      setCurrentHash(null);
+      setHashHistory([]);
+      hashHistoryRef.current = [];
+      setLastSolutionTime(null);
 
       // Start Web Worker for PoW solving
       startPoWWorker(challengeData);
+
+      // Start mining timer
+      const timer = setInterval(() => {
+        if (miningStartTimeRef.current) {
+          setMiningTime(Math.floor((Date.now() - miningStartTimeRef.current) / 1000));
+        }
+      }, 1000);
+      
+      return () => clearInterval(timer);
     } catch (error: any) {
-      alert(`Error: ${error.message}`);
+      setIsLoading(false);
+      setError(error.message || 'Failed to start mining');
+      setTimeout(() => setError(null), 5000);
     }
   };
 
@@ -147,6 +207,7 @@ export const MiningPage: React.FC<MiningPageProps> = ({ publicKey, wallet }) => 
         const startTime = Date.now();
         let hashesPerSecond = 0;
         let lastReportTime = startTime;
+        let lastHashReportTime = startTime;
 
         while (true) {
           const hashInput = seed + walletAddress + nonce.toString() + salt;
@@ -163,15 +224,27 @@ export const MiningPage: React.FC<MiningPageProps> = ({ publicKey, wallet }) => 
                 success: true, 
                 nonce: nonce.toString(), 
                 solution: hash,
-                hashesPerSecond 
+                hashesPerSecond,
+                hashAttempts: nonce + 1
               });
               return;
+            }
+            
+            // Report hash every 100ms for real-time display
+            const now = Date.now();
+            if (now - lastHashReportTime >= 100) {
+              self.postMessage({ 
+                hashUpdate: true,
+                nonce: nonce,
+                hash: hash,
+                hashAttempts: nonce + 1
+              });
+              lastHashReportTime = now;
             }
             
             nonce++;
             
             // Report progress every 500ms
-            const now = Date.now();
             if (now - lastReportTime >= 500) {
               const elapsed = (now - startTime) / 1000;
               hashesPerSecond = Math.round(nonce / elapsed);
@@ -201,9 +274,26 @@ export const MiningPage: React.FC<MiningPageProps> = ({ publicKey, wallet }) => 
 
     worker.onmessage = (e) => {
       if (e.data.success) {
+        setCurrentHash(e.data.solution);
+        setHashAttempts(e.data.hashAttempts || 0);
+        setLastSolutionTime(Date.now());
+        // Add to hash history
+        const newHashEntry = {
+          nonce: parseInt(e.data.nonce),
+          hash: e.data.solution,
+          time: Date.now()
+        };
+        setHashHistory(prev => [newHashEntry, ...prev].slice(0, 20)); // Keep last 20
+        hashHistoryRef.current = [newHashEntry, ...hashHistoryRef.current].slice(0, 20);
+        
         submitSolution(challengeData.challengeId, e.data.nonce, e.data.solution);
         worker.terminate();
         workerRef.current = null;
+      } else if (e.data.hashUpdate) {
+        // Real-time hash updates
+        setCurrentNonce(e.data.nonce);
+        setCurrentHash(e.data.hash);
+        setHashAttempts(e.data.hashAttempts || 0);
       } else if (e.data.progress) {
         setHashrate(e.data.hashesPerSecond);
       }
@@ -247,7 +337,7 @@ export const MiningPage: React.FC<MiningPageProps> = ({ publicKey, wallet }) => 
   };
 
   // Submit solution
-  const submitSolution = async (challengeId: string, nonce: string, solution: string) => {
+  const submitSolution = async (challengeId: string, nonce: string, solution: string, retryCount = 0) => {
     try {
       const response = await fetch('/api/mining/verify', {
         method: 'POST',
@@ -264,19 +354,56 @@ export const MiningPage: React.FC<MiningPageProps> = ({ publicKey, wallet }) => 
 
       if (result.success) {
         setSolutionsFound(prev => prev + 1);
-        setUserPoints(result.totalPoints);
+        setUserPoints(result.totalPoints || userPoints);
+        setDailyPoints(result.dailyPoints || dailyPoints);
+        setPointsEarned(prev => prev + (result.points || 10));
+        
+        // Show success animation
+        setSuccessMessage(`+${result.points || 10} points!`);
+        setTimeout(() => setSuccessMessage(null), 2000);
+        
+        // Reload stats
+        loadUserStats();
+        
+        // Check if daily cap reached
+        if (result.dailyCap && result.totalPoints >= result.dailyCap) {
+          setIsMining(false);
+          setError(`Daily cap reached (${result.dailyCap} points). Great job!`);
+          setTimeout(() => setError(null), 5000);
+          return;
+        }
         
         // Request new challenge immediately
         if (isMining) {
-          setTimeout(() => startMining(), 1000);
+          setTimeout(() => {
+            if (isMining) {
+              startMining();
+            }
+          }, 1000);
         }
       } else {
-        alert(`Solution rejected: ${result.error}`);
-        setIsMining(false);
+        if (result.error?.includes('Daily cap')) {
+          setIsMining(false);
+          setError(result.error);
+          setTimeout(() => setError(null), 5000);
+        } else if (retryCount < 2) {
+          // Retry on error
+          setTimeout(() => submitSolution(challengeId, nonce, solution, retryCount + 1), 2000);
+        } else {
+          setError(`Solution rejected: ${result.error}`);
+          setIsMining(false);
+          setTimeout(() => setError(null), 5000);
+        }
       }
     } catch (error: any) {
-      alert(`Error submitting solution: ${error.message}`);
-      setIsMining(false);
+      if (retryCount < 2) {
+        // Retry on network error
+        setTimeout(() => submitSolution(challengeId, nonce, solution, retryCount + 1), 2000);
+      } else {
+        setError(`Error submitting solution: ${error.message}`);
+        setIsMining(false);
+        setTimeout(() => setError(null), 5000);
+      }
     }
   };
 
@@ -284,10 +411,18 @@ export const MiningPage: React.FC<MiningPageProps> = ({ publicKey, wallet }) => 
   const stopMining = () => {
     setIsMining(false);
     setChallenge(null);
+    setMiningTime(0);
+    setCurrentHash(null);
+    setCurrentNonce(0);
+    setHashAttempts(0);
+    miningStartTimeRef.current = null;
     if (workerRef.current) {
       workerRef.current.terminate();
       workerRef.current = null;
     }
+    
+    // Reload stats after stopping
+    loadUserStats();
   };
 
   // Cleanup on unmount
@@ -335,6 +470,16 @@ export const MiningPage: React.FC<MiningPageProps> = ({ publicKey, wallet }) => 
         <p className="text-zinc-400">Bonded Proof of Work Puzzle Mining</p>
       </div>
 
+      {/* Error Toast */}
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-4 animate-slide-down">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+            <span className="text-red-400 font-medium">{error}</span>
+          </div>
+        </div>
+      )}
+
       {/* User Stats Summary */}
       {publicKey && (
         <div className={`bg-gradient-to-br ${getTierColor(userTier)} border rounded-3xl p-6 md:p-8 relative overflow-hidden`}>
@@ -362,9 +507,15 @@ export const MiningPage: React.FC<MiningPageProps> = ({ publicKey, wallet }) => 
                 <p className="text-xs text-zinc-400 mt-1">Current level</p>
               </div>
               <div className="bg-zinc-900/50 border border-white/5 rounded-2xl p-4">
-                <p className="text-zinc-400 text-sm mb-1">Deposit</p>
-                <p className="text-2xl font-bold text-white">{depositAmount.toLocaleString()}</p>
-                <p className="text-xs text-zinc-400 mt-1">JDH tokens</p>
+                <p className="text-zinc-400 text-sm mb-1">Daily Progress</p>
+                <p className="text-2xl font-bold text-white">{dailyPoints.toLocaleString()} / {dailyCap.toLocaleString()}</p>
+                <div className="w-full bg-zinc-800 rounded-full h-2 mt-2">
+                  <div 
+                    className="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${Math.min((dailyPoints / dailyCap) * 100, 100)}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-zinc-400 mt-1">{dailyCap - dailyPoints} points remaining</p>
               </div>
             </div>
           </div>
@@ -403,14 +554,33 @@ export const MiningPage: React.FC<MiningPageProps> = ({ publicKey, wallet }) => 
             {!isMining ? (
               <button
                 onClick={startMining}
-                disabled={!publicKey}
-                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold py-4 px-6 rounded-xl transition-all shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 flex items-center justify-center gap-2"
+                disabled={!publicKey || isLoading || dailyPoints >= dailyCap}
+                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold py-4 px-6 rounded-xl transition-all shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 flex items-center justify-center gap-2 relative overflow-hidden"
               >
-                <Zap size={20} className="fill-current" />
-                Start Mining
+                {isLoading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                    <span>Starting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Zap size={20} className="fill-current" />
+                    <span>{dailyPoints >= dailyCap ? 'Daily Cap Reached' : 'Start Mining'}</span>
+                  </>
+                )}
               </button>
             ) : (
               <div className="space-y-6">
+                {/* Success Animation */}
+                {successMessage && (
+                  <div className="bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/40 rounded-xl p-4 animate-pulse">
+                    <div className="flex items-center justify-center gap-2">
+                      <CheckCircle className="text-emerald-400" size={20} />
+                      <span className="text-emerald-400 font-bold text-lg">{successMessage}</span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-xl p-5 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/5 rounded-full blur-2xl"></div>
@@ -427,6 +597,106 @@ export const MiningPage: React.FC<MiningPageProps> = ({ publicKey, wallet }) => 
                       <p className="text-3xl font-bold text-yellow-400">{hashrate.toLocaleString()}</p>
                       <p className="text-xs text-yellow-400/70 mt-1">Hashes per second</p>
                     </div>
+                  </div>
+                </div>
+
+                {/* Mining Stats */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-4">
+                    <p className="text-zinc-400 text-sm mb-1">Points Earned</p>
+                    <p className="text-2xl font-bold text-white">{pointsEarned}</p>
+                    <p className="text-xs text-zinc-400 mt-1">This session</p>
+                  </div>
+                  <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-4">
+                    <p className="text-zinc-400 text-sm mb-1">Mining Time</p>
+                    <p className="text-2xl font-bold text-white">
+                      {Math.floor(miningTime / 60)}:{(miningTime % 60).toString().padStart(2, '0')}
+                    </p>
+                    <p className="text-xs text-zinc-400 mt-1">MM:SS</p>
+                  </div>
+                </div>
+
+                {/* Daily Progress */}
+                <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-zinc-400 text-sm">Daily Progress</p>
+                    <p className="text-emerald-400 text-sm font-semibold">
+                      {dailyPoints} / {dailyCap}
+                    </p>
+                  </div>
+                  <div className="w-full bg-zinc-800 rounded-full h-3">
+                    <div 
+                      className="bg-gradient-to-r from-emerald-500 to-teal-500 h-3 rounded-full transition-all duration-500 flex items-center justify-end pr-2"
+                      style={{ width: `${Math.min((dailyPoints / dailyCap) * 100, 100)}%` }}
+                    >
+                      {dailyPoints > 0 && (
+                        <span className="text-xs font-bold text-black">
+                          {Math.round((dailyPoints / dailyCap) * 100)}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-xs text-zinc-500 mt-2">
+                    {dailyCap - dailyPoints > 0 
+                      ? `${dailyCap - dailyPoints} points remaining today` 
+                      : 'Daily cap reached! 🎉'}
+                  </p>
+                </div>
+
+                {/* Real-time Hash Report */}
+                <div className="bg-gradient-to-br from-zinc-900/60 to-zinc-950/60 border border-white/5 rounded-xl p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Activity size={18} className="text-emerald-400" />
+                    <h3 className="text-lg font-bold text-white">Hash Report (Real-time)</h3>
+                  </div>
+                  
+                  {/* Current Hash Display */}
+                  {currentHash && (
+                    <div className="mb-4 p-4 bg-zinc-950/50 border border-emerald-500/20 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-zinc-400">Current Hash Attempt</span>
+                        <span className="text-xs text-emerald-400">Nonce: {currentNonce.toLocaleString()}</span>
+                      </div>
+                      <div className="font-mono text-sm break-all text-emerald-300 mb-2">
+                        {currentHash}
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-zinc-500">
+                        <span>Attempts: {hashAttempts.toLocaleString()}</span>
+                        <span>•</span>
+                        <span>Status: {currentHash.startsWith('0'.repeat(challenge?.difficulty || 0)) ? 
+                          <span className="text-emerald-400">✓ Valid Solution!</span> : 
+                          <span className="text-yellow-400">✗ Invalid</span>
+                        }</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Hash History */}
+                  <div className="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
+                    <div className="text-xs text-zinc-400 mb-2">Recent Hash Attempts</div>
+                    {hashHistory.length > 0 ? (
+                      hashHistory.map((entry, idx) => (
+                        <div key={idx} className="p-3 bg-zinc-950/30 border border-white/5 rounded-lg hover:border-emerald-500/30 transition-colors">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-emerald-400 font-semibold">Solution #{hashHistory.length - idx}</span>
+                            <span className="text-xs text-zinc-500">Nonce: {entry.nonce.toLocaleString()}</span>
+                          </div>
+                          <div className="font-mono text-xs break-all text-emerald-200/80">
+                            {entry.hash}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                            <span className="text-xs text-zinc-500">
+                              {new Date(entry.time).toLocaleTimeString()}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-4 text-zinc-500 text-sm">
+                        No hashes yet. Start mining to see real-time hash attempts...
+                      </div>
+                    )}
                   </div>
                 </div>
                 {challenge && (
