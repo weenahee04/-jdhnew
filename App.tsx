@@ -849,9 +849,9 @@ const App: React.FC = () => {
   );
 
   const renderWallet = () => (
-    <div className="animate-fade-in space-y-6 pb-24 md:pb-0">
-       <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-white">พอร์ตการลงทุน <span className="text-zinc-500 text-base font-normal hidden md:inline">(Portfolio)</span></h2>
+    <div className="animate-fade-in space-y-4 sm:space-y-5 md:space-y-6 pb-24 md:pb-0">
+       <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <h2 className="text-xl sm:text-2xl font-bold text-white">พอร์ตการลงทุน <span className="text-zinc-500 text-sm sm:text-base font-normal hidden md:inline">(Portfolio)</span></h2>
           {publicKey && (
             <button 
               onClick={refreshBalances}
@@ -882,15 +882,15 @@ const App: React.FC = () => {
        ) : (
          <>
            {/* Portfolio Summary */}
-           <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-emerald-500/20 rounded-3xl p-6 md:p-8 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[80px] rounded-full pointer-events-none"></div>
+           <div className="bg-gradient-to-br from-zinc-900 to-zinc-950 border border-emerald-500/20 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-emerald-500/5 blur-[80px] rounded-full pointer-events-none"></div>
               <div className="relative z-10">
-                 <p className="text-zinc-400 text-sm mb-2">มูลค่ารวมพอร์ต</p>
-                 <h2 className="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">
+                 <p className="text-zinc-400 text-xs sm:text-sm mb-2">มูลค่ารวมพอร์ต</p>
+                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">
                     {showBalance ? `฿${totalBalanceTHB.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '••••••••'}
                  </h2>
                  <div className="flex items-center gap-2">
-                    <span className="text-emerald-400 text-sm font-medium">
+                    <span className="text-emerald-400 text-xs sm:text-sm font-medium">
                        {showBalance ? `≈ $${totalBalanceUSD.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '••••'} USD
                     </span>
                  </div>
@@ -899,30 +899,30 @@ const App: React.FC = () => {
 
            {/* Asset Distribution */}
            {walletCoins.length > 0 ? (
-             <div className="bg-zinc-900/50 border border-white/5 rounded-2xl p-5">
-                <h3 className="text-lg font-bold text-white mb-4">การกระจายสินทรัพย์</h3>
-                <div className="space-y-3">
+             <div className="bg-zinc-900/50 border border-white/5 rounded-xl sm:rounded-2xl p-4 sm:p-5">
+                <h3 className="text-base sm:text-lg font-bold text-white mb-3 sm:mb-4">การกระจายสินทรัพย์</h3>
+                <div className="space-y-2.5 sm:space-y-3">
                    {walletCoins.map(coin => {
                       const value = coin.price * coin.balance;
                       const percentage = totalBalanceTHB > 0 ? (value / totalBalanceTHB) * 100 : 0;
                       return (
-                         <div key={coin.id} onClick={() => setSelectedCoin(coin)} className="cursor-pointer hover:bg-zinc-800/50 p-3 rounded-xl transition-colors">
-                            <div className="flex items-center justify-between mb-2">
-                               <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: coin.color }}>
+                         <div key={coin.id} onClick={() => setSelectedCoin(coin)} className="cursor-pointer hover:bg-zinc-800/50 p-2.5 sm:p-3 rounded-lg sm:rounded-xl transition-colors">
+                            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                               <div className="flex items-center gap-2 sm:gap-3">
+                                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm" style={{ backgroundColor: coin.color }}>
                                      {coin.symbol[0]}
                                   </div>
                                   <div>
-                                     <p className="text-white font-medium">{coin.name}</p>
-                                     <p className="text-zinc-500 text-xs">{coin.balance.toFixed(6)} {coin.symbol}</p>
+                                     <p className="text-white font-medium text-sm sm:text-base">{coin.name}</p>
+                                     <p className="text-zinc-500 text-[10px] sm:text-xs">{coin.balance.toFixed(6)} {coin.symbol}</p>
                                   </div>
                                </div>
                                <div className="text-right">
-                                  <p className="text-white font-bold">฿{value.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                                  <p className="text-zinc-500 text-xs">{percentage.toFixed(1)}%</p>
+                                  <p className="text-white font-bold text-sm sm:text-base">฿{value.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                                  <p className="text-zinc-500 text-[10px] sm:text-xs">{percentage.toFixed(1)}%</p>
                                </div>
                             </div>
-                            <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                            <div className="w-full bg-zinc-800 h-1 sm:h-1.5 rounded-full overflow-hidden">
                                <div className="h-full rounded-full transition-all" style={{ width: `${percentage}%`, backgroundColor: coin.color }}></div>
                             </div>
                          </div>
@@ -931,11 +931,11 @@ const App: React.FC = () => {
                 </div>
              </div>
            ) : (
-             <div className="bg-zinc-900/50 border border-white/5 rounded-2xl p-8 text-center">
-                <p className="text-zinc-500 mb-4">ยังไม่มีสินทรัพย์ในกระเป๋า</p>
+             <div className="bg-zinc-900/50 border border-white/5 rounded-xl sm:rounded-2xl p-6 sm:p-8 text-center">
+                <p className="text-zinc-500 mb-3 sm:mb-4 text-sm sm:text-base">ยังไม่มีสินทรัพย์ในกระเป๋า</p>
                 <button 
                   onClick={() => setActiveModal('receive')}
-                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl"
+                  className="px-3 sm:px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-sm sm:text-base rounded-lg sm:rounded-xl"
                 >
                   รับเหรียญ
                 </button>
@@ -944,8 +944,8 @@ const App: React.FC = () => {
 
            {/* Your Assets */}
            <div>
-              <div className="flex justify-between items-center mb-4">
-                 <h3 className="text-xl font-bold text-white">สินทรัพย์ของคุณ</h3>
+              <div className="flex justify-between items-center mb-3 sm:mb-4">
+                 <h3 className="text-lg sm:text-xl font-bold text-white">สินทรัพย์ของคุณ</h3>
                  <button className="text-xs text-emerald-400 hover:text-emerald-300 font-medium">ดูทั้งหมด</button>
               </div>
               {walletCoins.length > 0 ? (
@@ -962,9 +962,9 @@ const App: React.FC = () => {
   );
 
   const renderHistory = () => (
-    <div className="animate-fade-in space-y-6 pb-24 md:pb-0">
-       <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-white">ประวัติธุรกรรม <span className="text-zinc-500 text-base font-normal hidden md:inline">(History)</span></h2>
+    <div className="animate-fade-in space-y-4 sm:space-y-5 md:space-y-6 pb-24 md:pb-0">
+       <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <h2 className="text-xl sm:text-2xl font-bold text-white">ประวัติธุรกรรม <span className="text-zinc-500 text-sm sm:text-base font-normal hidden md:inline">(History)</span></h2>
           {publicKey && (
             <button 
               onClick={async () => {
@@ -1070,6 +1070,7 @@ const App: React.FC = () => {
   );
 
   const renderSettings = () => (
+    <div className="animate-fade-in space-y-4 sm:space-y-5 md:space-y-6 pb-24 md:pb-0">
     <div className="animate-fade-in pb-24 md:pb-0">
        <h2 className="text-2xl font-bold text-white mb-6">ตั้งค่า (Settings)</h2>
        <div className="space-y-6">
