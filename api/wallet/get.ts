@@ -1,7 +1,7 @@
 // Vercel Serverless Function - Get Wallet (Decrypted)
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
-import { supabase } from '../../lib/supabase';
+import { getSupabaseClient } from '../../lib/supabase';
 
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY!;
 

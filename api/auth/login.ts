@@ -32,21 +32,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
+    // Type assertion for user
+    const userData = user as any;
+
     // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
+    const isValidPassword = await bcrypt.compare(password, userData.password_hash);
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
+      { userId: userData.id, email: userData.email },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
 
     // Return user (without password_hash) and token
-    const { password_hash, ...userWithoutPassword } = user;
+    const { password_hash, ...userWithoutPassword } = userData;
 
     return res.status(200).json({
       success: true,

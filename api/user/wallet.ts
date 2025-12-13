@@ -42,7 +42,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         wallet_address: walletAddress,
         has_wallet: true,
         updated_at: new Date().toISOString(),
-      })
+      } as any)
       .eq('id', userId)
       .select()
       .single();
@@ -52,8 +52,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Failed to update wallet' });
     }
 
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     // Return updated user (without password_hash)
-    const { password_hash, ...userWithoutPassword } = user;
+    const userData = user as any;
+    const { password_hash, ...userWithoutPassword } = userData;
 
     return res.status(200).json({
       success: true,
