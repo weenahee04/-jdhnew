@@ -241,16 +241,22 @@ const App: React.FC = () => {
           }
           
           if (storedMnemonic) {
-            loadFromMnemonic(storedMnemonic).then(() => {
+            try {
+              await loadFromMnemonic(storedMnemonic);
+              // Wallet loaded successfully, go to APP
               setCurrentView('APP');
-            }).catch((error) => {
+            } catch (error) {
               console.error('Failed to load wallet:', error);
-              // If wallet load fails, go to wallet creation
-              setCurrentView('WALLET_CREATE');
-            });
+              // If wallet load fails but user has wallet flag, don't go to WALLET_CREATE
+              // This is an error state - wallet data exists but can't be loaded
+              // Stay on current view, user can try to login again
+            }
           } else {
-            // No wallet stored, go to wallet creation
-            setCurrentView('WALLET_CREATE');
+            // Wallet should exist but not found
+            // Don't go to WALLET_CREATE if user already has wallet flag set
+            // This is an error state - wallet data is missing
+            console.error('Wallet not found for user:', user.id, 'but hasWallet flag is true');
+            // Stay on current view, user needs to login again or contact support
           }
         };
         
