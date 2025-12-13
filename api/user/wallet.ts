@@ -32,7 +32,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const userId = decoded.userId;
 
-    // Use Supabase client from helper
+    // Get Supabase client
+    const supabase = getSupabaseClient();
 
     // Update user
     const { data: user, error } = await supabase

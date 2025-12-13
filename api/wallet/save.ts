@@ -54,13 +54,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         user_id: userId,
         mnemonic_encrypted: encryptedMnemonic,
         public_key: publicKey,
-      })
+      } as any)
       .select()
       .single();
 
     if (walletError) {
       console.error('Supabase error:', walletError);
       return res.status(500).json({ error: 'Failed to save wallet' });
+    }
+
+    if (!wallet) {
+      return res.status(500).json({ error: 'Failed to save wallet - no data returned' });
     }
 
     // Update user has_wallet flag
@@ -70,19 +74,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         has_wallet: true,
         wallet_address: publicKey,
         updated_at: new Date().toISOString(),
-      })
+      } as any)
       .eq('id', userId);
 
     if (updateError) {
       console.error('Update user error:', updateError);
     }
 
+    const walletData = wallet as any;
+
     return res.status(200).json({
       success: true,
       wallet: {
-        id: wallet.id,
-        public_key: wallet.public_key,
-        created_at: wallet.created_at,
+        id: walletData.id,
+        public_key: walletData.public_key,
+        created_at: walletData.created_at,
       },
     });
   } catch (error: any) {
