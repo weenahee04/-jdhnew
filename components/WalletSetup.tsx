@@ -154,12 +154,24 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ mode, onBack, onComple
     setStep('VERIFY');
   };
 
-  const checkVerification = () => {
+  const checkVerification = async () => {
     if (!verifyChallenge || !selectedVerifyOption) return;
 
     if (selectedVerifyOption === verifyChallenge.correct) {
         setStep('SUCCESS');
-        onWalletCreated?.(seedPhrase.join(' '));
+        
+        // Call onWalletCreated and wait for it to complete
+        if (onWalletCreated) {
+          try {
+            await onWalletCreated(seedPhrase.join(' '));
+            console.log('✅ Wallet creation completed, calling onComplete');
+          } catch (error) {
+            console.error('❌ Error in onWalletCreated:', error);
+            // Still call onComplete even if there's an error, but log it
+          }
+        }
+        
+        // Wait a bit before calling onComplete to show success message
         setTimeout(() => {
             onComplete();
         }, 2000);

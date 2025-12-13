@@ -441,6 +441,9 @@ const App: React.FC = () => {
   };
 
   const handleWalletComplete = () => {
+    // Only navigate to APP if wallet was successfully created/saved
+    // handleWalletCreated should have already saved the wallet
+    console.log('🔍 handleWalletComplete called, navigating to APP');
     setCurrentView('APP');
   };
 
@@ -568,9 +571,10 @@ const App: React.FC = () => {
     }
   };
 
-  const handleWalletImported = async (mnemonic: string) => {
-    await loadFromMnemonic(mnemonic);
-    setCurrentView('APP');
+  const handleWalletImported = async (mnemonicOrSecret: string) => {
+    // Similar to handleWalletCreated but for imported wallets
+    console.log('🔍 handleWalletImported called');
+    return handleWalletCreated(mnemonicOrSecret);
   };
 
   const handleWelcomeClose = () => {
