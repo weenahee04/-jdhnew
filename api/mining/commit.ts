@@ -2,7 +2,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { Connection, Keypair, PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
 import { createClient } from '@supabase/supabase-js';
-import { createMerkleTree } from '../../../lib/merkle';
+import { createMerkleTree } from '../../lib/merkle';
 import bs58 from 'bs58';
 import crypto from 'crypto';
 
