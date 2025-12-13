@@ -31,7 +31,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Verify JWT token (simplified - should verify properly)
 
-    // Use Supabase client from helper
+    // Get Supabase client
+    const supabase = getSupabaseClient();
 
     // Get wallet
     const { data: wallet, error } = await supabase

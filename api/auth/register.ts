@@ -1,7 +1,7 @@
 // Vercel Serverless Function - User Registration
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import bcrypt from 'bcryptjs';
-import { supabase } from '../../lib/supabase';
+import { getSupabaseClient } from '../../lib/supabase';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -25,19 +25,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
 
-    // Use Supabase client from helper
-    // Check if Supabase is initialized
-    if (!supabase) {
-      console.error('Supabase client not initialized');
-      return res.status(500).json({ error: 'Database connection failed' });
+    // Get Supabase client
+    let supabase;
+    try {
+      supabase = getSupabaseClient();
+    } catch (error: any) {
+      console.error('Failed to initialize Supabase:', error.message);
+      return res.status(500).json({ error: `Database connection failed: ${error.message}` });
     }
 
     // Check if user already exists
-    const { data: existingUser } = await supabase
+    const { data: existingUser, error: checkError } = await supabase
       .from('users')
       .select('id')
       .eq('email', email.toLowerCase())
-      .single();
+      .maybeSingle();
+
+    if (checkError) {
+      console.error('Error checking existing user:', checkError);
+      // Continue - might be table doesn't exist yet, will fail on insert
+    }
 
     if (existingUser) {
       return res.status(409).json({ error: 'Email already exists' });
@@ -60,7 +67,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (error) {
       console.error('Supabase error:', error);
-      return res.status(500).json({ error: 'Failed to create user' });
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      return res.status(500).json({ 
+        error: 'Failed to create user',
+        details: error.message || 'Unknown database error'
+      });
     }
 
     // Return user (without password_hash)
@@ -72,7 +83,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   } catch (error: any) {
     console.error('Registration error:', error);
-    return res.status(500).json({ error: error.message || 'Internal server error' });
+    console.error('Error stack:', error.stack);
+    return res.status(500).json({ 
+      error: error.message || 'Internal server error',
+      type: error.constructor?.name || 'Unknown'
+    });
   }
 }
 
