@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { NavTab, Coin, AppView, Transaction } from './types';
+import { NavTab, Coin, AppView, Transaction, Notification } from './types';
 import { MOCK_COINS, BANNERS, MOCK_TRANSACTIONS, MOCK_NOTIFICATIONS, FAQS } from './constants';
 import { AssetList } from './components/AssetList';
 import { BottomNav } from './components/BottomNav';
@@ -122,6 +122,7 @@ const App: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAnnouncements, setShowAnnouncements] = useState(false);
   const [showBuyCrypto, setShowBuyCrypto] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
   
   // New Missing Modals State
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -165,6 +166,8 @@ const App: React.FC = () => {
     loading: balancesLoading,
     error: balancesError,
     refresh: refreshBalances,
+    newTokens,
+    clearNewTokens,
   } = useWalletBalances(publicKey);
 
   // Use real coins if wallet is connected, otherwise use mock
@@ -1473,7 +1476,7 @@ const App: React.FC = () => {
         sendError={walletError}
         walletPublicKey={wallet.publicKey}
       />
-      {showNotifications && <NotificationCenter notifications={MOCK_NOTIFICATIONS} onClose={() => setShowNotifications(false)} />}
+      {showNotifications && <NotificationCenter notifications={notifications} onClose={() => setShowNotifications(false)} />}
       {showAnnouncements && <AnnouncementCenter banners={BANNERS} onClose={() => setShowAnnouncements(false)} />}
       {showBuyCrypto && <BuyCryptoModal onClose={() => setShowBuyCrypto(false)} />}
       

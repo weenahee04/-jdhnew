@@ -12,6 +12,8 @@ export const useWalletBalances = (publicKey: PublicKey | null) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [prices, setPrices] = useState<Record<string, TokenPrice>>({});
+  const [previousTokenMints, setPreviousTokenMints] = useState<Set<string>>(new Set());
+  const [newTokens, setNewTokens] = useState<TokenBalance[]>([]);
 
   const fetchBalances = useCallback(async () => {
     if (!publicKey) {
@@ -32,6 +34,28 @@ export const useWalletBalances = (publicKey: PublicKey | null) => {
 
       // Fetch SPL token balances
       const tokens = await getTokenBalances(publicKey);
+      
+      // Detect new tokens by comparing with previous token mints
+      const currentTokenMints = new Set(tokens.map(t => t.mint));
+      const newTokenMints = new Set<string>();
+      
+      // Find tokens that are new (not in previousTokenMints)
+      const detectedNewTokens: TokenBalance[] = [];
+      tokens.forEach(token => {
+        if (!previousTokenMints.has(token.mint) && token.uiAmount > 0) {
+          newTokenMints.add(token.mint);
+          detectedNewTokens.push(token);
+        }
+      });
+      
+      // Update new tokens if any were detected
+      if (detectedNewTokens.length > 0) {
+        setNewTokens(detectedNewTokens);
+        console.log('🆕 New tokens detected:', detectedNewTokens.map(t => t.mint));
+      }
+      
+      // Update previous token mints for next comparison
+      setPreviousTokenMints(currentTokenMints);
       setTokenBalances(tokens);
 
       // Fetch prices for all tokens
@@ -77,8 +101,13 @@ export const useWalletBalances = (publicKey: PublicKey | null) => {
           // Use fallback price if not available
           const effectivePrice = priceInfo?.price || 0;
           const effectiveChange24h = priceInfo?.priceChange24h || 0;
-          const effectiveSymbol = priceInfo?.symbol || 'TOKEN';
-          const effectiveName = priceInfo?.name || 'Unknown Token';
+          // Try to get symbol/name from priceInfo, otherwise use mint address short form
+          const effectiveSymbol = priceInfo?.symbol || token.mint.slice(0, 4).toUpperCase() + '...';
+          const effectiveName = priceInfo?.name || `Token ${token.mint.slice(0, 8)}`;
+          
+          // Store symbol and name in token balance for new token detection
+          token.symbol = effectiveSymbol;
+          token.name = effectiveName;
           const tokenUsd = effectivePrice > 0 ? token.uiAmount * effectivePrice : 0;
           coinsList.push({
             id: token.mint,
@@ -130,6 +159,8 @@ export const useWalletBalances = (publicKey: PublicKey | null) => {
     error,
     prices,
     refresh: fetchBalances,
+    newTokens, // New tokens detected in the last fetch
+    clearNewTokens: () => setNewTokens([]), // Function to clear new tokens after notification
   };
 };
 
