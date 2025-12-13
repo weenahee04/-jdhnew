@@ -53,7 +53,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .eq('user_id', userId)
       .single();
 
-    if (error || !wallet) {
+    if (error) {
+      console.error('Supabase wallet query error:', error);
+      // Check if it's a "not found" error (PGRST116) or other error
+      if (error.code === 'PGRST116' || error.message?.includes('No rows')) {
+        return res.status(404).json({ error: 'Wallet not found' });
+      }
+      return res.status(500).json({ error: 'Database query error' });
+    }
+
+    if (!wallet) {
+      console.log('Wallet not found for user:', userId);
       return res.status(404).json({ error: 'Wallet not found' });
     }
 

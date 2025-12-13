@@ -375,15 +375,21 @@ const App: React.FC = () => {
                 await loadFromMnemonic(storedMnemonic);
                 
                 // Wait a bit for wallet state to update
-                await new Promise(resolve => setTimeout(resolve, 100));
+                await new Promise(resolve => setTimeout(resolve, 200));
                 
                 // Get wallet public key after loading (wallet.publicKey is a string)
                 const walletPublicKey = wallet.publicKey || publicKey?.toBase58();
                 
+                console.log('🔍 Wallet loaded, publicKey:', walletPublicKey);
+                
                 if (walletPublicKey) {
                   // Update hasWallet flag in database
-                  await updateUserWallet(result.user.email, walletPublicKey);
-                  console.log('✅ Updated hasWallet flag in database');
+                  const updated = await updateUserWallet(result.user.email, walletPublicKey);
+                  if (updated) {
+                    console.log('✅ Updated hasWallet flag in database');
+                  } else {
+                    console.error('❌ Failed to update hasWallet flag');
+                  }
                   
                   // Update current user state
                   const updatedUser = {
@@ -393,13 +399,16 @@ const App: React.FC = () => {
                   };
                   setCurrentUserState(updatedUser);
                   setCurrentUser(updatedUser);
+                  
+                  // Go to APP
+                  setCurrentView('APP');
+                } else {
+                  console.error('❌ Wallet loaded but publicKey is null');
+                  setAuthError('ไม่สามารถโหลด wallet ได้ กรุณาลองอีกครั้ง');
                 }
-                
-                // Go to APP
-                setCurrentView('APP');
               } else {
                 // Really no wallet, go to create/import
-                console.log('🔍 No wallet found, going to WALLET_CREATE');
+                console.log('🔍 No wallet found in database, going to WALLET_CREATE');
                 setCurrentView('WALLET_CREATE');
               }
             } catch (error) {
@@ -436,27 +445,43 @@ const App: React.FC = () => {
   };
 
   const handleWalletCreated = async (mnemonic: string) => {
+    console.log('🔍 handleWalletCreated called with mnemonic:', mnemonic ? 'Present' : 'Missing');
+    console.log('🔍 Current user:', currentUser ? { id: currentUser.id, email: currentUser.email } : 'null');
+    
     try {
       await loadFromMnemonic(mnemonic);
+      console.log('✅ Wallet loaded from mnemonic');
+      
+      // Wait a bit for wallet state to update
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Get wallet public key
+      const walletPublicKey = wallet.publicKey || publicKey?.toBase58();
+      console.log('🔍 Wallet public key:', walletPublicKey);
       
       // Save wallet to user account
-      if (currentUser && wallet.publicKey) {
+      if (currentUser && walletPublicKey) {
+        console.log('🔍 Saving wallet to database...');
+        
         // Update user wallet address and hasWallet flag FIRST
-        const walletUpdated = await updateUserWallet(currentUser.email, wallet.publicKey.toString());
+        console.log('🔍 Step 1: Updating user wallet address...');
+        const walletUpdated = await updateUserWallet(currentUser.email, walletPublicKey);
         
         if (!walletUpdated) {
-          console.error('Failed to update user wallet address');
+          console.error('❌ Failed to update user wallet address');
           setAuthError('ไม่สามารถอัพเดทข้อมูล wallet ได้ กรุณาลองอีกครั้ง');
           return;
         }
+        console.log('✅ User wallet address updated');
         
         // Store mnemonic (encrypted in backend, plain in localStorage for demo)
         try {
           if (USE_BACKEND_API) {
             // Save to backend API (encrypted)
-            const saved = await saveWallet(currentUser.id, mnemonic, wallet.publicKey.toString());
+            console.log('🔍 Step 2: Saving wallet mnemonic to backend...');
+            const saved = await saveWallet(currentUser.id, mnemonic, walletPublicKey);
             if (!saved) {
-              console.error('Failed to save wallet to backend');
+              console.error('❌ Failed to save wallet to backend');
               setAuthError('ไม่สามารถบันทึก wallet ได้ กรุณาลองอีกครั้ง');
               return;
             } else {
@@ -468,7 +493,7 @@ const App: React.FC = () => {
             console.log('✅ Wallet saved to localStorage');
           }
         } catch (error) {
-          console.error('Failed to save wallet:', error);
+          console.error('❌ Failed to save wallet:', error);
           setAuthError('ไม่สามารถบันทึก wallet ได้ กรุณาลองอีกครั้ง');
           return;
         }
@@ -476,23 +501,29 @@ const App: React.FC = () => {
         // Update current user state to reflect wallet creation
         const updatedUser = getCurrentUser();
         if (updatedUser) {
-          setCurrentUserState({
+          const newUserState = {
             ...updatedUser,
             hasWallet: true,
-            walletAddress: wallet.publicKey.toString(),
-          });
-          setCurrentUser({
-            ...updatedUser,
-            hasWallet: true,
-            walletAddress: wallet.publicKey.toString(),
-          });
+            walletAddress: walletPublicKey,
+          };
+          setCurrentUserState(newUserState);
+          setCurrentUser(newUserState);
+          console.log('✅ User state updated with wallet info');
         }
+      } else {
+        console.error('❌ Cannot save wallet: currentUser or walletPublicKey is missing', {
+          hasCurrentUser: !!currentUser,
+          hasWalletPublicKey: !!walletPublicKey
+        });
+        setAuthError('ไม่สามารถบันทึก wallet ได้ กรุณาลองอีกครั้ง');
+        return;
       }
       
       // Show welcome modal after wallet creation
+      console.log('✅ Wallet creation completed successfully');
       setShowWelcomeModal(true);
     } catch (error) {
-      console.error('Failed to create wallet:', error);
+      console.error('❌ Failed to create wallet:', error);
       setAuthError('ไม่สามารถสร้าง wallet ได้ กรุณาลองอีกครั้ง');
     }
   };

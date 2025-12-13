@@ -296,14 +296,27 @@ export const updateUserDisplayName = async (email: string, displayName: string):
 // Save wallet (encrypted mnemonic)
 export const saveWallet = async (userId: string, mnemonic: string, publicKey: string): Promise<boolean> => {
   try {
+    console.log('🔍 saveWallet called:', { userId, hasMnemonic: !!mnemonic, publicKey });
     const result = await apiRequest('/wallet/save', {
       method: 'POST',
       body: JSON.stringify({ userId, mnemonic, publicKey }),
     });
 
-    return result.success || false;
-  } catch (error) {
-    console.error('Failed to save wallet:', error);
+    console.log('🔍 saveWallet API response:', {
+      success: result.success,
+      hasWallet: !!result.wallet,
+      error: result.error
+    });
+
+    if (result.success) {
+      console.log('✅ Wallet saved successfully');
+      return true;
+    } else {
+      console.error('❌ Wallet save failed:', result.error);
+      return false;
+    }
+  } catch (error: any) {
+    console.error('❌ Failed to save wallet:', error);
     return false;
   }
 };
@@ -319,7 +332,8 @@ export const getWallet = async (userId: string): Promise<string | null> => {
     console.log('🔍 getWallet API response:', {
       success: result.success,
       hasWallet: !!result.wallet,
-      hasMnemonic: !!(result.wallet?.mnemonic)
+      hasMnemonic: !!(result.wallet?.mnemonic),
+      error: result.error
     });
 
     if (result.success && result.wallet && result.wallet.mnemonic) {
@@ -327,14 +341,26 @@ export const getWallet = async (userId: string): Promise<string | null> => {
       return result.wallet.mnemonic;
     }
 
-    console.warn('⚠️ Wallet not found or missing mnemonic:', {
+    // If 404, wallet really doesn't exist
+    if (result.error && result.error.includes('Wallet not found')) {
+      console.warn('⚠️ Wallet not found in database for user:', userId);
+      return null;
+    }
+
+    console.warn('⚠️ Wallet response issue:', {
       success: result.success,
       hasWallet: !!result.wallet,
+      hasMnemonic: !!(result.wallet?.mnemonic),
       error: result.error
     });
     return null;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Failed to get wallet:', error);
+    // Check if it's a 404 error
+    if (error.message && error.message.includes('404') || error.message?.includes('Wallet not found')) {
+      console.warn('⚠️ Wallet not found (404)');
+      return null;
+    }
     return null;
   }
 };
