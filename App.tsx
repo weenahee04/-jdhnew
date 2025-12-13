@@ -229,28 +229,32 @@ const App: React.FC = () => {
       setCurrentUserState(user);
       if (user.hasWallet && user.walletAddress) {
         // Try to load wallet
-        let storedMnemonic: string | null = null;
-        
-        if (USE_BACKEND_API) {
-          // Load from backend API
-          storedMnemonic = await getWallet(user.id);
-        } else {
-          // Load from localStorage
-          storedMnemonic = localStorage.getItem(`jdh_wallet_${user.id}`);
-        }
-        
-        if (storedMnemonic) {
-          loadFromMnemonic(storedMnemonic).then(() => {
-            setCurrentView('APP');
-          }).catch((error) => {
-            console.error('Failed to load wallet:', error);
-            // If wallet load fails, go to wallet creation
+        const loadWallet = async () => {
+          let storedMnemonic: string | null = null;
+          
+          if (USE_BACKEND_API) {
+            // Load from backend API
+            storedMnemonic = await getWallet(user.id);
+          } else {
+            // Load from localStorage
+            storedMnemonic = localStorage.getItem(`jdh_wallet_${user.id}`);
+          }
+          
+          if (storedMnemonic) {
+            loadFromMnemonic(storedMnemonic).then(() => {
+              setCurrentView('APP');
+            }).catch((error) => {
+              console.error('Failed to load wallet:', error);
+              // If wallet load fails, go to wallet creation
+              setCurrentView('WALLET_CREATE');
+            });
+          } else {
+            // No wallet stored, go to wallet creation
             setCurrentView('WALLET_CREATE');
-          });
-        } else {
-          // No wallet stored, go to wallet creation
-          setCurrentView('WALLET_CREATE');
-        }
+          }
+        };
+        
+        loadWallet();
       } else {
         // User doesn't have wallet, stay on landing or go to wallet creation
         if (currentView === 'LANDING') {
