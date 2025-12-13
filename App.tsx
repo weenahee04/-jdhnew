@@ -355,9 +355,58 @@ const App: React.FC = () => {
               // Don't go to WALLET_CREATE on error - user already has wallet
             }
           } else {
-            // User doesn't have wallet yet, go to create/import
-            console.log('🔍 User does not have wallet, going to WALLET_CREATE');
-            setCurrentView('WALLET_CREATE');
+            // User doesn't have wallet flag set, but check if wallet exists in database
+            console.log('🔍 User hasWallet is false, checking if wallet exists in database...');
+            try {
+              // Double-check: Try to get wallet from database even if hasWallet is false
+              let storedMnemonic: string | null = null;
+              
+              if (USE_BACKEND_API) {
+                storedMnemonic = await getWallet(result.user.id);
+                console.log('🔍 Double-check wallet from database:', storedMnemonic ? 'Found!' : 'Not found');
+              } else {
+                storedMnemonic = localStorage.getItem(`jdh_wallet_${result.user.id}`);
+                console.log('🔍 Double-check wallet from localStorage:', storedMnemonic ? 'Found!' : 'Not found');
+              }
+              
+              if (storedMnemonic) {
+                // Wallet exists! Load it and update hasWallet flag
+                console.log('✅ Wallet found in database but hasWallet flag was false - loading wallet...');
+                await loadFromMnemonic(storedMnemonic);
+                
+                // Wait a bit for wallet state to update
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // Get wallet public key after loading (wallet.publicKey is a string)
+                const walletPublicKey = wallet.publicKey || publicKey?.toBase58();
+                
+                if (walletPublicKey) {
+                  // Update hasWallet flag in database
+                  await updateUserWallet(result.user.email, walletPublicKey);
+                  console.log('✅ Updated hasWallet flag in database');
+                  
+                  // Update current user state
+                  const updatedUser = {
+                    ...result.user,
+                    hasWallet: true,
+                    walletAddress: walletPublicKey,
+                  };
+                  setCurrentUserState(updatedUser);
+                  setCurrentUser(updatedUser);
+                }
+                
+                // Go to APP
+                setCurrentView('APP');
+              } else {
+                // Really no wallet, go to create/import
+                console.log('🔍 No wallet found, going to WALLET_CREATE');
+                setCurrentView('WALLET_CREATE');
+              }
+            } catch (error) {
+              console.error('❌ Error checking wallet:', error);
+              // If error checking, assume no wallet and go to create
+              setCurrentView('WALLET_CREATE');
+            }
           }
         } else {
           setAuthError(result.error || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
