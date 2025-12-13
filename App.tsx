@@ -368,29 +368,65 @@ const App: React.FC = () => {
   };
 
   const handleWalletCreated = async (mnemonic: string) => {
-    await loadFromMnemonic(mnemonic);
-    
-    // Save wallet to user account
-    if (currentUser && wallet.publicKey) {
-      // Update user wallet address
-      await updateUserWallet(currentUser.email, wallet.publicKey.toString());
+    try {
+      await loadFromMnemonic(mnemonic);
       
-      // Store mnemonic (encrypted in backend, plain in localStorage for demo)
-      try {
-        if (USE_BACKEND_API) {
-          // Save to backend API (encrypted)
-          await saveWallet(currentUser.id, mnemonic, wallet.publicKey.toString());
-        } else {
-          // Save to localStorage (for demo only)
-          localStorage.setItem(`jdh_wallet_${currentUser.id}`, mnemonic);
+      // Save wallet to user account
+      if (currentUser && wallet.publicKey) {
+        // Update user wallet address and hasWallet flag FIRST
+        const walletUpdated = await updateUserWallet(currentUser.email, wallet.publicKey.toString());
+        
+        if (!walletUpdated) {
+          console.error('Failed to update user wallet address');
+          setAuthError('ไม่สามารถอัพเดทข้อมูล wallet ได้ กรุณาลองอีกครั้ง');
+          return;
         }
-      } catch (error) {
-        console.error('Failed to save wallet:', error);
+        
+        // Store mnemonic (encrypted in backend, plain in localStorage for demo)
+        try {
+          if (USE_BACKEND_API) {
+            // Save to backend API (encrypted)
+            const saved = await saveWallet(currentUser.id, mnemonic, wallet.publicKey.toString());
+            if (!saved) {
+              console.error('Failed to save wallet to backend');
+              setAuthError('ไม่สามารถบันทึก wallet ได้ กรุณาลองอีกครั้ง');
+              return;
+            } else {
+              console.log('✅ Wallet saved successfully to backend');
+            }
+          } else {
+            // Save to localStorage (for demo only)
+            localStorage.setItem(`jdh_wallet_${currentUser.id}`, mnemonic);
+            console.log('✅ Wallet saved to localStorage');
+          }
+        } catch (error) {
+          console.error('Failed to save wallet:', error);
+          setAuthError('ไม่สามารถบันทึก wallet ได้ กรุณาลองอีกครั้ง');
+          return;
+        }
+        
+        // Update current user state to reflect wallet creation
+        const updatedUser = getCurrentUser();
+        if (updatedUser) {
+          setCurrentUserState({
+            ...updatedUser,
+            hasWallet: true,
+            walletAddress: wallet.publicKey.toString(),
+          });
+          setCurrentUser({
+            ...updatedUser,
+            hasWallet: true,
+            walletAddress: wallet.publicKey.toString(),
+          });
+        }
       }
+      
+      // Show welcome modal after wallet creation
+      setShowWelcomeModal(true);
+    } catch (error) {
+      console.error('Failed to create wallet:', error);
+      setAuthError('ไม่สามารถสร้าง wallet ได้ กรุณาลองอีกครั้ง');
     }
-    
-    // Show welcome modal after wallet creation
-    setShowWelcomeModal(true);
   };
 
   const handleWalletImported = async (mnemonic: string) => {
