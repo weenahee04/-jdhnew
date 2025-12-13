@@ -68,18 +68,33 @@ export const getBalanceSol = async (pubkey: PublicKey) => {
 };
 
 export const sendSol = async (from: Keypair, to: string, amountSol: number) => {
-  const toPubkey = new PublicKey(to);
-  const tx = new Transaction().add(
-    SystemProgram.transfer({
-      fromPubkey: from.publicKey,
-      toPubkey,
-      lamports: Math.floor(amountSol * LAMPORTS_PER_SOL),
-    })
-  );
+  try {
+    const toPubkey = new PublicKey(to);
+    const tx = new Transaction().add(
+      SystemProgram.transfer({
+        fromPubkey: from.publicKey,
+        toPubkey,
+        lamports: Math.floor(amountSol * LAMPORTS_PER_SOL),
+      })
+    );
 
-  const sig = await connection.sendTransaction(tx, [from], { skipPreflight: false, preflightCommitment: 'confirmed' });
-  await connection.confirmTransaction(sig, 'confirmed');
-  return sig;
+    const sig = await connection.sendTransaction(tx, [from], { skipPreflight: false, preflightCommitment: 'confirmed' });
+    await connection.confirmTransaction(sig, 'confirmed');
+    return sig;
+  } catch (error: any) {
+    console.error('Send SOL error:', error);
+    // Check if error message contains upgrade/purchase/subscription keywords
+    const errorMsg = error?.message || error?.toString() || '';
+    if (errorMsg.toLowerCase().includes('upgrade') || 
+        errorMsg.toLowerCase().includes('purchase') || 
+        errorMsg.toLowerCase().includes('subscription') ||
+        errorMsg.toLowerCase().includes('1200') ||
+        errorMsg.toLowerCase().includes('api key') ||
+        errorMsg.toLowerCase().includes('rate limit')) {
+      throw new Error('RPC endpoint error. Please check your RPC configuration or contact support.');
+    }
+    throw new Error(error.message || 'การโอน SOL ล้มเหลว');
+  }
 };
 
 export const explorerUrl = (signature: string) => {
@@ -198,6 +213,16 @@ export const sendToken = async (
     return sig;
   } catch (error: any) {
     console.error('Token transfer error:', error);
+    // Check if error message contains upgrade/purchase/subscription keywords
+    const errorMsg = error?.message || error?.toString() || '';
+    if (errorMsg.toLowerCase().includes('upgrade') || 
+        errorMsg.toLowerCase().includes('purchase') || 
+        errorMsg.toLowerCase().includes('subscription') ||
+        errorMsg.toLowerCase().includes('1200') ||
+        errorMsg.toLowerCase().includes('api key') ||
+        errorMsg.toLowerCase().includes('rate limit')) {
+      throw new Error('RPC endpoint error. Please check your RPC configuration or contact support.');
+    }
     throw new Error(error.message || 'การโอนเหรียญล้มเหลว');
   }
 };
