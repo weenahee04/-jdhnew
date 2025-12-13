@@ -219,9 +219,17 @@ export const logoutUser = () => {
 // Update user wallet address
 export const updateUserWallet = async (email: string, walletAddress: string): Promise<boolean> => {
   try {
+    console.log('🔍 updateUserWallet called:', { email, walletAddress: walletAddress?.substring(0, 20) + '...' });
     const result = await apiRequest('/user/wallet', {
       method: 'PUT',
       body: JSON.stringify({ walletAddress }),
+    });
+
+    console.log('🔍 updateUserWallet API response:', {
+      success: result.success,
+      hasUser: !!result.user,
+      userHasWallet: result.user?.has_wallet,
+      error: result.error
     });
 
     if (result.success) {
@@ -233,13 +241,16 @@ export const updateUserWallet = async (email: string, walletAddress: string): Pr
           walletAddress,
           hasWallet: true,
         });
+        console.log('✅ Updated current user session with wallet info');
       }
+      console.log('✅ updateUserWallet successful');
       return true;
     }
 
+    console.error('❌ updateUserWallet failed:', result.error);
     return false;
-  } catch (error) {
-    console.error('Failed to update user wallet:', error);
+  } catch (error: any) {
+    console.error('❌ Failed to update user wallet:', error);
     return false;
   }
 };

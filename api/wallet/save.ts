@@ -79,18 +79,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Failed to save wallet - no data returned' });
     }
 
-    // Update user has_wallet flag
-    const { error: updateError } = await supabase
+    // Update user has_wallet flag (backup - should already be updated by updateUserWallet)
+    console.log('🔍 Updating has_wallet flag in saveWallet (backup):', { userId, publicKey: publicKey?.substring(0, 20) + '...' });
+    const { error: updateError, data: updatedUser } = await supabase
       .from('users')
       .update({
         has_wallet: true,
         wallet_address: publicKey,
         updated_at: new Date().toISOString(),
       } as any)
-      .eq('id', userId);
+      .eq('id', userId)
+      .select()
+      .single();
 
     if (updateError) {
-      console.error('Update user error:', updateError);
+      console.error('❌ Update user error in saveWallet:', updateError);
+    } else {
+      console.log('✅ has_wallet flag updated in saveWallet:', {
+        userId,
+        has_wallet: (updatedUser as any)?.has_wallet,
+        wallet_address: (updatedUser as any)?.wallet_address?.substring(0, 20) + '...'
+      });
     }
 
     const walletData = wallet as any;

@@ -48,6 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     // Update user
+    console.log('🔍 Updating user wallet:', { userId, walletAddress: walletAddress?.substring(0, 20) + '...' });
     const { data: user, error } = await supabase
       .from('users')
       .update({
@@ -60,13 +61,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .single();
 
     if (error) {
-      console.error('Supabase error:', error);
+      console.error('❌ Supabase error updating user wallet:', error);
       return res.status(500).json({ error: 'Failed to update wallet' });
     }
 
     if (!user) {
+      console.error('❌ User not found after update:', userId);
       return res.status(404).json({ error: 'User not found' });
     }
+
+    console.log('✅ User wallet updated successfully:', {
+      userId,
+      has_wallet: (user as any).has_wallet,
+      wallet_address: (user as any).wallet_address?.substring(0, 20) + '...'
+    });
 
     // Return updated user (without password_hash)
     const userData = user as any;
