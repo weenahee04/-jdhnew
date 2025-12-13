@@ -11,10 +11,15 @@ const getRpcEndpoint = () => {
   // @ts-ignore - Vite injects these
   if (typeof process !== 'undefined' && process.env?.HELIUS_RPC_URL) {
     // @ts-ignore
+    console.log('🌐 Using Helius RPC URL:', process.env.HELIUS_RPC_URL.substring(0, 50) + '...');
+    // @ts-ignore
     return process.env.HELIUS_RPC_URL;
   }
   // @ts-ignore
-  const cluster = (typeof process !== 'undefined' && process.env?.SOLANA_CLUSTER) || 'devnet';
+  // Default to mainnet-beta for production, devnet for development
+  const cluster = (typeof process !== 'undefined' && process.env?.SOLANA_CLUSTER) || 
+    (import.meta.env.PROD ? 'mainnet-beta' : 'devnet');
+  console.log('🌐 Using Solana cluster:', cluster);
   return clusterApiUrl(cluster as any);
 };
 
@@ -79,7 +84,9 @@ export const sendSol = async (from: Keypair, to: string, amountSol: number) => {
 
 export const explorerUrl = (signature: string) => {
   // @ts-ignore
-  const cluster = (typeof process !== 'undefined' && process.env?.SOLANA_CLUSTER) || 'devnet';
+  // Default to mainnet-beta for production, devnet for development
+  const cluster = (typeof process !== 'undefined' && process.env?.SOLANA_CLUSTER) || 
+    (import.meta.env.PROD ? 'mainnet-beta' : 'devnet');
   const suffix = cluster === 'mainnet-beta' ? '' : `?cluster=${cluster}`;
   return `https://explorer.solana.com/tx/${signature}${suffix}`;
 };
