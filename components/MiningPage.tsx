@@ -306,10 +306,19 @@ export const MiningPage: React.FC<MiningPageProps> = ({ publicKey, wallet }) => 
 
   const getTierColor = (tier: string) => {
     switch (tier) {
-      case 'Platinum': return 'from-purple-600/20 to-pink-600/20 border-purple-500/30';
-      case 'Gold': return 'from-yellow-600/20 to-orange-600/20 border-yellow-500/30';
-      case 'Silver': return 'from-zinc-600/20 to-gray-600/20 border-zinc-500/30';
-      default: return 'from-amber-600/20 to-orange-600/20 border-amber-500/30';
+      case 'Platinum': return 'from-purple-600/20 via-pink-600/20 to-purple-600/20 border-purple-500/30';
+      case 'Gold': return 'from-yellow-600/20 via-amber-600/20 to-yellow-600/20 border-yellow-500/30';
+      case 'Silver': return 'from-zinc-600/20 via-gray-600/20 to-zinc-600/20 border-zinc-500/30';
+      default: return 'from-emerald-600/20 via-teal-600/20 to-emerald-600/20 border-emerald-500/30';
+    }
+  };
+
+  const getTierIcon = (tier: string) => {
+    switch (tier) {
+      case 'Platinum': return '💎';
+      case 'Gold': return '🥇';
+      case 'Silver': return '🥈';
+      default: return '🥉';
     }
   };
 
@@ -332,8 +341,8 @@ export const MiningPage: React.FC<MiningPageProps> = ({ publicKey, wallet }) => 
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl"></div>
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
-                <Activity size={24} className="text-emerald-400" />
+              <div className="w-14 h-14 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30 shadow-lg shadow-emerald-500/20">
+                <span className="text-2xl">{getTierIcon(userTier)}</span>
               </div>
               <div>
                 <h3 className="text-xl font-bold text-white">Your Mining Stats</h3>
@@ -366,82 +375,106 @@ export const MiningPage: React.FC<MiningPageProps> = ({ publicKey, wallet }) => 
         {/* Main Mining Panel */}
         <div className="lg:col-span-2 space-y-6">
           {/* Mining Control */}
-          <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-6 hover:border-emerald-500/30 transition-all">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
-                  <Zap size={20} className="text-emerald-400" />
+          <div className="bg-gradient-to-br from-zinc-900/60 to-zinc-950/60 border border-white/5 rounded-2xl p-6 hover:border-emerald-500/30 transition-all relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500/30 to-teal-500/30 flex items-center justify-center border border-emerald-500/30 shadow-lg shadow-emerald-500/20">
+                    <Zap size={22} className="text-emerald-400" fill="currentColor" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-white">Mining Control</h2>
+                    <p className="text-xs text-zinc-400">Start solving PoW puzzles</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold text-white">Mining Control</h2>
-                  <p className="text-xs text-zinc-400">Start solving PoW puzzles</p>
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${
+                  isMining 
+                    ? 'bg-emerald-500/10 border-emerald-500/30' 
+                    : 'bg-zinc-800/50 border-white/5'
+                }`}>
+                  <div className={`w-2.5 h-2.5 rounded-full ${isMining ? 'bg-emerald-500 animate-pulse shadow-lg shadow-emerald-500/50' : 'bg-zinc-500'}`} />
+                  <span className={`text-xs font-medium ${isMining ? 'text-emerald-400' : 'text-zinc-400'}`}>
+                    {isMining ? 'Active' : 'Idle'}
+                  </span>
                 </div>
               </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800/50 rounded-full border border-white/5">
-                <div className={`w-2 h-2 rounded-full ${isMining ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-500'}`} />
-                <span className="text-xs text-zinc-400 font-medium">
-                  {isMining ? 'Active' : 'Idle'}
-                </span>
-              </div>
-            </div>
 
             {!isMining ? (
               <button
                 onClick={startMining}
                 disabled={!publicKey}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 px-6 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30"
+                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold py-4 px-6 rounded-xl transition-all shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 flex items-center justify-center gap-2"
               >
+                <Zap size={20} className="fill-current" />
                 Start Mining
               </button>
             ) : (
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-4">
-                    <p className="text-zinc-400 text-sm mb-1">Solutions Found</p>
-                    <p className="text-2xl font-bold text-emerald-400">{solutionsFound}</p>
+                  <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-xl p-5 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/5 rounded-full blur-2xl"></div>
+                    <div className="relative z-10">
+                      <p className="text-zinc-400 text-sm mb-2">Solutions Found</p>
+                      <p className="text-3xl font-bold text-emerald-400">{solutionsFound}</p>
+                      <p className="text-xs text-emerald-400/70 mt-1">Successfully solved</p>
+                    </div>
                   </div>
-                  <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-4">
-                    <p className="text-zinc-400 text-sm mb-1">Hashrate</p>
-                    <p className="text-2xl font-bold text-white">{hashrate.toLocaleString()} H/s</p>
+                  <div className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-xl p-5 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-yellow-500/5 rounded-full blur-2xl"></div>
+                    <div className="relative z-10">
+                      <p className="text-zinc-400 text-sm mb-2">Hashrate</p>
+                      <p className="text-3xl font-bold text-yellow-400">{hashrate.toLocaleString()}</p>
+                      <p className="text-xs text-yellow-400/70 mt-1">Hashes per second</p>
+                    </div>
                   </div>
                 </div>
                 {challenge && (
-                  <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-4">
-                    <div className="flex items-center justify-between">
+                  <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Shield size={16} className="text-zinc-400" />
                       <span className="text-zinc-400 text-sm">Difficulty</span>
-                      <span className="text-white font-semibold">{challenge.difficulty} leading zeros</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-white font-semibold">{challenge.difficulty}</span>
+                      <span className="text-zinc-500 text-xs">leading zeros</span>
                     </div>
                   </div>
                 )}
                 <button
                   onClick={stopMining}
-                  className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 font-semibold py-4 px-6 rounded-xl transition-all border border-red-500/20"
+                  className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 font-semibold py-4 px-6 rounded-xl transition-all border border-red-500/20 hover:border-red-500/40 flex items-center justify-center gap-2"
                 >
+                  <Activity size={18} />
                   Stop Mining
                 </button>
               </div>
             )}
+            </div>
           </div>
 
           {/* Real-time Feed */}
-          <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Activity size={20} className="text-emerald-400" />
+          <div className="bg-gradient-to-br from-zinc-900/40 to-zinc-950/40 border border-white/5 rounded-2xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500"></div>
+            <div className="flex items-center gap-3 mb-4 mt-2">
+              <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
+                <Activity size={18} className="text-emerald-400" />
+              </div>
               <h3 className="text-xl font-bold text-white">Recent Solutions</h3>
             </div>
             <div className="space-y-2 max-h-64 overflow-y-auto no-scrollbar">
               {stats?.recentAccepted && stats.recentAccepted.length > 0 ? (
                 stats.recentAccepted.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 bg-zinc-900/50 border border-white/5 rounded-lg hover:border-emerald-500/30 transition-colors">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                        <CheckCircle size={12} className="text-emerald-400" />
+                  <div key={idx} className="flex items-center justify-between p-3 bg-gradient-to-r from-emerald-500/5 to-teal-500/5 border border-emerald-500/20 rounded-lg hover:border-emerald-500/40 hover:from-emerald-500/10 hover:to-teal-500/10 transition-all group">
+                    <div className="flex items-center gap-3">
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-500/30 to-teal-500/30 flex items-center justify-center border border-emerald-500/40 shadow-md shadow-emerald-500/20 group-hover:shadow-emerald-500/40 transition-shadow">
+                        <CheckCircle size={14} className="text-emerald-400" fill="currentColor" />
                       </div>
-                      <span className="text-zinc-300 text-sm font-mono">
+                      <span className="text-zinc-300 text-sm font-mono group-hover:text-white transition-colors">
                         {item.wallet_address.slice(0, 8)}...{item.wallet_address.slice(-6)}
                       </span>
                     </div>
-                    <span className="text-emerald-400 font-semibold">+{item.points_awarded} pts</span>
+                    <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20">+{item.points_awarded} pts</span>
                   </div>
                 ))
               ) : (
@@ -454,49 +487,63 @@ export const MiningPage: React.FC<MiningPageProps> = ({ publicKey, wallet }) => 
         {/* Stats Sidebar */}
         <div className="space-y-6">
           {/* Global Stats */}
-          <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <TrendingUp size={20} className="text-emerald-400" />
+          <div className="bg-gradient-to-br from-zinc-900/40 to-zinc-950/40 border border-white/5 rounded-2xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl"></div>
+            <div className="flex items-center gap-3 mb-4 relative z-10">
+              <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
+                <TrendingUp size={18} className="text-blue-400" />
+              </div>
               <h3 className="text-xl font-bold text-white">Global Stats</h3>
             </div>
-            <div className="space-y-4">
-              <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-4">
+            <div className="space-y-4 relative z-10">
+              <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-xl p-4 hover:border-blue-500/40 transition-colors">
                 <div className="flex items-center gap-3 mb-2">
                   <Users className="w-5 h-5 text-blue-400" />
                   <span className="text-zinc-400 text-sm">Miners Online</span>
                 </div>
-                <p className="text-2xl font-bold text-white">{stats?.minersOnline || 0}</p>
-                <p className="text-xs text-zinc-500 mt-1">Active in last 5 min</p>
+                <p className="text-3xl font-bold text-blue-400">{stats?.minersOnline || 0}</p>
+                <p className="text-xs text-blue-400/70 mt-1">Active in last 5 min</p>
               </div>
-              <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-4">
+              <div className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-xl p-4 hover:border-yellow-500/40 transition-colors">
                 <div className="flex items-center gap-3 mb-2">
-                  <Zap className="w-5 h-5 text-yellow-400" />
+                  <Zap className="w-5 h-5 text-yellow-400" fill="currentColor" />
                   <span className="text-zinc-400 text-sm">Network Hashrate</span>
                 </div>
-                <p className="text-2xl font-bold text-white">
+                <p className="text-3xl font-bold text-yellow-400">
                   {stats?.hashrateEstimate.toLocaleString() || 0}
                 </p>
-                <p className="text-xs text-zinc-500 mt-1">Solutions per hour</p>
+                <p className="text-xs text-yellow-400/70 mt-1">Solutions per hour</p>
               </div>
             </div>
           </div>
 
           {/* Leaderboard */}
-          <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Award size={20} className="text-emerald-400" />
+          <div className="bg-gradient-to-br from-zinc-900/40 to-zinc-950/40 border border-white/5 rounded-2xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-2xl"></div>
+            <div className="flex items-center gap-3 mb-4 relative z-10">
+              <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/30">
+                <Award size={18} className="text-purple-400" fill="currentColor" />
+              </div>
               <h3 className="text-xl font-bold text-white">Leaderboard</h3>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 relative z-10">
               {stats?.leaderboard && stats.leaderboard.length > 0 ? (
                 stats.leaderboard.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 bg-zinc-900/50 border border-white/5 rounded-lg hover:border-emerald-500/30 transition-colors">
+                  <div key={idx} className={`flex items-center justify-between p-3 rounded-lg transition-all ${
+                    idx === 0 
+                      ? 'bg-gradient-to-r from-yellow-500/10 to-amber-500/10 border border-yellow-500/30 hover:border-yellow-500/50 shadow-lg shadow-yellow-500/10' 
+                      : idx === 1
+                      ? 'bg-gradient-to-r from-zinc-500/10 to-gray-500/10 border border-zinc-400/30 hover:border-zinc-400/50'
+                      : idx === 2
+                      ? 'bg-gradient-to-r from-amber-600/10 to-orange-600/10 border border-amber-600/30 hover:border-amber-600/50'
+                      : 'bg-zinc-900/50 border border-white/5 hover:border-emerald-500/30'
+                  }`}>
                     <div className="flex items-center gap-3">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                        idx === 0 ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
-                        idx === 1 ? 'bg-zinc-400/20 text-zinc-300 border border-zinc-400/30' :
-                        idx === 2 ? 'bg-amber-600/20 text-amber-400 border border-amber-600/30' :
-                        'bg-zinc-800/50 text-zinc-500'
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-lg ${
+                        idx === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-black border-2 border-yellow-300' :
+                        idx === 1 ? 'bg-gradient-to-br from-zinc-300 to-zinc-500 text-white border-2 border-zinc-400' :
+                        idx === 2 ? 'bg-gradient-to-br from-amber-500 to-amber-700 text-white border-2 border-amber-600' :
+                        'bg-zinc-800/70 text-zinc-400 border border-white/10'
                       }`}>
                         {idx + 1}
                       </div>
@@ -504,7 +551,12 @@ export const MiningPage: React.FC<MiningPageProps> = ({ publicKey, wallet }) => 
                         {item.wallet_address.slice(0, 6)}...{item.wallet_address.slice(-4)}
                       </span>
                     </div>
-                    <span className="text-emerald-400 font-bold">{item.points.toLocaleString()}</span>
+                    <span className={`font-bold ${
+                      idx === 0 ? 'text-yellow-400' : 
+                      idx === 1 ? 'text-zinc-300' :
+                      idx === 2 ? 'text-amber-400' :
+                      'text-emerald-400'
+                    }`}>{item.points.toLocaleString()}</span>
                   </div>
                 ))
               ) : (
@@ -515,25 +567,34 @@ export const MiningPage: React.FC<MiningPageProps> = ({ publicKey, wallet }) => 
 
           {/* Latest Commitment */}
           {stats?.latestCommitment && (
-            <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Shield size={20} className="text-emerald-400" />
+            <div className="bg-gradient-to-br from-zinc-900/40 to-zinc-950/40 border border-white/5 rounded-2xl p-6 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500"></div>
+              <div className="flex items-center gap-3 mb-4 mt-2 relative z-10">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
+                  <Shield size={18} className="text-emerald-400" fill="currentColor" />
+                </div>
                 <h3 className="text-xl font-bold text-white">Latest Commitment</h3>
               </div>
-              <div className="space-y-4">
-                <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-4">
-                  <p className="text-zinc-400 text-xs mb-2">Merkle Root</p>
-                  <div className="text-zinc-300 font-mono text-xs break-all bg-zinc-950/50 p-2 rounded border border-white/5">
+              <div className="space-y-4 relative z-10">
+                <div className="bg-gradient-to-br from-emerald-500/5 to-teal-500/5 border border-emerald-500/20 rounded-xl p-4">
+                  <p className="text-zinc-400 text-xs mb-2 flex items-center gap-1">
+                    <Shield size={12} />
+                    Merkle Root
+                  </p>
+                  <div className="text-emerald-300 font-mono text-xs break-all bg-zinc-950/70 p-3 rounded-lg border border-emerald-500/10">
                     {stats.latestCommitment.merkle_root.slice(0, 24)}...
                   </div>
                 </div>
-                <div className="bg-zinc-900/50 border border-white/5 rounded-xl p-4">
-                  <p className="text-zinc-400 text-xs mb-2">Transaction</p>
+                <div className="bg-gradient-to-br from-blue-500/5 to-cyan-500/5 border border-blue-500/20 rounded-xl p-4">
+                  <p className="text-zinc-400 text-xs mb-2 flex items-center gap-1">
+                    <Clock size={12} />
+                    Transaction
+                  </p>
                   <a
                     href={`https://solscan.io/tx/${stats.latestCommitment.transaction_signature}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-emerald-400 hover:text-emerald-300 font-mono text-xs break-all block truncate"
+                    className="text-blue-400 hover:text-blue-300 font-mono text-xs break-all block truncate bg-zinc-950/70 p-3 rounded-lg border border-blue-500/10 hover:border-blue-500/30 transition-colors"
                   >
                     {stats.latestCommitment.transaction_signature.slice(0, 16)}...
                   </a>
