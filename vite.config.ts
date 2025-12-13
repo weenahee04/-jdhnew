@@ -62,10 +62,18 @@ export default defineConfig(({ mode }) => {
         rollupOptions: {
           output: {
             format: 'es',
-            manualChunks: undefined, // Disable manual chunks to avoid initialization issues
+            // Remove manual chunks completely to ensure single bundle
+            manualChunks: undefined,
           },
+          // Ensure proper module ordering
+          preserveEntrySignatures: 'strict',
         },
-        chunkSizeWarningLimit: 2000, // Increase limit since we're not splitting
+        chunkSizeWarningLimit: 2000,
+        // Ensure all modules are bundled together
+        commonjsOptions: {
+          include: [/node_modules/],
+          transformMixedEsModules: true,
+        },
       },
     };
 });
