@@ -226,16 +226,16 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
       case 'send':
         return (
           <>
-            <h2 className="text-2xl font-bold text-white mb-6">โอนเหรียญ (Send)</h2>
-            <div className="space-y-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">โอนเหรียญ (Send)</h2>
+            <div className="space-y-3 sm:space-y-4">
                <div>
                   <label className="text-xs text-zinc-500 mb-1 block">เลือกเหรียญ</label>
-                  <div className="bg-zinc-800/50 p-3 rounded-xl flex items-center justify-between border border-white/10">
+                  <div className="bg-zinc-800/50 p-2.5 sm:p-3 rounded-lg sm:rounded-xl flex items-center justify-between border border-white/10">
                      <div className="flex items-center gap-2">
-                        <img src={`https://ui-avatars.com/api/?name=${selectedCoin.symbol}&background=random`} className="w-6 h-6 rounded-full" alt="" />
-                        <span className="font-medium text-white">{selectedCoin.symbol}</span>
+                        <img src={`https://ui-avatars.com/api/?name=${selectedCoin.symbol}&background=random`} className="w-5 h-5 sm:w-6 sm:h-6 rounded-full" alt="" />
+                        <span className="font-medium text-white text-sm sm:text-base">{selectedCoin.symbol}</span>
                      </div>
-                     <ArrowDown size={16} className="text-zinc-500" />
+                     <ArrowDown size={14} className="sm:w-4 sm:h-4 text-zinc-500" />
                   </div>
                </div>
                <div>
@@ -246,10 +246,10 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
                       value={toAddress}
                       onChange={(e) => setToAddress(e.target.value)}
                       placeholder="วาง Address ที่นี่"
-                      className="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-3 text-white focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-zinc-600"
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg sm:rounded-xl p-2.5 sm:p-3 text-white text-sm sm:text-base focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-zinc-600"
                     />
-                    <button className="absolute right-3 top-3 text-emerald-400">
-                       <QrCode size={20} />
+                    <button className="absolute right-2.5 sm:right-3 top-2.5 sm:top-3 text-emerald-400">
+                       <QrCode size={18} className="sm:w-5 sm:h-5" />
                     </button>
                   </div>
                </div>
@@ -260,7 +260,7 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
                     value={amount} 
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="0.00" 
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-xl p-3 text-white text-lg font-bold focus:outline-none focus:border-emerald-500 transition-colors" 
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg sm:rounded-xl p-2.5 sm:p-3 text-white text-base sm:text-lg font-bold focus:outline-none focus:border-emerald-500 transition-colors" 
                   />
                   <div className="text-right mt-1 text-xs text-zinc-500">Available: {selectedCoin.balance} {selectedCoin.symbol}</div>
                </div>
@@ -268,7 +268,7 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
                <button
                  onClick={handleAction}
                  disabled={!amount || !toAddress || sending}
-                 className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.3)] mt-4 transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+                 className="w-full py-3 sm:py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-sm sm:text-base rounded-lg sm:rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.3)] mt-4 transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
                >
                   ยืนยันการโอน
                </button>
@@ -284,16 +284,16 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
         
         return (
           <div className="flex flex-col items-center text-center">
-            <h2 className="text-2xl font-bold text-white mb-2">รับเหรียญ (Receive)</h2>
-            <p className="text-zinc-400 text-sm mb-6">สแกน QR Code เพื่อรับเงิน</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">รับเหรียญ (Receive)</h2>
+            <p className="text-zinc-400 text-xs sm:text-sm mb-4 sm:mb-6 px-2">สแกน QR Code เพื่อรับเงิน</p>
             
-            <div className="bg-white p-4 rounded-2xl mb-6 shadow-lg shadow-white/5">
-               <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${displayAddress || selectedCoin.symbol + '-wallet-address'}`} alt="QR Code" className="w-48 h-48 mix-blend-multiply" />
+            <div className="bg-white p-3 sm:p-4 rounded-xl sm:rounded-2xl mb-4 sm:mb-6 shadow-lg shadow-white/5">
+               <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${displayAddress || selectedCoin.symbol + '-wallet-address'}`} alt="QR Code" className="w-40 h-40 sm:w-48 sm:h-48 mix-blend-multiply" />
             </div>
             
-            <div className="bg-zinc-800/50 p-3 rounded-xl w-full flex items-center justify-between border border-white/10 mb-4 cursor-pointer hover:bg-zinc-800 transition-colors group">
-               <div className="flex items-center gap-2 overflow-hidden">
-                  <span className="text-xs text-zinc-400 font-mono truncate group-hover:text-white transition-colors">
+            <div className="bg-zinc-800/50 p-2.5 sm:p-3 rounded-lg sm:rounded-xl w-full flex items-center justify-between border border-white/10 mb-3 sm:mb-4 cursor-pointer hover:bg-zinc-800 transition-colors group">
+               <div className="flex items-center gap-2 overflow-hidden flex-1 min-w-0">
+                  <span className="text-[10px] sm:text-xs text-zinc-400 font-mono truncate group-hover:text-white transition-colors">
                     {displayAddress || 'กรุณาสร้างกระเป๋าก่อน'}
                   </span>
                </div>
@@ -304,29 +304,29 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
                    setCopied(true);
                    setTimeout(() => setCopied(false), 1500);
                  }}
-                 className="text-emerald-400 flex-shrink-0"
+                 className="text-emerald-400 flex-shrink-0 ml-2"
                >
-                 {copied ? <CheckCircle size={16} className="text-emerald-400" /> : <Copy size={16} />}
+                 {copied ? <CheckCircle size={14} className="sm:w-4 sm:h-4 text-emerald-400" /> : <Copy size={14} className="sm:w-4 sm:h-4" />}
                </button>
             </div>
 
-            <div className="text-xs text-zinc-500 max-w-[280px] mb-4 space-y-2">
-               <p className="font-medium text-zinc-400">
+            <div className="text-xs text-zinc-500 max-w-[280px] mb-3 sm:mb-4 space-y-2 px-2">
+               <p className="font-medium text-zinc-400 text-xs">
                   ✅ ที่อยู่นี้สามารถรับได้:
                </p>
-               <ul className="text-zinc-500 text-[11px] space-y-1 list-disc list-inside ml-2">
+               <ul className="text-zinc-500 text-[10px] sm:text-[11px] space-y-1 list-disc list-inside ml-2">
                   <li>SOL (Solana native token)</li>
                   <li>SPL tokens ทั้งหมด (USDC, USDT, JDH, และอื่นๆ)</li>
                </ul>
-               <p className="text-emerald-400/80 text-[10px] mt-2">
+               <p className="text-emerald-400/80 text-[9px] sm:text-[10px] mt-2">
                   💡 ระบบจะสร้าง Associated Token Account อัตโนมัติเมื่อมีการส่ง SPL token มา
                </p>
-               <p className="text-red-400/80 text-[10px] mt-2 border-t border-white/5 pt-2">
+               <p className="text-red-400/80 text-[9px] sm:text-[10px] mt-2 border-t border-white/5 pt-2">
                   ⚠️ อย่าส่งเหรียญจาก blockchain อื่น (Bitcoin, Ethereum, BSC) มายังที่อยู่นี้ เพราะจะสูญหายถาวร
                </p>
             </div>
             
-            <button className="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white font-medium rounded-xl transition-colors">
+            <button className="w-full py-2.5 sm:py-3 bg-zinc-800 hover:bg-zinc-700 text-white font-medium text-sm sm:text-base rounded-lg sm:rounded-xl transition-colors">
                แชร์ QR Code
             </button>
           </div>
@@ -334,7 +334,7 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
       case 'swap':
         return (
           <>
-             <h2 className="text-2xl font-bold text-white mb-6">แลกเปลี่ยน (Swap)</h2>
+             <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">แลกเปลี่ยน (Swap)</h2>
              <div className="relative space-y-2">
                 {/* From */}
                 <div className="bg-zinc-800/30 p-4 rounded-2xl border border-white/5">
@@ -432,10 +432,10 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
 
   return (
     <>
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-         <div className="bg-zinc-900 border border-white/10 w-full max-w-md rounded-3xl p-6 relative shadow-2xl">
-            <button onClick={handleClose} className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors">
-               <X size={24} />
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm animate-fade-in">
+         <div className="bg-zinc-900 border border-white/10 w-full max-w-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+            <button onClick={handleClose} className="absolute top-3 right-3 sm:top-4 sm:right-4 text-zinc-500 hover:text-white transition-colors z-10">
+               <X size={20} className="sm:w-6 sm:h-6" />
             </button>
             {renderContent()}
          </div>
