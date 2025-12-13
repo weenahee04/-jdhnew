@@ -235,22 +235,22 @@ export const WalletSetup: React.FC<WalletSetupProps> = ({ mode, onBack, onComple
     console.log('renderBackup called, seedPhrase:', seedPhrase.length, 'showSeed:', showSeed, 'showSecurityWarning:', typeof showSecurityWarning);
     
     return (
-      <div className="w-full max-w-md animate-fade-in">
-         <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-white mb-2">จดบันทึก Seed Phrase</h2>
-            <p className="text-zinc-400 text-sm">
+      <div className="w-full max-w-md animate-fade-in px-4 sm:px-0">
+         <div className="text-center mb-4 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-2 px-2">จดบันทึก Seed Phrase</h2>
+            <p className="text-zinc-400 text-xs sm:text-sm px-2">
                นี่คือหัวใจของกระเป๋าเงินของคุณ จดบันทึก 12 คำนี้ลงในกระดาษและเก็บไว้ในที่ปลอดภัย
             </p>
          </div>
 
-         <div className="w-full relative group mb-6" style={{ minHeight: '200px' }}>
+         <div className="w-full relative group mb-4 sm:mb-6" style={{ minHeight: '180px' }}>
             {seedPhrase.length > 0 ? (
               <>
-                <div className={`grid grid-cols-3 gap-3 transition-all duration-300 ${!showSeed ? 'blur-md select-none opacity-50' : 'blur-0 opacity-100'}`} style={{ pointerEvents: showSeed ? 'auto' : 'none' }}>
+                <div className={`grid grid-cols-3 gap-2 sm:gap-3 transition-all duration-300 ${!showSeed ? 'blur-md select-none opacity-50' : 'blur-0 opacity-100'}`} style={{ pointerEvents: showSeed ? 'auto' : 'none' }}>
                    {seedPhrase.map((word, i) => (
-                      <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-xl px-2 py-3 flex flex-col items-center justify-center relative overflow-hidden">
-                         <span className="text-[10px] text-zinc-600 font-mono absolute top-1 left-2">{i+1}</span>
-                         <span className="text-emerald-50 font-medium tracking-wide">{word}</span>
+                      <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-lg sm:rounded-xl px-1.5 sm:px-2 py-2 sm:py-3 flex flex-col items-center justify-center relative overflow-hidden">
+                         <span className="text-[9px] sm:text-[10px] text-zinc-600 font-mono absolute top-0.5 sm:top-1 left-1 sm:left-2">{i+1}</span>
+                         <span className="text-emerald-50 font-medium tracking-wide text-xs sm:text-sm mt-2 sm:mt-0">{word}</span>
                       </div>
                    ))}
                 </div>
