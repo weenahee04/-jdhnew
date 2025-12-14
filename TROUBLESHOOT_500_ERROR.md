@@ -85,3 +85,4 @@ echo "https://kwxgpxmxhbtqbrupbluj.supabase.co" | vercel env add SUPABASE_URL pr
 
 
 
+

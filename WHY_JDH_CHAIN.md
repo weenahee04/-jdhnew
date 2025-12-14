@@ -171,3 +171,4 @@ A: Deploy: ~2-3 SOL (~$300-450) | Transaction fee: ~$0.00025 ต่อ transacti
 
 
 
+

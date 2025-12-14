@@ -110,3 +110,4 @@ solana balance <AIRDROP_WALLET_PUBLIC_KEY>
 
 
 
+

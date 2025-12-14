@@ -76,3 +76,4 @@ cd $env:USERPROFILE\Downloads
 **ลองใช้ `stable` ดูครับ!** 🚀
 
 
+
