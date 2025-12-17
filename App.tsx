@@ -179,7 +179,21 @@ const App: React.FC = () => {
   const mockCoinsWithPrices = useMockCoinPrices(MOCK_COINS);
   
   // Use real coins if wallet is connected, otherwise use mock coins with real prices
-  const displayCoins = publicKey && walletCoins.length > 0 ? walletCoins : mockCoinsWithPrices;
+  // Always include WARP token even if wallet is connected
+  const baseDisplayCoins = publicKey && walletCoins.length > 0 ? walletCoins : mockCoinsWithPrices;
+  
+  // Ensure WARP is always included in display coins
+  const displayCoins = React.useMemo(() => {
+    const warpCoin = mockCoinsWithPrices.find(c => c.symbol === 'WARP');
+    if (!warpCoin) return baseDisplayCoins;
+    
+    // Check if WARP already exists in display coins
+    const hasWarp = baseDisplayCoins.some(c => c.symbol === 'WARP');
+    if (hasWarp) return baseDisplayCoins;
+    
+    // Add WARP to the list (always show WARP)
+    return [...baseDisplayCoins, warpCoin];
+  }, [baseDisplayCoins, mockCoinsWithPrices]);
   
   // Debug: Log coin count
   useEffect(() => {
