@@ -83,3 +83,65 @@ const USD_TO_THB = 34.5;
 
 export const convertUsdToThb = (usd: number) => usd * USD_TO_THB;
 
+// BNB Chain token price fetching
+// WARP token on BNB Chain: 0x5218B89C38Fa966493Cd380E0cB4906342A01a6C
+export interface BNBTokenPrice {
+  symbol: string;
+  name: string;
+  price: number;
+  priceChange24h: number;
+  contractAddress: string;
+}
+
+// Fetch BNB Chain token price from DEXScreener API
+export const getBNBTokenPrice = async (contractAddress: string): Promise<BNBTokenPrice | null> => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    // DEXScreener API for BNB Chain tokens
+    const response = await fetch(
+      `https://api.dexscreener.com/latest/dex/tokens/${contractAddress}`,
+      { signal: controller.signal }
+    );
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      throw new Error(`DEXScreener API returned ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // DEXScreener returns array of pairs, get the first one with price
+    if (data.pairs && data.pairs.length > 0) {
+      const pair = data.pairs[0];
+      const price = parseFloat(pair.priceUsd || '0');
+      const priceChange24h = parseFloat(pair.priceChange?.h24 || '0');
+      
+      return {
+        symbol: pair.baseToken?.symbol || 'UNKNOWN',
+        name: pair.baseToken?.name || 'Unknown Token',
+        price,
+        priceChange24h,
+        contractAddress,
+      };
+    }
+    
+    return null;
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      console.warn('BNB token price fetch timeout');
+    } else {
+      console.warn('BNB token price fetch error:', error.message || error);
+    }
+    return null;
+  }
+};
+
+// Fetch WARP token price specifically
+export const getWARPPrice = async (): Promise<BNBTokenPrice | null> => {
+  const WARP_CONTRACT = '0x5218B89C38Fa966493Cd380E0cB4906342A01a6C';
+  return getBNBTokenPrice(WARP_CONTRACT);
+};
+

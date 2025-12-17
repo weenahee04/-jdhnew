@@ -60,6 +60,18 @@ export const MOCK_COINS: Coin[] = [
     color: '#14F195',
     about: 'Solana is a high-performance blockchain supporting builders around the world.',
     chartData: [{ value: 3100 }, { value: 3200 }, { value: 3350 }, { value: 3400 }, { value: 3500 }, { value: 3600 }, { value: 3500 }]
+  },
+  {
+    id: 'warp',
+    symbol: 'WARP',
+    name: 'Warp',
+    price: 15.07, // Fallback price: ~$0.4368 USD converted to THB (34.5 rate) - Will be updated with real price
+    change24h: 0.0,
+    balance: 0,
+    balanceUsd: 0,
+    color: '#8B5CF6',
+    about: 'Warp (WARP) is a token on BNB Chain. Price is fetched in real-time from DEXScreener API.',
+    chartData: [{ value: 15.0 }, { value: 15.05 }, { value: 15.1 }, { value: 15.07 }, { value: 15.08 }, { value: 15.06 }, { value: 15.07 }]
   }
 ];
 

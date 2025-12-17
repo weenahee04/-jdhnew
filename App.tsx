@@ -20,6 +20,7 @@ import { Eye, EyeOff, Bell, User, Sparkles, Wallet, Settings, ArrowRight, Shield
 import { getMarketInsight } from './services/geminiService';
 import { useSolanaWallet } from './hooks/useSolanaWallet';
 import { useWalletBalances } from './hooks/useWalletBalances';
+import { useMockCoinPrices } from './hooks/useMockCoinPrices';
 import { registerUser, loginUser, getCurrentUser, setCurrentUser, updateUserWallet, updateUserDisplayName, logoutUser as authLogout, saveWallet, getWallet } from './services/authService';
 import { USE_BACKEND_API } from './config';
 import { getTransactionHistory } from './services/helius';
@@ -174,8 +175,11 @@ const App: React.FC = () => {
     tokenMetadata,
   } = useWalletBalances(publicKey);
 
-  // Use real coins if wallet is connected, otherwise use mock
-  const displayCoins = publicKey && walletCoins.length > 0 ? walletCoins : MOCK_COINS;
+  // Fetch real prices for mock coins (like WARP)
+  const mockCoinsWithPrices = useMockCoinPrices(MOCK_COINS);
+  
+  // Use real coins if wallet is connected, otherwise use mock coins with real prices
+  const displayCoins = publicKey && walletCoins.length > 0 ? walletCoins : mockCoinsWithPrices;
   
   // Debug: Log coin count
   useEffect(() => {
