@@ -182,17 +182,31 @@ export const useWalletBalances = (publicKey: PublicKey | null) => {
           // For JDH token (GkDEVLZP), ALWAYS use hardcoded name and symbol
           let effectiveSymbol: string;
           let effectiveName: string;
+          let logoURI: string | undefined;
           
           if (token.mint === 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR') {
             effectiveSymbol = 'JDH'; // Always use JDH
             effectiveName = 'JDH Token'; // Always use JDH Token
+            
+            // Try to get logo from metadata first
+            logoURI = meta?.logoURI;
+            
+            // If no logo in metadata, try to fetch from GMGN.ai or DEXScreener
+            if (!logoURI) {
+              try {
+                const { getTokenMetadata } = await import('../services/tokenMetadata');
+                const jdhMetadata = await getTokenMetadata(token.mint);
+                logoURI = jdhMetadata?.logoURI;
+              } catch (error) {
+                // Silently fail
+              }
+            }
           } else {
             // Priority: metadata > priceInfo > fallback
             effectiveSymbol = meta?.symbol || priceInfo?.symbol || token.symbol || token.mint.slice(0, 4).toUpperCase();
             effectiveName = meta?.name || priceInfo?.name || token.name || `Token ${token.mint.slice(0, 8)}`;
+            logoURI = meta?.logoURI;
           }
-          
-          const logoURI = meta?.logoURI;
           
           // Store symbol and name in token balance for new token detection
           token.symbol = effectiveSymbol;

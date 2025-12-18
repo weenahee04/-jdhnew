@@ -27,9 +27,22 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
             const WARP_CONTRACT = '0x5218B89C38Fa966493Cd380E0cB4906342A01a6C';
             logoURI = await getCoinLogoWithFallback(coin.symbol, WARP_CONTRACT);
           } else if (coin.symbol === 'JDH') {
-            // Special handling for JDH (Solana token)
+            // Special handling for JDH (Solana token) - fetch from GMGN.ai or DEXScreener
             const JDH_MINT = TOKEN_MINTS.JDH;
-            logoURI = await getCoinLogoWithFallback(coin.symbol, JDH_MINT);
+            try {
+              // Try to get logo from tokenMetadata service (uses GMGN.ai first)
+              const { getTokenMetadata } = await import('../services/tokenMetadata');
+              const jdhMetadata = await getTokenMetadata(JDH_MINT);
+              if (jdhMetadata?.logoURI) {
+                logoURI = jdhMetadata.logoURI;
+              } else {
+                // Fallback to coinLogoService
+                logoURI = await getCoinLogoWithFallback(coin.symbol, JDH_MINT);
+              }
+            } catch (error) {
+              // Fallback to coinLogoService
+              logoURI = await getCoinLogoWithFallback(coin.symbol, JDH_MINT);
+            }
           } else {
             // For other coins, try to get logo
             logoURI = await getCoinLogoWithFallback(coin.symbol);
@@ -87,19 +100,31 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
         try {
           const JDH_MINT = TOKEN_MINTS.JDH;
           
-          // Fetch from DEXScreener token-pairs API (better data)
+          // Try to get logo from tokenMetadata service first (uses GMGN.ai)
+          let jdhLogoURI = updatedCoins[jdhIndex].logoURI;
+          try {
+            const { getTokenMetadata } = await import('../services/tokenMetadata');
+            const jdhMetadata = await getTokenMetadata(JDH_MINT);
+            if (jdhMetadata?.logoURI) {
+              jdhLogoURI = jdhMetadata.logoURI;
+            }
+          } catch (error) {
+            // Continue to try DEXScreener
+          }
+          
+          // Fetch from DEXScreener token-pairs API (better data for price)
           const jdhData = await getJDHFromDEXScreenerPairs(JDH_MINT);
           
           if (jdhData) {
             const priceTHB = jdhData.price ? convertUsdToThb(jdhData.price) : updatedCoins[jdhIndex].price;
             const change24h = jdhData.priceChange24h || 0;
             
-            // Update JDH coin with real price and logo
+            // Update JDH coin with real price and logo (prefer GMGN logo if available)
             updatedCoins[jdhIndex] = {
               ...updatedCoins[jdhIndex],
               price: priceTHB,
               change24h: change24h,
-              logoURI: jdhData.logoURI || updatedCoins[jdhIndex].logoURI,
+              logoURI: jdhLogoURI || jdhData.logoURI || updatedCoins[jdhIndex].logoURI,
               // Update chart data based on real price
               chartData: jdhData.price ? [
                 { value: jdhData.price * 0.98 },
