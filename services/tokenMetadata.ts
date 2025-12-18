@@ -521,38 +521,41 @@ export const getMultipleTokenMetadata = async (mintAddresses: string[]): Promise
       // ALWAYS check hardcoded metadata first - this is critical for JDH token
       const hardcoded = HARDCODED_TOKEN_METADATA[mint];
       if (hardcoded) {
-        // For JDH token (GkDEVLZP), try GMGN.ai first for logo (user requested)
+        // For JDH token (GkDEVLZP), try multiple sources for logo
         if (mint === 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR') {
-          // Try GMGN.ai first (user requested this source) - mainly for logo
-          const gmgnLogo = await fetchGMGNLogo(mint);
-          if (gmgnLogo) {
-            metadataMap[mint] = {
-              ...hardcoded,
-              // ALWAYS keep hardcoded name and symbol - these are correct
-              name: hardcoded.name, // "JDH Token" - never override
-              symbol: hardcoded.symbol, // "JDH" - never override
-              logoURI: gmgnLogo, // Use GMGN logo
-              decimals: hardcoded.decimals,
-            };
-            return;
-          }
+          let logoURI: string | undefined;
           
-          // Fallback to DEXScreener token-pairs API for logo
+          // Try DEXScreener first (most reliable)
           const dexscreenerPairsData = await fetchDEXScreenerPairsMetadata(mint);
           if (dexscreenerPairsData?.logoURI) {
-            metadataMap[mint] = {
-              ...hardcoded,
-              // ALWAYS keep hardcoded name and symbol - these are correct
-              name: hardcoded.name, // "JDH Token"
-              symbol: hardcoded.symbol, // "JDH"
-              logoURI: dexscreenerPairsData.logoURI,
-              decimals: hardcoded.decimals,
-            };
-            return;
+            logoURI = dexscreenerPairsData.logoURI;
+            console.log('✅ JDH Logo from DEXScreener (multiple):', logoURI);
+          } else {
+            // Try GMGN.ai (user requested)
+            const gmgnLogo = await fetchGMGNLogo(mint);
+            if (gmgnLogo) {
+              logoURI = gmgnLogo;
+              console.log('✅ JDH Logo from GMGN.ai (multiple):', logoURI);
+            } else {
+              // Try Jupiter API as last resort
+              const jupiterData = await fetchJupiterMetadata(mint);
+              if (jupiterData?.logoURI) {
+                logoURI = jupiterData.logoURI;
+                console.log('✅ JDH Logo from Jupiter (multiple):', logoURI);
+              } else {
+                console.warn('⚠️ JDH Logo not found from any source (multiple)');
+              }
+            }
           }
           
-          // If no logo found, still return hardcoded metadata with correct name/symbol
-          metadataMap[mint] = hardcoded;
+          metadataMap[mint] = {
+            ...hardcoded,
+            // ALWAYS keep hardcoded name and symbol - these are correct
+            name: hardcoded.name, // "JDH Token" - never override
+            symbol: hardcoded.symbol, // "JDH" - never override
+            logoURI: logoURI, // Use logo from any source
+            decimals: hardcoded.decimals,
+          };
           return;
         }
         
