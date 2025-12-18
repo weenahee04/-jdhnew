@@ -64,6 +64,38 @@ const fetchDEXScreenerLogo = async (mintAddress: string): Promise<string | null>
   }
 };
 
+// Fetch full token metadata from DEXScreener (name, symbol, logo)
+const fetchDEXScreenerMetadata = async (mintAddress: string): Promise<{ name?: string; symbol?: string; logoURI?: string } | null> => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(
+      `https://api.dexscreener.com/latest/dex/tokens/${mintAddress}`,
+      { signal: controller.signal }
+    );
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    if (data.pairs && data.pairs.length > 0) {
+      const pair = data.pairs[0];
+      const baseToken = pair.baseToken;
+      return {
+        name: baseToken?.name,
+        symbol: baseToken?.symbol,
+        logoURI: baseToken?.logoURI,
+      };
+    }
+    return null;
+  } catch (error) {
+    console.warn(`Failed to fetch DEXScreener metadata for ${mintAddress}:`, error);
+    return null;
+  }
+};
+
 // Fetch token list from Jupiter (more comprehensive)
 export const fetchTokenList = async (): Promise<TokenMetadata[]> => {
   const now = Date.now();
@@ -213,14 +245,15 @@ export const getMultipleTokenMetadata = async (mintAddresses: string[]): Promise
         }
         metadataMap[mint] = token;
       } else {
-        // Try DEXScreener for logo
-        const logoURI = await fetchDEXScreenerLogo(mint);
+        // Try DEXScreener for full metadata (name, symbol, logo)
+        const dexscreenerData = await fetchDEXScreenerMetadata(mint);
+        
         metadataMap[mint] = {
           address: mint,
-          name: `Token ${mint.slice(0, 8)}`,
-          symbol: mint.slice(0, 4).toUpperCase(),
+          name: dexscreenerData?.name || `Token ${mint.slice(0, 8)}`,
+          symbol: dexscreenerData?.symbol || mint.slice(0, 4).toUpperCase(),
           decimals: 9,
-          logoURI: logoURI || undefined,
+          logoURI: dexscreenerData?.logoURI || undefined,
         };
       }
     }));
