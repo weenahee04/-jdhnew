@@ -1,5 +1,5 @@
 import { Connection, Keypair, PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL, clusterApiUrl, ParsedAccountData } from '@solana/web3.js';
-import { getAccount, getAssociatedTokenAddress, TOKEN_PROGRAM_ID, createTransferInstruction, getMint } from '@solana/spl-token';
+import { getAccount, getAssociatedTokenAddress, TOKEN_PROGRAM_ID, createTransferInstruction, getMint, createAssociatedTokenAccountInstruction } from '@solana/spl-token';
 import bs58 from 'bs58';
 import { derivePath } from 'ed25519-hd-key';
 import { mnemonicToSeedSync, generateMnemonic, validateMnemonic } from '@scure/bip39';
@@ -301,7 +301,6 @@ export const sendToken = async (
     
     // Add create account instruction if needed
     if (needsCreateAccount) {
-      const { createAssociatedTokenAccountInstruction } = await import('@solana/spl-token');
       tx.add(
         createAssociatedTokenAccountInstruction(
           from.publicKey, // payer
