@@ -58,6 +58,16 @@ export const useWalletBalances = (publicKey: PublicKey | null) => {
       // Enrich tokens with metadata
       const enrichedTokens = tokens.map(token => {
         const meta = metadata[token.mint];
+        
+        // For JDH token (GkDEVLZP), ALWAYS use hardcoded name and symbol
+        if (token.mint === 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR') {
+          return {
+            ...token,
+            symbol: 'JDH', // Always use JDH
+            name: 'JDH Token', // Always use JDH Token
+          };
+        }
+        
         // Priority: metadata > token.symbol/name > fallback
         const symbol = meta?.symbol || token.symbol || token.mint.slice(0, 4).toUpperCase();
         const name = meta?.name || token.name || `Token ${token.mint.slice(0, 8)}`;
@@ -169,10 +179,19 @@ export const useWalletBalances = (publicKey: PublicKey | null) => {
             }
           }
           
-          // Priority: metadata > priceInfo > fallback
-          // ALWAYS use metadata name and symbol if available (for JDH token)
-          const effectiveSymbol = meta?.symbol || priceInfo?.symbol || token.symbol || token.mint.slice(0, 4).toUpperCase();
-          const effectiveName = meta?.name || priceInfo?.name || token.name || `Token ${token.mint.slice(0, 8)}`;
+          // For JDH token (GkDEVLZP), ALWAYS use hardcoded name and symbol
+          let effectiveSymbol: string;
+          let effectiveName: string;
+          
+          if (token.mint === 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR') {
+            effectiveSymbol = 'JDH'; // Always use JDH
+            effectiveName = 'JDH Token'; // Always use JDH Token
+          } else {
+            // Priority: metadata > priceInfo > fallback
+            effectiveSymbol = meta?.symbol || priceInfo?.symbol || token.symbol || token.mint.slice(0, 4).toUpperCase();
+            effectiveName = meta?.name || priceInfo?.name || token.name || `Token ${token.mint.slice(0, 8)}`;
+          }
+          
           const logoURI = meta?.logoURI;
           
           // Store symbol and name in token balance for new token detection
