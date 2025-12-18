@@ -346,7 +346,7 @@ const HARDCODED_METADATA: Record<string, TokenMeta> = {
     name: 'JDH Token',
     symbol: 'JDH',
     decimals: 9,
-    logoURI: undefined,
+    logoURI: 'https://img2.pic.in.th/pic/IMG_13847b26fb6a73c061f7.th.jpeg', // User provided logo
     source: 'hardcoded',
   },
   '5FaVDbaQtdZ4dizCqZcmpDscByWfcc1ssvu8snbcemjx': {

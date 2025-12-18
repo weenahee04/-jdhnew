@@ -89,7 +89,7 @@ export const MOCK_COINS: Coin[] = [
     color: '#14F195',
     about: 'JDH Token (JDH) is a token on Solana blockchain. Price is fetched in real-time from Jupiter Price API.',
     chartData: [{ value: 1.75 }, { value: 1.72 }, { value: 1.70 }, { value: 1.68 }, { value: 1.69 }, { value: 1.67 }, { value: 1.68 }],
-    logoURI: undefined, // Will be fetched from Jupiter/DEXScreener
+    logoURI: 'https://img2.pic.in.th/pic/IMG_13847b26fb6a73c061f7.th.jpeg', // User provided logo
   }
 ];
 

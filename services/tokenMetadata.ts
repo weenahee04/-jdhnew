@@ -12,7 +12,7 @@ const HARDCODED_TOKEN_METADATA: Record<string, TokenMetadata> = {
     name: 'JDH Token', // Always use this name
     symbol: 'JDH', // Always use this symbol
     decimals: 9,
-    logoURI: undefined, // Will be fetched from GMGN.ai or DEXScreener
+    logoURI: 'https://img2.pic.in.th/pic/IMG_13847b26fb6a73c061f7.th.jpeg', // User provided logo
     tags: [],
   },
   '5FaVDbaQtdZ4dizCqZcmpDscByWfcc1ssvu8snbcemjx': {
