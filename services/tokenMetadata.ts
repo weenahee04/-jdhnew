@@ -196,16 +196,29 @@ export const fetchTokenList = async (): Promise<TokenMetadata[]> => {
 // Get token metadata by mint address
 export const getTokenMetadata = async (mintAddress: string): Promise<TokenMetadata | null> => {
   try {
-    // Check hardcoded metadata first
+    // ALWAYS check hardcoded metadata first - this is critical for JDH token
     const hardcoded = HARDCODED_TOKEN_METADATA[mintAddress];
     if (hardcoded) {
-      // If logoURI is undefined, try to fetch from DEXScreener (for JDH token)
-      if (!hardcoded.logoURI && mintAddress === '5FaVDbaQtdZ4dizCqZcmpDscByWfcc1ssvu8snbcemjx') {
+      // Always try to fetch logo from Jupiter API for hardcoded tokens
+      // BUT keep hardcoded name and symbol (don't override)
+      const jupiterData = await fetchJupiterMetadata(mintAddress);
+      if (jupiterData?.logoURI) {
+        return {
+          ...hardcoded,
+          // Keep hardcoded name and symbol - these are correct
+          name: hardcoded.name,
+          symbol: hardcoded.symbol,
+          logoURI: jupiterData.logoURI,
+        };
+      }
+      // Try DEXScreener as fallback for logo
+      if (!hardcoded.logoURI) {
         const logoURI = await fetchDEXScreenerLogo(mintAddress);
         if (logoURI) {
           return { ...hardcoded, logoURI };
         }
       }
+      // Return hardcoded metadata as-is (name and symbol are already correct)
       return hardcoded;
     }
 
