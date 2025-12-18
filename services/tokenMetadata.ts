@@ -64,6 +64,46 @@ const fetchDEXScreenerLogo = async (mintAddress: string): Promise<string | null>
   }
 };
 
+// Fetch full token metadata from Jupiter API (name, symbol, logo)
+const fetchJupiterMetadata = async (mintAddress: string): Promise<{ name?: string; symbol?: string; logoURI?: string; decimals?: number } | null> => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    // Try Jupiter API v2 search endpoint
+    const response = await fetch(
+      `https://api.jup.ag/tokens/v2/search?query=${encodeURIComponent(mintAddress)}`,
+      { signal: controller.signal }
+    );
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    
+    // Jupiter API returns array of tokens
+    if (Array.isArray(data) && data.length > 0) {
+      const token = data.find((t: any) => 
+        t.address?.toLowerCase() === mintAddress.toLowerCase()
+      ) || data[0];
+
+      if (token) {
+        return {
+          name: token.name,
+          symbol: token.symbol,
+          logoURI: token.logoURI,
+          decimals: token.decimals,
+        };
+      }
+    }
+    return null;
+  } catch (error) {
+    console.warn(`Failed to fetch Jupiter metadata for ${mintAddress}:`, error);
+    return null;
+  }
+};
+
 // Fetch full token metadata from DEXScreener (name, symbol, logo)
 const fetchDEXScreenerMetadata = async (mintAddress: string): Promise<{ name?: string; symbol?: string; logoURI?: string } | null> => {
   try {
@@ -172,8 +212,12 @@ export const getTokenMetadata = async (mintAddress: string): Promise<TokenMetada
     const token = tokenList.find(t => t.address.toLowerCase() === mintAddress.toLowerCase());
     
     if (token) {
-      // If token found but no logo, try DEXScreener
+      // If token found but no logo, try Jupiter API first, then DEXScreener
       if (!token.logoURI) {
+        const jupiterData = await fetchJupiterMetadata(mintAddress);
+        if (jupiterData?.logoURI) {
+          return { ...token, logoURI: jupiterData.logoURI };
+        }
         const logoURI = await fetchDEXScreenerLogo(mintAddress);
         if (logoURI) {
           return { ...token, logoURI };
@@ -182,8 +226,29 @@ export const getTokenMetadata = async (mintAddress: string): Promise<TokenMetada
       return token;
     }
 
-    // If not found, try DEXScreener for logo
-    const logoURI = await fetchDEXScreenerLogo(mintAddress);
+    // If not found in token list, try Jupiter API first
+    const jupiterData = await fetchJupiterMetadata(mintAddress);
+    if (jupiterData) {
+      return {
+        address: mintAddress,
+        name: jupiterData.name || `Token ${mintAddress.slice(0, 8)}`,
+        symbol: jupiterData.symbol || mintAddress.slice(0, 4).toUpperCase(),
+        decimals: jupiterData.decimals || 9,
+        logoURI: jupiterData.logoURI || undefined,
+      };
+    }
+    
+    // Fallback to DEXScreener
+    const dexscreenerData = await fetchDEXScreenerMetadata(mintAddress);
+    if (dexscreenerData) {
+      return {
+        address: mintAddress,
+        name: dexscreenerData.name || `Token ${mintAddress.slice(0, 8)}`,
+        symbol: dexscreenerData.symbol || mintAddress.slice(0, 4).toUpperCase(),
+        decimals: 9,
+        logoURI: dexscreenerData.logoURI || undefined,
+      };
+    }
     
     // If not found, return basic metadata
     return {
@@ -191,7 +256,7 @@ export const getTokenMetadata = async (mintAddress: string): Promise<TokenMetada
       name: `Token ${mintAddress.slice(0, 8)}`,
       symbol: mintAddress.slice(0, 4).toUpperCase(),
       decimals: 9,
-      logoURI: logoURI || undefined,
+      logoURI: undefined,
     };
   } catch (error) {
     console.error('Error fetching token metadata:', error);
@@ -245,15 +310,20 @@ export const getMultipleTokenMetadata = async (mintAddresses: string[]): Promise
         }
         metadataMap[mint] = token;
       } else {
-        // Try DEXScreener for full metadata (name, symbol, logo)
-        const dexscreenerData = await fetchDEXScreenerMetadata(mint);
+        // Try Jupiter API first (most reliable for Solana tokens)
+        let jupiterData = await fetchJupiterMetadata(mint);
+        
+        // If Jupiter doesn't have it, try DEXScreener
+        if (!jupiterData) {
+          jupiterData = await fetchDEXScreenerMetadata(mint);
+        }
         
         metadataMap[mint] = {
           address: mint,
-          name: dexscreenerData?.name || `Token ${mint.slice(0, 8)}`,
-          symbol: dexscreenerData?.symbol || mint.slice(0, 4).toUpperCase(),
-          decimals: 9,
-          logoURI: dexscreenerData?.logoURI || undefined,
+          name: jupiterData?.name || `Token ${mint.slice(0, 8)}`,
+          symbol: jupiterData?.symbol || mint.slice(0, 4).toUpperCase(),
+          decimals: jupiterData?.decimals || 9,
+          logoURI: jupiterData?.logoURI || undefined,
         };
       }
     }));
