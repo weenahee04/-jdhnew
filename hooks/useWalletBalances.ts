@@ -42,13 +42,43 @@ export const useWalletBalances = (publicKey: PublicKey | null) => {
       const metadata = await getMultipleTokenMetadata(mintAddresses);
       setTokenMetadata(metadata);
       
+      // Debug: Log metadata for GkDEVLZP token
+      const gkdevlzpMint = 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR';
+      if (mintAddresses.includes(gkdevlzpMint)) {
+        const gkdevlzpMeta = metadata[gkdevlzpMint];
+        console.log('🔍 GkDEVLZP Metadata:', {
+          mint: gkdevlzpMint,
+          metadata: gkdevlzpMeta,
+          hasMetadata: !!gkdevlzpMeta,
+          name: gkdevlzpMeta?.name,
+          symbol: gkdevlzpMeta?.symbol,
+        });
+      }
+      
       // Enrich tokens with metadata
       const enrichedTokens = tokens.map(token => {
         const meta = metadata[token.mint];
+        // Priority: metadata > token.symbol/name > fallback
+        const symbol = meta?.symbol || token.symbol || token.mint.slice(0, 4).toUpperCase();
+        const name = meta?.name || token.name || `Token ${token.mint.slice(0, 8)}`;
+        
+        // Debug for GkDEVLZP
+        if (token.mint === gkdevlzpMint) {
+          console.log('🔍 GkDEVLZP Enrichment:', {
+            mint: token.mint,
+            metaSymbol: meta?.symbol,
+            metaName: meta?.name,
+            tokenSymbol: token.symbol,
+            tokenName: token.name,
+            finalSymbol: symbol,
+            finalName: name,
+          });
+        }
+        
         return {
           ...token,
-          symbol: meta?.symbol || token.symbol || token.mint.slice(0, 4).toUpperCase(),
-          name: meta?.name || token.name || `Token ${token.mint.slice(0, 8)}`,
+          symbol,
+          name,
         };
       });
       
