@@ -241,6 +241,24 @@ async function fetchMetadataUri(mint: string): Promise<string | null> {
   return null;
 }
 
+// Fetch logo from DEXScreener token-pairs API
+async function fetchDEXScreenerLogo(mint: string): Promise<string | null> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const response = await fetch(`https://api.dexscreener.com/token-pairs/v1/solana/${mint}`, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (data.pairs && data.pairs.length > 0) {
+      return data.pairs[0].baseToken?.logoURI || null;
+    }
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
 // Hardcoded metadata for specific tokens
 const HARDCODED_METADATA: Record<string, TokenMeta> = {
   'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR': {
@@ -266,7 +284,17 @@ export async function getTokenMeta(mint: string): Promise<TokenMeta> {
   // ALWAYS check hardcoded metadata first
   const hardcoded = HARDCODED_METADATA[mint];
   if (hardcoded) {
-    // Return hardcoded metadata immediately (don't cache, always return fresh)
+    // For JDH token, try to fetch logo from DEXScreener
+    if (mint === 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR' || mint === '5FaVDbaQtdZ4dizCqZcmpDscByWfcc1ssvu8snbcemjx') {
+      const logoURI = await fetchDEXScreenerLogo(mint);
+      if (logoURI) {
+        return {
+          ...hardcoded,
+          logoURI,
+        };
+      }
+    }
+    // Return hardcoded metadata (with or without logo)
     return hardcoded;
   }
 
