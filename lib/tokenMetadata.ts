@@ -364,7 +364,13 @@ export async function getTokenMeta(mint: string): Promise<TokenMeta> {
   // ALWAYS check hardcoded metadata first
   const hardcoded = HARDCODED_METADATA[mint];
   if (hardcoded) {
-    // For JDH token, try to fetch logo from GMGN.ai first (user requested)
+    // Use hardcoded logoURI directly (user provided URL)
+    if (hardcoded.logoURI) {
+      console.log('✅ JDH Logo from hardcoded (lib):', hardcoded.logoURI);
+      return hardcoded;
+    }
+    
+    // If hardcoded logoURI is missing, try to fetch from APIs
     if (mint === 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR' || mint === '5FaVDbaQtdZ4dizCqZcmpDscByWfcc1ssvu8snbcemjx') {
       const gmgnLogo = await fetchGMGNLogo(mint);
       if (gmgnLogo) {

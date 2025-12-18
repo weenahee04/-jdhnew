@@ -383,8 +383,15 @@ export const getTokenMetadata = async (mintAddress: string): Promise<TokenMetada
     // ALWAYS check hardcoded metadata first - this is critical for JDH token
     const hardcoded = HARDCODED_TOKEN_METADATA[mintAddress];
     if (hardcoded) {
-      // For JDH token (GkDEVLZP), try multiple sources for logo
+      // For JDH token (GkDEVLZP), use hardcoded logoURI first (user provided)
       if (mintAddress === 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR') {
+        // Use hardcoded logoURI directly (user provided URL)
+        if (hardcoded.logoURI) {
+          console.log('✅ JDH Logo from hardcoded:', hardcoded.logoURI);
+          return hardcoded;
+        }
+        
+        // If hardcoded logoURI is missing, try to fetch from APIs
         let logoURI: string | undefined;
         
         // Try DEXScreener first (most reliable)
@@ -415,7 +422,7 @@ export const getTokenMetadata = async (mintAddress: string): Promise<TokenMetada
           // ALWAYS keep hardcoded name and symbol - these are correct
           name: hardcoded.name, // "JDH Token" - never override
           symbol: hardcoded.symbol, // "JDH" - never override
-          logoURI: logoURI, // Use logo from any source
+          logoURI: logoURI || hardcoded.logoURI, // Use fetched logo or hardcoded
           decimals: hardcoded.decimals,
         };
       }
@@ -521,8 +528,16 @@ export const getMultipleTokenMetadata = async (mintAddresses: string[]): Promise
       // ALWAYS check hardcoded metadata first - this is critical for JDH token
       const hardcoded = HARDCODED_TOKEN_METADATA[mint];
       if (hardcoded) {
-        // For JDH token (GkDEVLZP), try multiple sources for logo
+        // For JDH token (GkDEVLZP), use hardcoded logoURI first (user provided)
         if (mint === 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR') {
+          // Use hardcoded logoURI directly (user provided URL)
+          if (hardcoded.logoURI) {
+            console.log('✅ JDH Logo from hardcoded (multiple):', hardcoded.logoURI);
+            metadataMap[mint] = hardcoded;
+            return;
+          }
+          
+          // If hardcoded logoURI is missing, try to fetch from APIs
           let logoURI: string | undefined;
           
           // Try DEXScreener first (most reliable)
@@ -553,7 +568,7 @@ export const getMultipleTokenMetadata = async (mintAddresses: string[]): Promise
             // ALWAYS keep hardcoded name and symbol - these are correct
             name: hardcoded.name, // "JDH Token" - never override
             symbol: hardcoded.symbol, // "JDH" - never override
-            logoURI: logoURI, // Use logo from any source
+            logoURI: logoURI || hardcoded.logoURI, // Use fetched logo or hardcoded
             decimals: hardcoded.decimals,
           };
           return;
