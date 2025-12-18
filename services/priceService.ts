@@ -17,8 +17,10 @@ export const TOKEN_MINTS: Record<string, string> = {
   USDT: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
   BONK: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',
   RAY: '4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R',
-  // JDH Token (from DEXScreener)
-  JDH: '5FaVDbaQtdZ4dizCqZcmpDscByWfcc1ssvu8snbcemjx',
+  // JDH Token - Primary address (from Jupiter)
+  JDH: 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR',
+  // JDH Token - Secondary address (from DEXScreener)
+  JDH_ALT: '5FaVDbaQtdZ4dizCqZcmpDscByWfcc1ssvu8snbcemjx',
 };
 
 export const getTokenPrices = async (mints: string[]): Promise<Record<string, TokenPrice>> => {

@@ -5,12 +5,13 @@ const JUPITER_TOKEN_LIST_URL = 'https://token.jup.ag/all';
 // Hardcoded metadata for specific tokens not in token lists
 // These tokens may not be in Jupiter/Solana token lists but are commonly used
 const HARDCODED_TOKEN_METADATA: Record<string, TokenMetadata> = {
+  // GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR is JDH Token
   'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR': {
     address: 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR',
-    name: 'OKX Token',
-    symbol: 'OKX',
+    name: 'JDH Token',
+    symbol: 'JDH',
     decimals: 9,
-    logoURI: 'https://static.okx.com/cdn/oksupport/okx/logo.png', // OKX official logo
+    logoURI: undefined, // Will be fetched from Jupiter API
     tags: [],
   },
   '5FaVDbaQtdZ4dizCqZcmpDscByWfcc1ssvu8snbcemjx': {
@@ -286,23 +287,31 @@ export const getMultipleTokenMetadata = async (mintAddresses: string[]): Promise
       // Check hardcoded metadata first
       const hardcoded = HARDCODED_TOKEN_METADATA[mint];
       if (hardcoded) {
-        // If logoURI is undefined, try to fetch from Jupiter or DEXScreener
-        if (!hardcoded.logoURI) {
-          // Try Jupiter API first
-          const jupiterData = await fetchJupiterMetadata(mint);
-          if (jupiterData?.logoURI) {
-            metadataMap[mint] = { ...hardcoded, logoURI: jupiterData.logoURI };
-            return;
+        // Always try to fetch logo from Jupiter API for hardcoded tokens
+        // This ensures we get the latest logo from Jupiter
+        const jupiterData = await fetchJupiterMetadata(mint);
+        
+        // Use Jupiter data if available, otherwise use hardcoded
+        if (jupiterData) {
+          metadataMap[mint] = {
+            ...hardcoded,
+            name: jupiterData.name || hardcoded.name,
+            symbol: jupiterData.symbol || hardcoded.symbol,
+            logoURI: jupiterData.logoURI || hardcoded.logoURI,
+            decimals: jupiterData.decimals || hardcoded.decimals,
+          };
+        } else {
+          // If Jupiter doesn't have it, try DEXScreener for logo
+          if (!hardcoded.logoURI) {
+            const logoURI = await fetchDEXScreenerLogo(mint);
+            if (logoURI) {
+              metadataMap[mint] = { ...hardcoded, logoURI };
+              return;
+            }
           }
-          // Try DEXScreener as fallback
-          const logoURI = await fetchDEXScreenerLogo(mint);
-          if (logoURI) {
-            metadataMap[mint] = { ...hardcoded, logoURI };
-            return;
-          }
+          // Use hardcoded metadata as-is
+          metadataMap[mint] = hardcoded;
         }
-        // Use hardcoded metadata as-is
-        metadataMap[mint] = hardcoded;
         return;
       }
 
