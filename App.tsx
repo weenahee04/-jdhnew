@@ -642,55 +642,91 @@ const App: React.FC = () => {
   const handleSendAsset = async ({ to, amount, symbol, mintAddress }: { to: string; amount: number; symbol: string; mintAddress?: string }) => {
     try {
       if (!publicKey) {
-        throw new Error('กรุณาสร้างหรือเชื่อมกระเป๋าก่อน');
+        const error = new Error('กรุณาสร้างหรือเชื่อมกระเป๋าก่อน');
+        console.error('❌ handleSendAsset validation error:', error);
+        throw error;
       }
       
       if (!amount || amount <= 0) {
-        throw new Error('จำนวนไม่ถูกต้อง');
+        const error = new Error('จำนวนไม่ถูกต้อง');
+        console.error('❌ handleSendAsset validation error:', error);
+        throw error;
       }
       
       if (!to || to.trim().length === 0) {
-        throw new Error('กรุณากรอกที่อยู่ผู้รับ');
+        const error = new Error('กรุณากรอกที่อยู่ผู้รับ');
+        console.error('❌ handleSendAsset validation error:', error);
+        throw error;
       }
+      
+      console.log('📤 handleSendAsset called:', { symbol, amount, to: to.trim(), mintAddress });
       
       // Check if sending SOL or SPL token
       if (symbol === 'SOL') {
-        const result = await transferSol(to.trim(), amount);
-        // Refresh balances after send
-        setTimeout(() => refreshBalances(), 2000);
-        return result;
+        try {
+          const result = await transferSol(to.trim(), amount);
+          console.log('✅ SOL transfer successful:', result);
+          // Refresh balances after send
+          setTimeout(() => refreshBalances(), 2000);
+          return result;
+        } catch (solError: any) {
+          console.error('❌ SOL transfer error:', solError);
+          const errorMessage = solError?.message || solError?.toString() || 'การโอน SOL ล้มเหลว';
+          throw new Error(errorMessage);
+        }
       } else {
         // SPL Token transfer
-        let finalMintAddress = mintAddress;
-        
-        if (!finalMintAddress) {
-          // Try to find mint address from current coins
-          const coin = displayCoins.find(c => c.symbol === symbol);
-          if (!coin || !coin.id || coin.id === 'sol') {
-            throw new Error(`ไม่พบที่อยู่เหรียญ (Mint Address) สำหรับ ${symbol}`);
+        try {
+          let finalMintAddress = mintAddress;
+          
+          if (!finalMintAddress) {
+            // Try to find mint address from current coins
+            const coin = displayCoins.find(c => c.symbol === symbol);
+            if (!coin || !coin.id || coin.id === 'sol') {
+              throw new Error(`ไม่พบที่อยู่เหรียญ (Mint Address) สำหรับ ${symbol}`);
+            }
+            finalMintAddress = coin.id;
           }
-          finalMintAddress = coin.id;
+          
+          // Validate mint address format
+          if (!finalMintAddress || finalMintAddress.length < 32) {
+            throw new Error(`ที่อยู่เหรียญไม่ถูกต้อง: ${finalMintAddress || 'undefined'}`);
+          }
+          
+          // Get decimals from coin if available
+          const coin = displayCoins.find(c => c.symbol === symbol);
+          const decimals = coin?.decimals;
+          
+          console.log('📤 Token transfer:', { symbol, mintAddress: finalMintAddress, amount, decimals });
+          
+          const result = await transferToken(to.trim(), finalMintAddress, amount, decimals);
+          console.log('✅ Token transfer successful:', result);
+          // Refresh balances after send
+          setTimeout(() => refreshBalances(), 2000);
+          return result;
+        } catch (tokenError: any) {
+          console.error('❌ Token transfer error:', tokenError);
+          const errorMessage = tokenError?.message || tokenError?.toString() || 'การโอนเหรียญล้มเหลว';
+          throw new Error(errorMessage);
         }
-        
-        // Validate mint address format
-        if (!finalMintAddress || finalMintAddress.length < 32) {
-          throw new Error(`ที่อยู่เหรียญไม่ถูกต้อง: ${finalMintAddress || 'undefined'}`);
-        }
-        
-        // Get decimals from coin if available
-        const coin = displayCoins.find(c => c.symbol === symbol);
-        const decimals = coin?.decimals;
-        
-        const result = await transferToken(to.trim(), finalMintAddress, amount, decimals);
-        // Refresh balances after send
-        setTimeout(() => refreshBalances(), 2000);
-        return result;
       }
     } catch (error: any) {
-      // Re-throw with user-friendly message
+      // Ensure error is properly formatted
       const errorMessage = error?.message || error?.toString() || 'การโอนล้มเหลว';
-      console.error('❌ handleSendAsset error:', error);
-      throw new Error(errorMessage);
+      console.error('❌ handleSendAsset final error:', {
+        error,
+        errorMessage,
+        stack: error?.stack,
+        name: error?.name,
+      });
+      
+      // Create new error with message to ensure it's properly formatted
+      const formattedError = new Error(errorMessage);
+      // Preserve original error info
+      if (error?.stack) {
+        formattedError.stack = error.stack;
+      }
+      throw formattedError;
     }
   };
 
