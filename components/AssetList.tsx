@@ -42,15 +42,23 @@ export const AssetList: React.FC<AssetListProps> = ({ coins, compact = false, on
                      src={coin.logoURI} 
                      className="w-10 h-10 rounded-full object-cover shadow-lg ring-1 ring-white/10" 
                      alt={coin.symbol}
+                     onLoad={() => {
+                       if (coin.symbol === 'JDH') {
+                         console.log('✅ JDH Logo loaded successfully:', coin.logoURI);
+                       }
+                     }}
                      onError={(e) => {
                        // Fallback to colored circle if logo fails to load
+                       console.error('❌ JDH Logo failed to load:', coin.logoURI, e);
                        const target = e.target as HTMLImageElement;
                        target.style.display = 'none';
                        const fallback = target.nextElementSibling as HTMLElement;
                        if (fallback) fallback.style.display = 'flex';
                      }}
                    />
-                 ) : null}
+                 ) : (
+                   coin.symbol === 'JDH' && console.warn('⚠️ JDH coin has no logoURI:', coin)
+                 )}
                  <div 
                    className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-lg ring-1 ring-white/10 ${coin.logoURI ? 'hidden' : ''}`}
                    style={{ backgroundColor: coin.color }}
