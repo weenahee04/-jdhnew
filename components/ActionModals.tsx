@@ -700,54 +700,61 @@ const ActionModalContent: React.FC<ActionModalProps> = ({ type, onClose, coins, 
   );
 };
 
-// Wrapper with error boundary
-export const ActionModal: React.FC<ActionModalProps> = (props) => {
-  const [hasError, setHasError] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+// Error Boundary for ActionModal
+class ActionModalErrorBoundary extends React.Component<
+  { children: React.ReactNode; onClose: () => void },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode; onClose: () => void }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
 
-  // Reset error when modal type changes
-  useEffect(() => {
-    if (props.type) {
-      setHasError(false);
-      setError(null);
-    }
-  }, [props.type]);
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
 
-  if (hasError) {
-    return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-        <div className="bg-zinc-900 border border-red-500/20 w-full max-w-sm rounded-3xl p-8 text-center">
-          <h3 className="text-xl font-bold text-white mb-4">เกิดข้อผิดพลาด</h3>
-          <p className="text-red-400 text-sm mb-4">{error?.message || 'เกิดข้อผิดพลาดที่ไม่คาดคิด'}</p>
-          <div className="flex gap-3">
-            <button
-              onClick={() => {
-                setHasError(false);
-                setError(null);
-              }}
-              className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl"
-            >
-              ลองใหม่
-            </button>
-            <button
-              onClick={props.onClose}
-              className="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl"
-            >
-              ปิด
-            </button>
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('❌ ActionModalErrorBoundary caught error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-zinc-900 border border-red-500/20 w-full max-w-sm rounded-3xl p-8 text-center">
+            <h3 className="text-xl font-bold text-white mb-4">เกิดข้อผิดพลาด</h3>
+            <p className="text-red-400 text-sm mb-4">{this.state.error?.message || 'เกิดข้อผิดพลาดที่ไม่คาดคิด'}</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  this.setState({ hasError: false, error: null });
+                }}
+                className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl"
+              >
+                ลองใหม่
+              </button>
+              <button
+                onClick={this.props.onClose}
+                className="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl"
+              >
+                ปิด
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  // Use React Error Boundary pattern with componentDidCatch equivalent
-  try {
-    return <ActionModalContent {...props} />;
-  } catch (err: any) {
-    console.error('❌ ActionModal render error:', err);
-    setHasError(true);
-    setError(err instanceof Error ? err : new Error(String(err)));
-    return null; // Will show error UI above
+    return this.props.children;
   }
+}
+
+// Wrapper with error boundary
+export const ActionModal: React.FC<ActionModalProps> = (props) => {
+  return (
+    <ActionModalErrorBoundary onClose={props.onClose}>
+      <ActionModalContent {...props} />
+    </ActionModalErrorBoundary>
+  );
 };
