@@ -80,6 +80,7 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
         setSwapAmount('');
         setTxResult(null);
         setQuote(null);
+        setErrorMessage(null); // Clear error when modal opens
         setFromCoin(coins.find(c => c.symbol === 'SOL') || coins[0]);
         setToCoin(coins.find(c => c.symbol === 'USDC') || coins[1] || coins[0]);
         
@@ -148,6 +149,7 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
   if (!type) return null;
 
   const handleAction = async () => {
+    try {
       if (type === 'send' && onSend) {
         // Show confirmation modal first
         setShowSendConfirm(true);
@@ -164,6 +166,11 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
       setTimeout(() => {
           setStatus('SUCCESS');
       }, 1200);
+    } catch (e: any) {
+      console.error('❌ handleAction error:', e);
+      setErrorMessage(e?.message || 'เกิดข้อผิดพลาด');
+      setStatus('IDLE');
+    }
   };
 
   const handleSendConfirm = async () => {
@@ -198,6 +205,7 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
     
     setShowSendConfirm(false);
     setStatus('PROCESSING');
+    setErrorMessage(null); // Clear previous error
     
     try {
       // Pass mint address for SPL tokens (coin.id should be mint address for tokens)
@@ -205,8 +213,19 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
       
       // Validate mint address for tokens
       if (selectedCoin.symbol !== 'SOL' && !mintAddress) {
-        throw new Error(`ไม่พบที่อยู่เหรียญ (Mint Address) สำหรับ ${selectedCoin.symbol}`);
+        const error = `ไม่พบที่อยู่เหรียญ (Mint Address) สำหรับ ${selectedCoin.symbol}`;
+        setErrorMessage(error);
+        setStatus('IDLE');
+        alert(error);
+        return;
       }
+      
+      console.log('📤 Sending transaction:', {
+        symbol: selectedCoin.symbol,
+        mintAddress,
+        to: toAddress.trim(),
+        amount: Number(amount),
+      });
       
       const result = await onSend({ 
         to: toAddress.trim(), 
@@ -218,11 +237,13 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
       if (result) {
         setTxResult(result);
         setStatus('SUCCESS');
+        setErrorMessage(null);
         // Show success message
         console.log('✅ Transaction successful:', result);
       } else {
         // If no result but no error, assume success
         setStatus('SUCCESS');
+        setErrorMessage(null);
       }
     } catch (e: any) {
       setStatus('IDLE');
@@ -239,19 +260,26 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
         errorMsg = e.toString();
       }
       
+      // Set error message state
+      setErrorMessage(errorMsg);
+      
       // Show user-friendly error message
       alert(errorMsg);
       console.error('❌ Send error:', e);
       
       // Log full error for debugging
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Full error details:', {
-          error: e,
-          coin: selectedCoin,
-          toAddress: toAddress.trim(),
-          amount: Number(amount),
-        });
-      }
+      console.error('Full error details:', {
+        error: e,
+        errorName: e?.name,
+        errorStack: e?.stack,
+        coin: selectedCoin,
+        toAddress: toAddress.trim(),
+        amount: Number(amount),
+      });
+      
+      // Prevent error from bubbling up
+      e.preventDefault?.();
+      e.stopPropagation?.();
     }
   };
 
