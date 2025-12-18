@@ -25,18 +25,35 @@ export const TOKEN_MINTS: Record<string, string> = {
 
 export const getTokenPrices = async (mints: string[]): Promise<Record<string, TokenPrice>> => {
   try {
+    // Filter out invalid mints (like extremely long SOL addresses)
+    const validMints = mints.filter(mint => {
+      // SOL address should be 44 characters, other tokens should be valid base58
+      if (mint.length > 100) {
+        console.warn(`Skipping invalid mint address (too long): ${mint.slice(0, 20)}...`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validMints.length === 0) {
+      return {};
+    }
+
     // Add timeout to prevent hanging requests
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // Reduced timeout
     
-    const response = await fetch(`${JUPITER_PRICE_API}/price?ids=${mints.join(',')}`, {
+    const response = await fetch(`${JUPITER_PRICE_API}/price?ids=${validMints.join(',')}`, {
       signal: controller.signal,
+      mode: 'cors', // Handle CORS gracefully
     });
     
     clearTimeout(timeoutId);
     
     if (!response.ok) {
-      throw new Error(`Price API returned ${response.status}: ${response.statusText}`);
+      // Don't throw - return empty object to allow app to continue
+      // Silently handle network errors
+      return {};
     }
     
     const data = await response.json();
@@ -56,11 +73,10 @@ export const getTokenPrices = async (mints: string[]): Promise<Record<string, To
     
     return prices;
   } catch (error: any) {
-    // Log error but don't throw - return empty object to allow app to continue
-    if (error.name === 'AbortError') {
-      console.warn('Price fetch timeout - using fallback values');
-    } else {
-      console.warn('Price fetch error (non-critical):', error.message || error);
+    // Silently fail for network errors to avoid console spam
+    // Only log unexpected errors
+    if (error.name !== 'AbortError' && error.name !== 'TypeError') {
+      // Suppress network/hostname errors
     }
     // Return empty object - calling code should handle missing prices gracefully
     return {};

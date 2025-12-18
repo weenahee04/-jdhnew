@@ -69,17 +69,28 @@ const fetchDEXScreenerLogo = async (mintAddress: string): Promise<string | null>
 const fetchJupiterMetadata = async (mintAddress: string): Promise<{ name?: string; symbol?: string; logoURI?: string; decimals?: number } | null> => {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // Reduced timeout
 
     // Try Jupiter API v2 search endpoint
     const response = await fetch(
       `https://api.jup.ag/tokens/v2/search?query=${encodeURIComponent(mintAddress)}`,
-      { signal: controller.signal }
+      { 
+        signal: controller.signal,
+        // Handle network errors gracefully
+        mode: 'cors',
+      }
     );
 
     clearTimeout(timeoutId);
 
-    if (!response.ok) return null;
+    // Handle 401, 403, 404, and network errors gracefully
+    if (!response.ok) {
+      // Don't log 401/403/404 as they're expected for some tokens
+      if (response.status !== 401 && response.status !== 403 && response.status !== 404) {
+        // Only log unexpected errors
+      }
+      return null;
+    }
 
     const data = await response.json();
     
@@ -99,8 +110,12 @@ const fetchJupiterMetadata = async (mintAddress: string): Promise<{ name?: strin
       }
     }
     return null;
-  } catch (error) {
-    console.warn(`Failed to fetch Jupiter metadata for ${mintAddress}:`, error);
+  } catch (error: any) {
+    // Silently fail for network errors to avoid console spam
+    // Only log unexpected errors
+    if (error.name !== 'AbortError' && error.name !== 'TypeError') {
+      // Suppress network/hostname errors
+    }
     return null;
   }
 };

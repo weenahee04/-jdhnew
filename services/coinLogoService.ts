@@ -12,14 +12,15 @@ const CRYPTOCOMPARE_API = 'https://www.cryptocompare.com';
 const DEXSCREENER_API = 'https://api.dexscreener.com/latest/dex/tokens';
 
 // Token symbol to CoinGecko ID mapping
+// Note: Only include tokens that exist in CoinGecko to avoid 404 errors
 const COINGECKO_IDS: Record<string, string> = {
   'BTC': 'bitcoin',
   'ETH': 'ethereum',
   'USDT': 'tether',
   'BNB': 'binancecoin',
   'SOL': 'solana',
-  'WARP': 'warp', // May not exist, will try
-  'JDH': 'jdh', // May not exist, will try DEXScreener
+  // WARP and JDH don't exist in CoinGecko - skip to avoid 404 errors
+  // They will be fetched from DEXScreener/Jupiter instead
 };
 
 // Get logo from CoinGecko
