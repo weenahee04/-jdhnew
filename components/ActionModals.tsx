@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, ArrowDown, Search, QrCode, Copy, Loader2, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, ArrowDown, Search, QrCode, Copy, Loader2, CheckCircle, ChevronDown } from 'lucide-react';
 import { Coin } from '../types';
 import Confetti from 'react-confetti';
 import { SendConfirmationModal, SwapConfirmationModal } from './ConfirmationModals';
@@ -53,6 +53,23 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
       return false;
     });
   }, [coins]);
+
+  // Close coin selector when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (coinSelectorRef.current && !coinSelectorRef.current.contains(event.target as Node)) {
+        setShowCoinSelector(false);
+      }
+    };
+
+    if (showCoinSelector) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCoinSelector]);
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -299,7 +316,7 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
             <div className="space-y-3 sm:space-y-4">
                <div>
                   <label className="text-xs text-zinc-500 mb-1 block">เลือกเหรียญ</label>
-                  <div className="relative">
+                  <div className="relative" ref={coinSelectorRef}>
                     <button
                       onClick={() => setShowCoinSelector(!showCoinSelector)}
                       className="w-full bg-zinc-800/50 p-2.5 sm:p-3 rounded-lg sm:rounded-xl flex items-center justify-between border border-white/10 hover:border-emerald-500/30 transition-colors"
