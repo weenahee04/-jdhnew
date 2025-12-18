@@ -182,17 +182,24 @@ const App: React.FC = () => {
   // Always include WARP token even if wallet is connected
   const baseDisplayCoins = publicKey && walletCoins.length > 0 ? walletCoins : mockCoinsWithPrices;
   
-  // Ensure WARP is always included in display coins
+  // Ensure WARP and JDH are always included in display coins
   const displayCoins = React.useMemo(() => {
     const warpCoin = mockCoinsWithPrices.find(c => c.symbol === 'WARP');
-    if (!warpCoin) return baseDisplayCoins;
+    const jdhCoin = mockCoinsWithPrices.find(c => c.symbol === 'JDH');
     
-    // Check if WARP already exists in display coins
-    const hasWarp = baseDisplayCoins.some(c => c.symbol === 'WARP');
-    if (hasWarp) return baseDisplayCoins;
+    let result = [...baseDisplayCoins];
     
-    // Add WARP to the list (always show WARP)
-    return [...baseDisplayCoins, warpCoin];
+    // Add WARP if not already present
+    if (warpCoin && !result.some(c => c.symbol === 'WARP')) {
+      result.push(warpCoin);
+    }
+    
+    // Add JDH if not already present
+    if (jdhCoin && !result.some(c => c.symbol === 'JDH')) {
+      result.push(jdhCoin);
+    }
+    
+    return result;
   }, [baseDisplayCoins, mockCoinsWithPrices]);
   
   // Debug: Log coin count

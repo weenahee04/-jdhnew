@@ -77,6 +77,19 @@ export const MOCK_COINS: Coin[] = [
     color: '#8B5CF6',
     about: 'Warp (WARP) is a token on BNB Chain. Price is fetched in real-time from DEXScreener API.',
     chartData: [{ value: 15.0 }, { value: 15.05 }, { value: 15.1 }, { value: 15.07 }, { value: 15.08 }, { value: 15.06 }, { value: 15.07 }]
+  },
+  {
+    id: 'jdh',
+    symbol: 'JDH',
+    name: 'JDH Token',
+    price: 1.68, // Fallback price: ~$0.048662 USD converted to THB (34.5 rate) - Will be updated with real price from Jupiter
+    change24h: -3.5,
+    balance: 0,
+    balanceUsd: 0,
+    color: '#14F195',
+    about: 'JDH Token (JDH) is a token on Solana blockchain. Price is fetched in real-time from Jupiter Price API.',
+    chartData: [{ value: 1.75 }, { value: 1.72 }, { value: 1.70 }, { value: 1.68 }, { value: 1.69 }, { value: 1.67 }, { value: 1.68 }],
+    logoURI: undefined, // Will be fetched from Jupiter/DEXScreener
   }
 ];
 
