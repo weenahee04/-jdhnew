@@ -191,3 +191,29 @@ export const getJDHLogo = async (): Promise<string | null> => {
   return null;
 };
 
+// Get JDH token data from DEXScreener token-pairs API (includes logo, price, etc.)
+export const getJDHFromDEXScreenerPairs = async (mintAddress: string): Promise<{ name: string; symbol: string; logoURI: string; price: number; priceChange24h: number } | null> => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const response = await fetch(`https://api.dexscreener.com/token-pairs/v1/solana/${mintAddress}`, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (data.pairs && data.pairs.length > 0) {
+      const pair = data.pairs[0];
+      return {
+        name: pair.baseToken.name,
+        symbol: pair.baseToken.symbol,
+        logoURI: pair.baseToken.logoURI,
+        price: parseFloat(pair.priceUsd || 0),
+        priceChange24h: pair.priceChange?.h24 || 0,
+      };
+    }
+    return null;
+  } catch (error) {
+    // Suppress network errors
+    return null;
+  }
+};
+
