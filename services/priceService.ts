@@ -163,3 +163,42 @@ export const getWARPPrice = async (): Promise<BNBTokenPrice | null> => {
   return getBNBTokenPrice(WARP_CONTRACT);
 };
 
+// Fetch JDH token price from DEXScreener token-pairs API
+export const getJDHPrice = async (): Promise<TokenPrice | null> => {
+  try {
+    const JDH_MINT = 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR';
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    
+    const response = await fetch(
+      `https://api.dexscreener.com/token-pairs/v1/solana/${JDH_MINT}`,
+      { signal: controller.signal }
+    );
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) return null;
+    
+    const data = await response.json();
+    
+    // Data is an array of pairs, get the first one (usually the most liquid)
+    if (Array.isArray(data) && data.length > 0) {
+      const pair = data[0];
+      const baseToken = pair.baseToken;
+      
+      return {
+        id: JDH_MINT,
+        symbol: baseToken?.symbol || 'JDH',
+        name: baseToken?.name || 'JDH Token',
+        price: parseFloat(pair.priceUsd || 0),
+        priceChange24h: pair.priceChange?.h24 || 0,
+        decimals: 9,
+      };
+    }
+    return null;
+  } catch (error) {
+    // Silently fail for network errors
+    return null;
+  }
+};
+

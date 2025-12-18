@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Coin } from '../types';
-import { getWARPPrice, convertUsdToThb, getTokenPrices, TOKEN_MINTS } from '../services/priceService';
-import { getCoinLogoWithFallback, PREDEFINED_LOGOS } from '../services/coinLogoService';
+import { getWARPPrice, convertUsdToThb, getTokenPrices, TOKEN_MINTS, getJDHPrice } from '../services/priceService';
+import { getCoinLogoWithFallback, PREDEFINED_LOGOS, getJDHFromDEXScreenerPairs } from '../services/coinLogoService';
 
 // Hook to fetch real prices and logos for mock coins (like WARP)
 export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
@@ -80,35 +80,61 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
         }
       }
 
-      // Find JDH coin and update its price from Jupiter API
+      // Find JDH coin and update its price and logo from DEXScreener token-pairs API
       const jdhIndex = updatedCoins.findIndex(coin => coin.symbol === 'JDH');
       
       if (jdhIndex !== -1) {
         try {
           const JDH_MINT = TOKEN_MINTS.JDH;
-          const priceData = await getTokenPrices([JDH_MINT]);
-          const jdhPriceData = priceData[JDH_MINT];
           
-          if (jdhPriceData && jdhPriceData.price > 0) {
-            const priceTHB = convertUsdToThb(jdhPriceData.price);
-            const change24h = jdhPriceData.priceChange24h || 0;
+          // Fetch from DEXScreener token-pairs API (better data)
+          const jdhData = await getJDHFromDEXScreenerPairs(JDH_MINT);
+          
+          if (jdhData) {
+            const priceTHB = jdhData.price ? convertUsdToThb(jdhData.price) : updatedCoins[jdhIndex].price;
+            const change24h = jdhData.priceChange24h || 0;
             
-            // Update JDH coin with real price
+            // Update JDH coin with real price and logo
             updatedCoins[jdhIndex] = {
               ...updatedCoins[jdhIndex],
               price: priceTHB,
               change24h: change24h,
+              logoURI: jdhData.logoURI || updatedCoins[jdhIndex].logoURI,
               // Update chart data based on real price
-              chartData: [
-                { value: jdhPriceData.price * 0.98 },
-                { value: jdhPriceData.price * 1.01 },
-                { value: jdhPriceData.price * 0.99 },
-                { value: jdhPriceData.price },
-                { value: jdhPriceData.price * 1.02 },
-                { value: jdhPriceData.price * 0.97 },
-                { value: jdhPriceData.price },
-              ],
+              chartData: jdhData.price ? [
+                { value: jdhData.price * 0.98 },
+                { value: jdhData.price * 1.01 },
+                { value: jdhData.price * 0.99 },
+                { value: jdhData.price },
+                { value: jdhData.price * 1.02 },
+                { value: jdhData.price * 0.97 },
+                { value: jdhData.price },
+              ] : updatedCoins[jdhIndex].chartData,
             };
+          } else {
+            // Fallback to Jupiter Price API
+            const priceData = await getTokenPrices([JDH_MINT]);
+            const jdhPriceData = priceData[JDH_MINT];
+            
+            if (jdhPriceData && jdhPriceData.price > 0) {
+              const priceTHB = convertUsdToThb(jdhPriceData.price);
+              const change24h = jdhPriceData.priceChange24h || 0;
+              
+              updatedCoins[jdhIndex] = {
+                ...updatedCoins[jdhIndex],
+                price: priceTHB,
+                change24h: change24h,
+                chartData: [
+                  { value: jdhPriceData.price * 0.98 },
+                  { value: jdhPriceData.price * 1.01 },
+                  { value: jdhPriceData.price * 0.99 },
+                  { value: jdhPriceData.price },
+                  { value: jdhPriceData.price * 1.02 },
+                  { value: jdhPriceData.price * 0.97 },
+                  { value: jdhPriceData.price },
+                ],
+              };
+            }
           }
         } catch (error) {
           console.warn('Failed to fetch JDH price, using fallback:', error);

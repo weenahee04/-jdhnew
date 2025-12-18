@@ -120,7 +120,41 @@ const fetchJupiterMetadata = async (mintAddress: string): Promise<{ name?: strin
   }
 };
 
-// Fetch full token metadata from DEXScreener (name, symbol, logo)
+// Fetch full token metadata from DEXScreener token-pairs API (better for Solana tokens)
+const fetchDEXScreenerPairsMetadata = async (mintAddress: string): Promise<{ name?: string; symbol?: string; logoURI?: string } | null> => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(
+      `https://api.dexscreener.com/token-pairs/v1/solana/${mintAddress}`,
+      { signal: controller.signal }
+    );
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    
+    // Data is an array of pairs, get the first one (usually the most liquid)
+    if (Array.isArray(data) && data.length > 0) {
+      const pair = data[0];
+      const baseToken = pair.baseToken;
+      return {
+        name: baseToken?.name,
+        symbol: baseToken?.symbol,
+        logoURI: baseToken?.logoURI,
+      };
+    }
+    return null;
+  } catch (error) {
+    // Silently fail for network errors
+    return null;
+  }
+};
+
+// Fetch full token metadata from DEXScreener (name, symbol, logo) - legacy API
 const fetchDEXScreenerMetadata = async (mintAddress: string): Promise<{ name?: string; symbol?: string; logoURI?: string } | null> => {
   try {
     const controller = new AbortController();
@@ -147,7 +181,7 @@ const fetchDEXScreenerMetadata = async (mintAddress: string): Promise<{ name?: s
     }
     return null;
   } catch (error) {
-    console.warn(`Failed to fetch DEXScreener metadata for ${mintAddress}:`, error);
+    // Silently fail for network errors
     return null;
   }
 };

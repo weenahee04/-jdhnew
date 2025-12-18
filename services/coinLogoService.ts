@@ -10,6 +10,8 @@ const CRYPTOCOMPARE_API = 'https://www.cryptocompare.com';
 
 // DEXScreener for BNB Chain tokens
 const DEXSCREENER_API = 'https://api.dexscreener.com/latest/dex/tokens';
+// DEXScreener token-pairs API for Solana tokens (better data)
+const DEXSCREENER_TOKEN_PAIRS_API = 'https://api.dexscreener.com/token-pairs/v1/solana';
 
 // Token symbol to CoinGecko ID mapping
 // Note: Only include tokens that exist in CoinGecko to avoid 404 errors
