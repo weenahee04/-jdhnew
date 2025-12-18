@@ -26,6 +26,7 @@ const ActionModalContent: React.FC<ActionModalProps> = ({ type, onClose, coins, 
   const [txResult, setTxResult] = useState<{ signature?: string; explorer?: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [showCoinSelector, setShowCoinSelector] = useState(false);
+  const coinSelectorRef = useRef<HTMLDivElement>(null);
   
   // Confirmation modals
   const [showSendConfirm, setShowSendConfirm] = useState(false);
