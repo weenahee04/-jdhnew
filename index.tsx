@@ -23,6 +23,21 @@ if (process.env.NODE_ENV === 'production') {
   // Keep console.error and console.warn for debugging
 }
 
+// Global error handler for unhandled promise rejections
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('❌ Unhandled promise rejection:', event.reason);
+  // Prevent default error handling (don't show in console)
+  event.preventDefault();
+  // You can show a toast notification here instead
+});
+
+// Global error handler for errors
+window.addEventListener('error', (event) => {
+  console.error('❌ Global error:', event.error);
+  // Prevent default error handling
+  event.preventDefault();
+});
+
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error("Could not find root element to mount to");
