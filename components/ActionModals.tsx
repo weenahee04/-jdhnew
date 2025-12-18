@@ -227,17 +227,20 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
         amount: Number(amount),
       });
       
-      // Wrap onSend in Promise to ensure errors are caught
-      const result = await Promise.resolve(onSend({ 
-        to: toAddress.trim(), 
-        amount: Number(amount), 
-        symbol: selectedCoin.symbol,
-        mintAddress: mintAddress
-      })).catch((error) => {
-        // Re-throw with better error message
-        console.error('❌ onSend promise rejected:', error);
-        throw error;
-      });
+      // Call onSend and catch any errors
+      let result;
+      try {
+        result = await onSend({ 
+          to: toAddress.trim(), 
+          amount: Number(amount), 
+          symbol: selectedCoin.symbol,
+          mintAddress: mintAddress
+        });
+      } catch (sendError: any) {
+        console.error('❌ onSend error caught:', sendError);
+        // Re-throw to be caught by outer catch
+        throw sendError;
+      }
       
       if (result) {
         setTxResult(result);
