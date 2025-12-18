@@ -27,11 +27,30 @@ export const getTokenPrices = async (mints: string[]): Promise<Record<string, To
   try {
     // Filter out invalid mints (like extremely long SOL addresses)
     const validMints = mints.filter(mint => {
-      // SOL address should be 44 characters, other tokens should be valid base58
-      if (mint.length > 100) {
-        console.warn(`Skipping invalid mint address (too long): ${mint.slice(0, 20)}...`);
+      // Validate mint address format
+      // Solana addresses are base58 encoded and should be 32-44 characters
+      if (!mint || typeof mint !== 'string') {
         return false;
       }
+      
+      // Check length - Solana addresses should be 32-44 characters
+      if (mint.length < 32 || mint.length > 44) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(`Skipping invalid mint address (wrong length ${mint.length}): ${mint.slice(0, 20)}...`);
+        }
+        return false;
+      }
+      
+      // Check for duplicate/repeated addresses (common bug)
+      // If address appears multiple times in the string, it's likely corrupted
+      const firstPart = mint.slice(0, 44);
+      if (mint.length > 44 && mint.includes(firstPart + firstPart)) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(`Skipping corrupted mint address (duplicated): ${mint.slice(0, 20)}...`);
+        }
+        return false;
+      }
+      
       return true;
     });
 
@@ -39,11 +58,61 @@ export const getTokenPrices = async (mints: string[]): Promise<Record<string, To
       return {};
     }
 
+    // Limit number of mints to prevent URL from being too long
+    // Max URL length is typically 2048 characters
+    // Each mint is ~44 chars + comma = ~45 chars
+    // So max ~40 mints per request
+    const maxMints = 40;
+    const mintsToFetch = validMints.slice(0, maxMints);
+    
+    // Build URL and check length
+    const url = `${JUPITER_PRICE_API}/price?ids=${mintsToFetch.join(',')}`;
+    
+    // If URL is too long, use POST instead
+    if (url.length > 2000) {
+      // Use POST for long URLs
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      
+      const response = await fetch(`${JUPITER_PRICE_API}/price`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ids: mintsToFetch }),
+        signal: controller.signal,
+        mode: 'cors',
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        return {};
+      }
+      
+      const data = await response.json();
+      const prices: Record<string, TokenPrice> = {};
+      
+      for (const [mint, priceData] of Object.entries(data.data || {})) {
+        const p = priceData as any;
+        prices[mint] = {
+          id: mint,
+          symbol: p.symbol || 'UNKNOWN',
+          name: p.name || 'Unknown Token',
+          price: p.price || 0,
+          priceChange24h: p.priceChange24h || 0,
+          decimals: p.decimals || 9,
+        };
+      }
+      
+      return prices;
+    }
+
     // Add timeout to prevent hanging requests
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000); // Reduced timeout
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     
-    const response = await fetch(`${JUPITER_PRICE_API}/price?ids=${validMints.join(',')}`, {
+    const response = await fetch(url, {
       signal: controller.signal,
       mode: 'cors', // Handle CORS gracefully
     });
