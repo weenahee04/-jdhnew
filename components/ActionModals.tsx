@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, ErrorInfo } from 'react';
 import { X, ArrowDown, Search, QrCode, Copy, Loader2, CheckCircle, ChevronDown } from 'lucide-react';
 import { Coin } from '../types';
 import Confetti from 'react-confetti';
