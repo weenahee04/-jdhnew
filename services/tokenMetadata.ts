@@ -286,14 +286,22 @@ export const getMultipleTokenMetadata = async (mintAddresses: string[]): Promise
       // Check hardcoded metadata first
       const hardcoded = HARDCODED_TOKEN_METADATA[mint];
       if (hardcoded) {
-        // If logoURI is undefined, try to fetch from DEXScreener (for JDH token)
-        if (!hardcoded.logoURI && mint === '5FaVDbaQtdZ4dizCqZcmpDscByWfcc1ssvu8snbcemjx') {
+        // If logoURI is undefined, try to fetch from Jupiter or DEXScreener
+        if (!hardcoded.logoURI) {
+          // Try Jupiter API first
+          const jupiterData = await fetchJupiterMetadata(mint);
+          if (jupiterData?.logoURI) {
+            metadataMap[mint] = { ...hardcoded, logoURI: jupiterData.logoURI };
+            return;
+          }
+          // Try DEXScreener as fallback
           const logoURI = await fetchDEXScreenerLogo(mint);
           if (logoURI) {
             metadataMap[mint] = { ...hardcoded, logoURI };
             return;
           }
         }
+        // Use hardcoded metadata as-is
         metadataMap[mint] = hardcoded;
         return;
       }
