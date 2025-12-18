@@ -76,14 +76,7 @@ export const StakingPage: React.FC<StakingPageProps> = ({ coins, publicKey }) =>
   const handleConfirmStake = () => {
     if (!selectedPool || !stakeAmount) return;
     
-    // Show API payment modal first
-    setShowApiPaymentModal(true);
-  };
-
-  const handleApiPaymentConfirm = () => {
-    if (!selectedPool || !stakeAmount) return;
-    
-    // Mock stake action after API payment confirmed
+    // Mock stake action
     const amount = parseFloat(stakeAmount);
     const existingStake = myStakes.find(s => s.poolId === selectedPool.id);
     
@@ -102,7 +95,6 @@ export const StakingPage: React.FC<StakingPageProps> = ({ coins, publicKey }) =>
       }]);
     }
     
-    setShowApiPaymentModal(false);
     setShowStakeModal(false);
     setStakeAmount('');
     setSelectedPool(null);

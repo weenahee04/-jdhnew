@@ -928,10 +928,7 @@ const App: React.FC = () => {
                 <div className="w-full hidden md:block">
                    <div className="flex gap-4">
                       {[
-                        { label: 'Send', icon: ArrowRight, action: () => {
-                          setPendingSendAction(() => () => setActiveModal('send'));
-                          setShowApiPaymentModal(true);
-                        }},
+                        { label: 'Send', icon: ArrowRight, action: () => setActiveModal('send') },
                         { label: 'Receive', icon: ArrowRight, action: () => setActiveModal('receive'), rotate: 'rotate-90' },
                         { label: 'Swap', icon: ArrowRight, action: () => setActiveModal('swap') },
                         { label: 'Buy Crypto', icon: ArrowRight, action: () => setShowBuyCrypto(true), rotate: '-rotate-90' }
