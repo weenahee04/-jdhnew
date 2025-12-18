@@ -385,22 +385,27 @@ export const getTokenMetadata = async (mintAddress: string): Promise<TokenMetada
     if (hardcoded) {
       // For JDH token (GkDEVLZP), try multiple sources for logo
       if (mintAddress === 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR') {
-        // Try GMGN.ai first (user requested)
         let logoURI: string | undefined;
         
-        const gmgnLogo = await fetchGMGNLogo(mintAddress);
-        if (gmgnLogo) {
-          logoURI = gmgnLogo;
+        // Try DEXScreener first (most reliable)
+        const dexscreenerPairsData = await fetchDEXScreenerPairsMetadata(mintAddress);
+        if (dexscreenerPairsData?.logoURI) {
+          logoURI = dexscreenerPairsData.logoURI;
+          console.log('✅ JDH Logo from DEXScreener:', logoURI);
         } else {
-          // Fallback to DEXScreener token-pairs API
-          const dexscreenerPairsData = await fetchDEXScreenerPairsMetadata(mintAddress);
-          if (dexscreenerPairsData?.logoURI) {
-            logoURI = dexscreenerPairsData.logoURI;
+          // Try GMGN.ai (user requested)
+          const gmgnLogo = await fetchGMGNLogo(mintAddress);
+          if (gmgnLogo) {
+            logoURI = gmgnLogo;
+            console.log('✅ JDH Logo from GMGN.ai:', logoURI);
           } else {
             // Try Jupiter API as last resort
             const jupiterData = await fetchJupiterMetadata(mintAddress);
             if (jupiterData?.logoURI) {
               logoURI = jupiterData.logoURI;
+              console.log('✅ JDH Logo from Jupiter:', logoURI);
+            } else {
+              console.warn('⚠️ JDH Logo not found from any source');
             }
           }
         }
