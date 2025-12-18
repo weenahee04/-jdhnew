@@ -277,22 +277,35 @@ export const sendToken = async (
     let fromAccount;
     try {
       fromAccount = await getAccount(connection, fromTokenAccount);
+      console.log('✅ Token account found:', {
+        address: fromTokenAccount.toString(),
+        balance: fromAccount.amount.toString(),
+        decimals: tokenDecimals,
+      });
     } catch (e: any) {
       // Token account doesn't exist
+      console.error('❌ Token account not found:', fromTokenAccount.toString());
       throw new Error('คุณไม่มีเหรียญนี้ในกระเป๋า (Token account not found)');
     }
     
-    // Check balance
-    const balance = Number(fromAccount.amount);
-    const amountRaw = Math.floor(amount * Math.pow(10, tokenDecimals));
+    // Check balance - use BigInt for precision
+    const balance = BigInt(fromAccount.amount.toString());
+    const amountRaw = BigInt(Math.floor(amount * Math.pow(10, tokenDecimals)));
     
-    if (balance === 0) {
+    console.log('📊 Balance check:', {
+      balance: balance.toString(),
+      amountRaw: amountRaw.toString(),
+      balanceDecimal: Number(balance) / Math.pow(10, tokenDecimals),
+      amountDecimal: amount,
+    });
+    
+    if (balance === 0n) {
       throw new Error('คุณไม่มีเหรียญนี้ในกระเป๋า (Balance is zero)');
     }
     
     if (balance < amountRaw) {
-      const availableAmount = balance / Math.pow(10, tokenDecimals);
-      throw new Error(`ยอดเงินไม่พอ (Insufficient balance). Available: ${availableAmount.toFixed(4)} ${symbol || 'tokens'}`);
+      const availableAmount = Number(balance) / Math.pow(10, tokenDecimals);
+      throw new Error(`ยอดเงินไม่พอ (Insufficient balance). Available: ${availableAmount.toFixed(4)} tokens`);
     }
     
     // Check if receiver token account exists, create if not

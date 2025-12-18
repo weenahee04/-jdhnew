@@ -697,7 +697,18 @@ const App: React.FC = () => {
           const coin = displayCoins.find(c => c.symbol === symbol);
           const decimals = coin?.decimals;
           
-          console.log('📤 Token transfer:', { symbol, mintAddress: finalMintAddress, amount, decimals });
+          // Double-check balance from blockchain before sending
+          if (coin && coin.balance <= 0) {
+            throw new Error(`คุณไม่มี ${symbol} ในกระเป๋า (Balance: ${coin.balance})`);
+          }
+          
+          console.log('📤 Token transfer:', { 
+            symbol, 
+            mintAddress: finalMintAddress, 
+            amount, 
+            decimals,
+            coinBalance: coin?.balance,
+          });
           
           const result = await transferToken(to.trim(), finalMintAddress, amount, decimals);
           console.log('✅ Token transfer successful:', result);
