@@ -300,8 +300,13 @@ export const getMultipleTokenMetadata = async (mintAddresses: string[]): Promise
 
       const token = tokenList.find(t => t.address.toLowerCase() === mint.toLowerCase());
       if (token) {
-        // If token found but no logo, try DEXScreener
+        // If token found but no logo, try Jupiter API first, then DEXScreener
         if (!token.logoURI) {
+          const jupiterData = await fetchJupiterMetadata(mint);
+          if (jupiterData?.logoURI) {
+            metadataMap[mint] = { ...token, logoURI: jupiterData.logoURI };
+            return;
+          }
           const logoURI = await fetchDEXScreenerLogo(mint);
           if (logoURI) {
             metadataMap[mint] = { ...token, logoURI };
