@@ -6,12 +6,13 @@ const JUPITER_TOKEN_LIST_URL = 'https://token.jup.ag/all';
 // These tokens may not be in Jupiter/Solana token lists but are commonly used
 const HARDCODED_TOKEN_METADATA: Record<string, TokenMetadata> = {
   // GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR is JDH Token
+  // Name and symbol are hardcoded to ensure correct display
   'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR': {
     address: 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR',
-    name: 'JDH Token',
-    symbol: 'JDH',
+    name: 'JDH Token', // Always use this name
+    symbol: 'JDH', // Always use this symbol
     decimals: 9,
-    logoURI: undefined, // Will be fetched from Jupiter API
+    logoURI: undefined, // Will be fetched from GMGN.ai or DEXScreener
     tags: [],
   },
   '5FaVDbaQtdZ4dizCqZcmpDscByWfcc1ssvu8snbcemjx': {
@@ -303,16 +304,16 @@ export const getTokenMetadata = async (mintAddress: string): Promise<TokenMetada
     // ALWAYS check hardcoded metadata first - this is critical for JDH token
     const hardcoded = HARDCODED_TOKEN_METADATA[mintAddress];
     if (hardcoded) {
-      // For JDH token (GkDEVLZP), try GMGN.ai first
+      // For JDH token (GkDEVLZP), try GMGN.ai first for logo
       if (mintAddress === 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR') {
         const gmgnData = await fetchGMGNMetadata(mintAddress);
-        if (gmgnData) {
+        if (gmgnData?.logoURI) {
           return {
             ...hardcoded,
-            // Use GMGN data for name, symbol, and logo
-            name: gmgnData.name || hardcoded.name,
-            symbol: gmgnData.symbol || hardcoded.symbol,
-            logoURI: gmgnData.logoURI || hardcoded.logoURI,
+            // ALWAYS keep hardcoded name and symbol - these are correct
+            name: hardcoded.name, // "JDH Token" - never override
+            symbol: hardcoded.symbol, // "JDH" - never override
+            logoURI: gmgnData.logoURI, // Use GMGN logo
             decimals: hardcoded.decimals,
           };
         }
@@ -419,23 +420,23 @@ export const getMultipleTokenMetadata = async (mintAddresses: string[]): Promise
       // ALWAYS check hardcoded metadata first - this is critical for JDH token
       const hardcoded = HARDCODED_TOKEN_METADATA[mint];
       if (hardcoded) {
-        // For JDH token (GkDEVLZP), try GMGN.ai first, then DEXScreener
+        // For JDH token (GkDEVLZP), try GMGN.ai first for logo, then DEXScreener
         if (mint === 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR') {
-          // Try GMGN.ai first (user requested this source)
+          // Try GMGN.ai first (user requested this source) - mainly for logo
           const gmgnData = await fetchGMGNMetadata(mint);
-          if (gmgnData) {
+          if (gmgnData?.logoURI) {
             metadataMap[mint] = {
               ...hardcoded,
-              // Use GMGN data for name, symbol, and logo
-              name: gmgnData.name || hardcoded.name,
-              symbol: gmgnData.symbol || hardcoded.symbol,
-              logoURI: gmgnData.logoURI || hardcoded.logoURI,
+              // ALWAYS keep hardcoded name and symbol - these are correct
+              name: hardcoded.name, // "JDH Token" - never override
+              symbol: hardcoded.symbol, // "JDH" - never override
+              logoURI: gmgnData.logoURI, // Use GMGN logo
               decimals: hardcoded.decimals,
             };
             return;
           }
           
-          // Fallback to DEXScreener token-pairs API
+          // Fallback to DEXScreener token-pairs API for logo
           const dexscreenerPairsData = await fetchDEXScreenerPairsMetadata(mint);
           if (dexscreenerPairsData?.logoURI) {
             metadataMap[mint] = {
@@ -448,6 +449,10 @@ export const getMultipleTokenMetadata = async (mintAddresses: string[]): Promise
             };
             return;
           }
+          
+          // If no logo found, still return hardcoded metadata with correct name/symbol
+          metadataMap[mint] = hardcoded;
+          return;
         }
         
         // For other hardcoded tokens, try Jupiter API for logo
