@@ -290,15 +290,7 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
                       onChange={(e) => {
                         const value = e.target.value.trim();
                         setToAddress(value);
-                        // Validate address format
-                        if (value && value.length > 0) {
-                          try {
-                            new (window as any).solanaWeb3?.PublicKey(value);
-                            // Valid address
-                          } catch (e) {
-                            // Invalid address format - will show error on submit
-                          }
-                        }
+                        // Address validation will be done on submit
                       }}
                       placeholder="วาง Solana Address ที่นี่ (44 characters)"
                       className="w-full bg-zinc-900 border border-zinc-700 rounded-lg sm:rounded-xl p-2.5 sm:p-3 text-white text-sm sm:text-base focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-zinc-600 font-mono"
