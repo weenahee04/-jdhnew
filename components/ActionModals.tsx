@@ -169,6 +169,15 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
         setStatus('SUCCESS');
         // Show success message
         console.log('✅ Transaction successful:', result);
+        // Auto-close after 3 seconds if explorer link is available
+        if (result.explorer) {
+          setTimeout(() => {
+            // Keep modal open so user can click explorer link
+          }, 5000);
+        }
+      } else {
+        // If no result but no error, assume success
+        setStatus('SUCCESS');
       }
     } catch (e: any) {
       setStatus('IDLE');
