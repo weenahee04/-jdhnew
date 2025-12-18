@@ -349,14 +349,29 @@ export const getMultipleTokenMetadata = async (mintAddresses: string[]): Promise
       // ALWAYS check hardcoded metadata first - this is critical for JDH token
       const hardcoded = HARDCODED_TOKEN_METADATA[mint];
       if (hardcoded) {
-        // Always try to fetch logo from Jupiter API for hardcoded tokens
-        // BUT keep hardcoded name and symbol (don't override with Jupiter data)
+        // For JDH token (GkDEVLZP), use DEXScreener token-pairs API for logo
+        if (mint === 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR') {
+          const dexscreenerPairsData = await fetchDEXScreenerPairsMetadata(mint);
+          if (dexscreenerPairsData?.logoURI) {
+            metadataMap[mint] = {
+              ...hardcoded,
+              // ALWAYS keep hardcoded name and symbol - these are correct
+              name: hardcoded.name, // "JDH Token"
+              symbol: hardcoded.symbol, // "JDH"
+              logoURI: dexscreenerPairsData.logoURI,
+              decimals: hardcoded.decimals,
+            };
+            return;
+          }
+        }
+        
+        // For other hardcoded tokens, try Jupiter API for logo
         const jupiterData = await fetchJupiterMetadata(mint);
         
         // Use hardcoded name and symbol, but try to get logo from Jupiter
         metadataMap[mint] = {
           ...hardcoded,
-          // Keep hardcoded name and symbol - these are correct
+          // ALWAYS keep hardcoded name and symbol - these are correct
           name: hardcoded.name,
           symbol: hardcoded.symbol,
           // Only update logoURI if we get it from Jupiter
