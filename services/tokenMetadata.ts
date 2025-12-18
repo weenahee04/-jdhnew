@@ -331,8 +331,19 @@ export const getTokenMetadata = async (mintAddress: string): Promise<TokenMetada
           logoURI: jupiterData.logoURI,
         };
       }
-      // Try DEXScreener as fallback for logo
+      // Try DEXScreener token-pairs API as fallback for logo (better data for JDH)
       if (!hardcoded.logoURI) {
+        // For JDH token, use token-pairs API first
+        if (mintAddress === 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR') {
+          const dexscreenerPairsData = await fetchDEXScreenerPairsMetadata(mintAddress);
+          if (dexscreenerPairsData?.logoURI) {
+            return {
+              ...hardcoded,
+              logoURI: dexscreenerPairsData.logoURI,
+            };
+          }
+        }
+        // Try regular DEXScreener API
         const logoURI = await fetchDEXScreenerLogo(mintAddress);
         if (logoURI) {
           return { ...hardcoded, logoURI };
