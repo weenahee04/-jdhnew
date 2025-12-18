@@ -24,6 +24,7 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
   const [status, setStatus] = useState<'IDLE' | 'PROCESSING' | 'SUCCESS'>('IDLE');
   const [txResult, setTxResult] = useState<{ signature?: string; explorer?: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showCoinSelector, setShowCoinSelector] = useState(false);
   
   // Confirmation modals
   const [showSendConfirm, setShowSendConfirm] = useState(false);
@@ -37,6 +38,22 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
   const [quote, setQuote] = useState<{ outAmount: string; priceImpact: number; rawOutAmount?: string } | null>(null);
   const [swapping, setSwapping] = useState(false);
   
+  // Filter coins that can actually be sent (SOL and SPL tokens on Solana)
+  // Exclude mock coins like BTC, ETH that aren't on Solana
+  const sendableCoins = React.useMemo(() => {
+    return coins.filter(coin => {
+      // Include SOL
+      if (coin.symbol === 'SOL') return true;
+      // Include SPL tokens (have mint address in coin.id and balance > 0)
+      if (coin.id && coin.id !== 'sol' && coin.id.length > 20) {
+        return true;
+      }
+      // Include JDH and WARP (mock coins but can be sent)
+      if (coin.symbol === 'JDH' || coin.symbol === 'WARP') return true;
+      return false;
+    });
+  }, [coins]);
+
   // Reset state when modal opens/closes
   useEffect(() => {
     if (type) {
@@ -48,8 +65,17 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
         setQuote(null);
         setFromCoin(coins.find(c => c.symbol === 'SOL') || coins[0]);
         setToCoin(coins.find(c => c.symbol === 'USDC') || coins[1] || coins[0]);
+        
+        // Set selectedCoin to first sendable coin (prefer SOL)
+        if (type === 'send') {
+          const solCoin = sendableCoins.find(c => c.symbol === 'SOL');
+          const firstSendable = solCoin || sendableCoins.find(c => c.balance > 0) || sendableCoins[0];
+          if (firstSendable) {
+            setSelectedCoin(firstSendable);
+          }
+        }
     }
-  }, [type, coins]);
+  }, [type, coins, sendableCoins]);
 
   // Fetch swap quote
   useEffect(() => {
@@ -273,12 +299,69 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
             <div className="space-y-3 sm:space-y-4">
                <div>
                   <label className="text-xs text-zinc-500 mb-1 block">เลือกเหรียญ</label>
-                  <div className="bg-zinc-800/50 p-2.5 sm:p-3 rounded-lg sm:rounded-xl flex items-center justify-between border border-white/10">
-                     <div className="flex items-center gap-2">
-                        <img src={`https://ui-avatars.com/api/?name=${selectedCoin.symbol}&background=random`} className="w-5 h-5 sm:w-6 sm:h-6 rounded-full" alt="" />
-                        <span className="font-medium text-white text-sm sm:text-base">{selectedCoin.symbol}</span>
-                     </div>
-                     <ArrowDown size={14} className="sm:w-4 sm:h-4 text-zinc-500" />
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowCoinSelector(!showCoinSelector)}
+                      className="w-full bg-zinc-800/50 p-2.5 sm:p-3 rounded-lg sm:rounded-xl flex items-center justify-between border border-white/10 hover:border-emerald-500/30 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        {selectedCoin.logoURI ? (
+                          <img src={selectedCoin.logoURI} className="w-5 h-5 sm:w-6 sm:h-6 rounded-full" alt={selectedCoin.symbol} />
+                        ) : (
+                          <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: selectedCoin.color }}>
+                            {selectedCoin.symbol[0]}
+                          </div>
+                        )}
+                        <div className="flex flex-col items-start">
+                          <span className="font-medium text-white text-sm sm:text-base">{selectedCoin.symbol}</span>
+                          {selectedCoin.balance > 0 && (
+                            <span className="text-xs text-zinc-400">Balance: {selectedCoin.balance.toFixed(4)}</span>
+                          )}
+                        </div>
+                      </div>
+                      <ChevronDown size={16} className={`text-zinc-500 transition-transform ${showCoinSelector ? 'rotate-180' : ''}`} />
+                    </button>
+                    
+                    {/* Coin Selector Dropdown */}
+                    {showCoinSelector && (
+                      <div className="absolute z-50 w-full mt-2 bg-zinc-900 border border-white/10 rounded-lg sm:rounded-xl shadow-2xl max-h-64 overflow-y-auto">
+                        {sendableCoins.length === 0 ? (
+                          <div className="p-4 text-center text-zinc-400 text-sm">ไม่มีเหรียญที่สามารถโอนได้</div>
+                        ) : (
+                          sendableCoins.map((coin) => (
+                            <button
+                              key={coin.id}
+                              onClick={() => {
+                                setSelectedCoin(coin);
+                                setShowCoinSelector(false);
+                                setAmount(''); // Reset amount when changing coin
+                              }}
+                              className={`w-full p-3 flex items-center gap-3 hover:bg-zinc-800 transition-colors ${
+                                selectedCoin.id === coin.id ? 'bg-emerald-500/10 border-l-2 border-emerald-500' : ''
+                              }`}
+                            >
+                              {coin.logoURI ? (
+                                <img src={coin.logoURI} className="w-8 h-8 rounded-full" alt={coin.symbol} />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ backgroundColor: coin.color }}>
+                                  {coin.symbol[0]}
+                                </div>
+                              )}
+                              <div className="flex-1 text-left">
+                                <div className="font-medium text-white">{coin.symbol}</div>
+                                <div className="text-xs text-zinc-400">{coin.name}</div>
+                              </div>
+                              {coin.balance > 0 && (
+                                <div className="text-right">
+                                  <div className="text-sm font-medium text-white">{coin.balance.toFixed(4)}</div>
+                                  <div className="text-xs text-zinc-400">{coin.symbol}</div>
+                                </div>
+                              )}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
                   </div>
                </div>
                <div>
