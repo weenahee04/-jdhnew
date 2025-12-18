@@ -241,8 +241,35 @@ async function fetchMetadataUri(mint: string): Promise<string | null> {
   return null;
 }
 
+// Hardcoded metadata for specific tokens
+const HARDCODED_METADATA: Record<string, TokenMeta> = {
+  'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR': {
+    mint: 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR',
+    name: 'JDH Token',
+    symbol: 'JDH',
+    decimals: 9,
+    logoURI: undefined,
+    source: 'hardcoded',
+  },
+  '5FaVDbaQtdZ4dizCqZcmpDscByWfcc1ssvu8snbcemjx': {
+    mint: '5FaVDbaQtdZ4dizCqZcmpDscByWfcc1ssvu8snbcemjx',
+    name: 'JDH Token',
+    symbol: 'JDH',
+    decimals: 9,
+    logoURI: undefined,
+    source: 'hardcoded',
+  },
+};
+
 // Main function: Get token metadata
 export async function getTokenMeta(mint: string): Promise<TokenMeta> {
+  // ALWAYS check hardcoded metadata first
+  const hardcoded = HARDCODED_METADATA[mint];
+  if (hardcoded) {
+    // Return hardcoded metadata immediately (don't cache, always return fresh)
+    return hardcoded;
+  }
+
   // Validate mint address
   if (!validateMint(mint)) {
     return {
