@@ -640,34 +640,57 @@ const App: React.FC = () => {
   };
 
   const handleSendAsset = async ({ to, amount, symbol, mintAddress }: { to: string; amount: number; symbol: string; mintAddress?: string }) => {
-    if (!publicKey) throw new Error('กรุณาสร้างหรือเชื่อมกระเป๋าก่อน');
-    if (!amount || amount <= 0) throw new Error('จำนวนไม่ถูกต้อง');
-    
-    // Check if sending SOL or SPL token
-    if (symbol === 'SOL') {
-      const result = await transferSol(to, amount);
-      // Refresh balances after send
-      setTimeout(() => refreshBalances(), 2000);
-      return result;
-    } else {
-      // SPL Token transfer
-      if (!mintAddress) {
-        // Try to find mint address from current coins
-        const coin = displayCoins.find(c => c.symbol === symbol);
-        if (!coin || !coin.id || coin.id === 'sol') {
-          throw new Error('ไม่พบที่อยู่เหรียญ (Mint Address)');
-        }
-        // Use coin.id as mint address (it should be the mint address for tokens)
-        const result = await transferToken(to, coin.id, amount);
+    try {
+      if (!publicKey) {
+        throw new Error('กรุณาสร้างหรือเชื่อมกระเป๋าก่อน');
+      }
+      
+      if (!amount || amount <= 0) {
+        throw new Error('จำนวนไม่ถูกต้อง');
+      }
+      
+      if (!to || to.trim().length === 0) {
+        throw new Error('กรุณากรอกที่อยู่ผู้รับ');
+      }
+      
+      // Check if sending SOL or SPL token
+      if (symbol === 'SOL') {
+        const result = await transferSol(to.trim(), amount);
         // Refresh balances after send
         setTimeout(() => refreshBalances(), 2000);
         return result;
       } else {
-        const result = await transferToken(to, mintAddress, amount);
+        // SPL Token transfer
+        let finalMintAddress = mintAddress;
+        
+        if (!finalMintAddress) {
+          // Try to find mint address from current coins
+          const coin = displayCoins.find(c => c.symbol === symbol);
+          if (!coin || !coin.id || coin.id === 'sol') {
+            throw new Error(`ไม่พบที่อยู่เหรียญ (Mint Address) สำหรับ ${symbol}`);
+          }
+          finalMintAddress = coin.id;
+        }
+        
+        // Validate mint address format
+        if (!finalMintAddress || finalMintAddress.length < 32) {
+          throw new Error(`ที่อยู่เหรียญไม่ถูกต้อง: ${finalMintAddress || 'undefined'}`);
+        }
+        
+        // Get decimals from coin if available
+        const coin = displayCoins.find(c => c.symbol === symbol);
+        const decimals = coin?.decimals;
+        
+        const result = await transferToken(to.trim(), finalMintAddress, amount, decimals);
         // Refresh balances after send
         setTimeout(() => refreshBalances(), 2000);
         return result;
       }
+    } catch (error: any) {
+      // Re-throw with user-friendly message
+      const errorMessage = error?.message || error?.toString() || 'การโอนล้มเหลว';
+      console.error('❌ handleSendAsset error:', error);
+      throw new Error(errorMessage);
     }
   };
 

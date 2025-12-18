@@ -198,36 +198,60 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
     
     setShowSendConfirm(false);
     setStatus('PROCESSING');
+    
     try {
       // Pass mint address for SPL tokens (coin.id should be mint address for tokens)
       const mintAddress = selectedCoin.symbol === 'SOL' ? undefined : selectedCoin.id;
+      
+      // Validate mint address for tokens
+      if (selectedCoin.symbol !== 'SOL' && !mintAddress) {
+        throw new Error(`ไม่พบที่อยู่เหรียญ (Mint Address) สำหรับ ${selectedCoin.symbol}`);
+      }
+      
       const result = await onSend({ 
         to: toAddress.trim(), 
         amount: Number(amount), 
         symbol: selectedCoin.symbol,
         mintAddress: mintAddress
       });
+      
       if (result) {
         setTxResult(result);
         setStatus('SUCCESS');
         // Show success message
         console.log('✅ Transaction successful:', result);
-        // Auto-close after 3 seconds if explorer link is available
-        if (result.explorer) {
-          setTimeout(() => {
-            // Keep modal open so user can click explorer link
-          }, 5000);
-        }
       } else {
         // If no result but no error, assume success
         setStatus('SUCCESS');
       }
     } catch (e: any) {
       setStatus('IDLE');
-      // Show error message
-      const errorMsg = e?.message || 'การโอนล้มเหลว';
+      setShowSendConfirm(false); // Close confirmation modal on error
+      
+      // Extract error message
+      let errorMsg = 'การโอนล้มเหลว';
+      
+      if (e?.message) {
+        errorMsg = e.message;
+      } else if (typeof e === 'string') {
+        errorMsg = e;
+      } else if (e?.toString) {
+        errorMsg = e.toString();
+      }
+      
+      // Show user-friendly error message
       alert(errorMsg);
       console.error('❌ Send error:', e);
+      
+      // Log full error for debugging
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Full error details:', {
+          error: e,
+          coin: selectedCoin,
+          toAddress: toAddress.trim(),
+          amount: Number(amount),
+        });
+      }
     }
   };
 
