@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, TrendingUp, Clock, CheckCircle, AlertCircle, ArrowRight, Zap, Shield } from 'lucide-react';
 import { Coin } from '../types';
-import { ApiPaymentModal } from './ApiPaymentModal';
 
 interface StakingPageProps {
   coins: Coin[];
@@ -61,7 +60,6 @@ export const StakingPage: React.FC<StakingPageProps> = ({ coins, publicKey }) =>
   const [selectedPool, setSelectedPool] = useState<StakingPool | null>(null);
   const [stakeAmount, setStakeAmount] = useState('');
   const [showStakeModal, setShowStakeModal] = useState(false);
-  const [showApiPaymentModal, setShowApiPaymentModal] = useState(false);
   const [myStakes, setMyStakes] = useState<Array<{ poolId: string; amount: number; apy: number; earned: number }>>([
     { poolId: 'sol-staking', amount: 50, apy: 6.5, earned: 3.25 },
     { poolId: 'jdh-staking', amount: 500, apy: 12.0, earned: 60 }

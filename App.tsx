@@ -14,7 +14,6 @@ import { SettingsPage } from './components/SettingsPage';
 import { StakingPage } from './components/StakingPage';
 import { AirdropPage } from './components/AirdropPage';
 import { MiningPage } from './components/MiningPage';
-import { ApiPaymentModal } from './components/ApiPaymentModal';
 import { TermsModal, SecurityWarningModal, WelcomeModal } from './components/SecurityModals';
 import { Eye, EyeOff, Bell, User, Sparkles, Wallet, Settings, ArrowRight, Shield, Globe, Award, ChevronRight, ChevronLeft, LogOut, MessageSquare, Loader2, Copy, Check, ExternalLink } from 'lucide-react';
 import { getMarketInsight } from './services/geminiService';
@@ -133,8 +132,6 @@ const App: React.FC = () => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [transactionHistory, setTransactionHistory] = useState<Transaction[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
-  const [showApiPaymentModal, setShowApiPaymentModal] = useState(false);
-  const [pendingSendAction, setPendingSendAction] = useState<(() => void) | null>(null);
   
   // Security Modals
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -955,8 +952,7 @@ const App: React.FC = () => {
            <div className="md:hidden">
              <QuickActions
                onSendClick={() => {
-                 setPendingSendAction(() => () => setActiveModal('send'));
-                 setShowApiPaymentModal(true);
+                 setActiveModal('send');
                }}
                onReceiveClick={() => setActiveModal('receive')}
                onSwapClick={() => setActiveModal('swap')}
@@ -1564,20 +1560,6 @@ const App: React.FC = () => {
       <TransactionDetailModal tx={selectedTransaction} onClose={() => setSelectedTransaction(null)} />
       <LogoutModal isOpen={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)} onConfirm={handleLogout} />
       
-      {/* API Payment Modal */}
-      <ApiPaymentModal
-        isOpen={showApiPaymentModal}
-        onClose={() => {
-          setShowApiPaymentModal(false);
-          setPendingSendAction(null);
-        }}
-        onConfirm={() => {
-          if (pendingSendAction) {
-            pendingSendAction();
-            setPendingSendAction(null);
-          }
-        }}
-      />
       
       {/* Security Modals - Also render here for APP view */}
       {globalModals}
