@@ -104,8 +104,13 @@ export const sendSol = async (from: Keypair, to: string, amountSol: number) => {
     const amountLamports = Math.floor(amountSol * LAMPORTS_PER_SOL);
     const estimatedFee = 5000; // Estimated transaction fee
     
+    if (balance === 0) {
+      throw new Error('คุณไม่มี SOL ในกระเป๋า (Balance is zero)');
+    }
+    
     if (balance < amountLamports + estimatedFee) {
-      throw new Error('ยอดเงินไม่พอ (Insufficient balance). ต้องมี SOL สำหรับค่าธรรมเนียมด้วย');
+      const availableSOL = (balance - estimatedFee) / LAMPORTS_PER_SOL;
+      throw new Error(`ยอดเงินไม่พอ (Insufficient balance). Available: ${availableSOL.toFixed(4)} SOL (need ${estimatedFee / LAMPORTS_PER_SOL} SOL for fees)`);
     }
 
     // Build transaction
