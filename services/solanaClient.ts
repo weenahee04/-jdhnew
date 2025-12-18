@@ -84,20 +84,70 @@ export const getBalanceSol = async (pubkey: PublicKey) => {
 
 export const sendSol = async (from: Keypair, to: string, amountSol: number) => {
   try {
-    const toPubkey = new PublicKey(to);
+    // Validate inputs
+    if (!to || !amountSol || amountSol <= 0) {
+      throw new Error('ข้อมูลไม่ครบถ้วน');
+    }
+
+    // Validate address format
+    let toPubkey: PublicKey;
+    try {
+      toPubkey = new PublicKey(to);
+    } catch (e) {
+      throw new Error('ที่อยู่ไม่ถูกต้อง (Invalid address)');
+    }
+
+    const connection = getConnection();
+    
+    // Check sender balance
+    const balance = await connection.getBalance(from.publicKey);
+    const amountLamports = Math.floor(amountSol * LAMPORTS_PER_SOL);
+    const estimatedFee = 5000; // Estimated transaction fee
+    
+    if (balance < amountLamports + estimatedFee) {
+      throw new Error('ยอดเงินไม่พอ (Insufficient balance). ต้องมี SOL สำหรับค่าธรรมเนียมด้วย');
+    }
+
+    // Build transaction
     const tx = new Transaction().add(
       SystemProgram.transfer({
         fromPubkey: from.publicKey,
         toPubkey,
-        lamports: Math.floor(amountSol * LAMPORTS_PER_SOL),
+        lamports: amountLamports,
       })
     );
 
-    const sig = await connection.sendTransaction(tx, [from], { skipPreflight: false, preflightCommitment: 'confirmed' });
-    await connection.confirmTransaction(sig, 'confirmed');
+    // Get recent blockhash
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+    tx.recentBlockhash = blockhash;
+    tx.feePayer = from.publicKey;
+
+    // Sign and send transaction
+    tx.sign(from);
+    const sig = await connection.sendRawTransaction(tx.serialize(), {
+      skipPreflight: false,
+      maxRetries: 3,
+    });
+
+    // Confirm transaction
+    await connection.confirmTransaction({
+      signature: sig,
+      blockhash,
+      lastValidBlockHeight,
+    }, 'confirmed');
+    
     return sig;
   } catch (error: any) {
     console.error('Send SOL error:', error);
+    
+    // Handle specific errors
+    if (error.message?.includes('Insufficient')) {
+      throw error;
+    }
+    if (error.message?.includes('Invalid address')) {
+      throw error;
+    }
+    
     // Check if error message contains upgrade/purchase/subscription keywords
     const errorMsg = error?.message || error?.toString() || '';
     if (errorMsg.toLowerCase().includes('upgrade') || 
@@ -108,7 +158,10 @@ export const sendSol = async (from: Keypair, to: string, amountSol: number) => {
         errorMsg.toLowerCase().includes('rate limit')) {
       throw new Error('RPC endpoint error. Please check your RPC configuration or contact support.');
     }
-    throw new Error(error.message || 'การโอน SOL ล้มเหลว');
+    
+    // Return user-friendly error message
+    const userMessage = error.message || 'การโอน SOL ล้มเหลว';
+    throw new Error(userMessage);
   }
 };
 
@@ -176,17 +229,35 @@ export const sendToken = async (
   decimals?: number
 ) => {
   try {
-    const toPubkey = new PublicKey(to);
-    const mintPubkey = new PublicKey(mintAddress);
+    // Validate inputs
+    if (!to || !mintAddress || !amount || amount <= 0) {
+      throw new Error('ข้อมูลไม่ครบถ้วน');
+    }
+
+    // Validate address format
+    let toPubkey: PublicKey;
+    let mintPubkey: PublicKey;
+    try {
+      toPubkey = new PublicKey(to);
+      mintPubkey = new PublicKey(mintAddress);
+    } catch (e) {
+      throw new Error('ที่อยู่ไม่ถูกต้อง (Invalid address)');
+    }
+    
+    const connection = getConnection();
     
     // Get decimals if not provided
     let tokenDecimals = decimals;
     if (!tokenDecimals) {
-      const mintInfo = await getMint(connection, mintPubkey);
-      tokenDecimals = mintInfo.decimals;
+      try {
+        const mintInfo = await getMint(connection, mintPubkey);
+        tokenDecimals = mintInfo.decimals;
+      } catch (e) {
+        throw new Error('ไม่พบข้อมูลเหรียญ (Token not found)');
+      }
     }
     
-    // Get or create associated token accounts
+    // Get associated token accounts
     const fromTokenAccount = await getAssociatedTokenAddress(
       mintPubkey,
       from.publicKey
@@ -197,15 +268,49 @@ export const sendToken = async (
       toPubkey
     );
     
-    // Check if sender has token account
+    // Check if sender has token account and sufficient balance
     try {
-      await getAccount(connection, fromTokenAccount);
-    } catch (e) {
+      const fromAccount = await getAccount(connection, fromTokenAccount);
+      const balance = Number(fromAccount.amount);
+      const amountRaw = Math.floor(amount * Math.pow(10, tokenDecimals));
+      
+      if (balance < amountRaw) {
+        throw new Error('ยอดเงินไม่พอ (Insufficient balance)');
+      }
+    } catch (e: any) {
+      if (e.message?.includes('Insufficient')) {
+        throw e;
+      }
       throw new Error('คุณไม่มีเหรียญนี้ในกระเป๋า');
+    }
+    
+    // Check if receiver token account exists, create if not
+    let needsCreateAccount = false;
+    try {
+      await getAccount(connection, toTokenAccount);
+    } catch (e) {
+      // Token account doesn't exist, will need to create it
+      needsCreateAccount = true;
     }
     
     // Convert amount to smallest unit
     const amountRaw = Math.floor(amount * Math.pow(10, tokenDecimals));
+    
+    // Build transaction
+    const tx = new Transaction();
+    
+    // Add create account instruction if needed
+    if (needsCreateAccount) {
+      const { createAssociatedTokenAccountInstruction } = await import('@solana/spl-token');
+      tx.add(
+        createAssociatedTokenAccountInstruction(
+          from.publicKey, // payer
+          toTokenAccount, // ata
+          toPubkey, // owner
+          mintPubkey // mint
+        )
+      );
+    }
     
     // Create transfer instruction
     const transferInstruction = createTransferInstruction(
@@ -217,17 +322,39 @@ export const sendToken = async (
       TOKEN_PROGRAM_ID
     );
     
-    // Build and send transaction
-    const tx = new Transaction().add(transferInstruction);
-    const sig = await connection.sendTransaction(tx, [from], { 
-      skipPreflight: false, 
-      preflightCommitment: 'confirmed' 
+    tx.add(transferInstruction);
+    
+    // Get recent blockhash
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+    tx.recentBlockhash = blockhash;
+    tx.feePayer = from.publicKey;
+    
+    // Sign and send transaction
+    tx.sign(from);
+    const sig = await connection.sendRawTransaction(tx.serialize(), {
+      skipPreflight: false,
+      maxRetries: 3,
     });
     
-    await connection.confirmTransaction(sig, 'confirmed');
+    // Confirm transaction
+    await connection.confirmTransaction({
+      signature: sig,
+      blockhash,
+      lastValidBlockHeight,
+    }, 'confirmed');
+    
     return sig;
   } catch (error: any) {
     console.error('Token transfer error:', error);
+    
+    // Handle specific errors
+    if (error.message?.includes('Insufficient')) {
+      throw error;
+    }
+    if (error.message?.includes('Invalid address')) {
+      throw error;
+    }
+    
     // Check if error message contains upgrade/purchase/subscription keywords
     const errorMsg = error?.message || error?.toString() || '';
     if (errorMsg.toLowerCase().includes('upgrade') || 
@@ -238,6 +365,9 @@ export const sendToken = async (
         errorMsg.toLowerCase().includes('rate limit')) {
       throw new Error('RPC endpoint error. Please check your RPC configuration or contact support.');
     }
-    throw new Error(error.message || 'การโอนเหรียญล้มเหลว');
+    
+    // Return user-friendly error message
+    const userMessage = error.message || 'การโอนเหรียญล้มเหลว';
+    throw new Error(userMessage);
   }
 };

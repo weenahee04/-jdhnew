@@ -125,23 +125,57 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
 
   const handleSendConfirm = async () => {
     if (!onSend) return;
+    
+    // Validate inputs
+    if (!toAddress || toAddress.trim().length === 0) {
+      alert('กรุณากรอกที่อยู่ผู้รับ');
+      return;
+    }
+    
+    if (!amount || Number(amount) <= 0) {
+      alert('กรุณากรอกจำนวนที่ถูกต้อง');
+      return;
+    }
+    
+    // Validate address format
+    try {
+      // Try to validate as Solana address
+      const { PublicKey } = await import('@solana/web3.js');
+      new PublicKey(toAddress.trim());
+    } catch (e) {
+      alert('ที่อยู่ไม่ถูกต้อง กรุณาตรวจสอบ Solana address');
+      return;
+    }
+    
+    // Validate amount doesn't exceed balance
+    if (Number(amount) > selectedCoin.balance) {
+      alert(`ยอดเงินไม่พอ (Available: ${selectedCoin.balance} ${selectedCoin.symbol})`);
+      return;
+    }
+    
     setShowSendConfirm(false);
     setStatus('PROCESSING');
     try {
       // Pass mint address for SPL tokens (coin.id should be mint address for tokens)
       const mintAddress = selectedCoin.symbol === 'SOL' ? undefined : selectedCoin.id;
       const result = await onSend({ 
-        to: toAddress, 
+        to: toAddress.trim(), 
         amount: Number(amount), 
         symbol: selectedCoin.symbol,
         mintAddress: mintAddress
       });
-      if (result) setTxResult(result);
-      setStatus('SUCCESS');
+      if (result) {
+        setTxResult(result);
+        setStatus('SUCCESS');
+        // Show success message
+        console.log('✅ Transaction successful:', result);
+      }
     } catch (e: any) {
       setStatus('IDLE');
       // Show error message
-      alert(e?.message || 'การโอนล้มเหลว');
+      const errorMsg = e?.message || 'การโอนล้มเหลว';
+      alert(errorMsg);
+      console.error('❌ Send error:', e);
     }
   };
 
@@ -244,14 +278,32 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
                     <input
                       type="text"
                       value={toAddress}
-                      onChange={(e) => setToAddress(e.target.value)}
-                      placeholder="วาง Address ที่นี่"
-                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg sm:rounded-xl p-2.5 sm:p-3 text-white text-sm sm:text-base focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-zinc-600"
+                      onChange={(e) => {
+                        const value = e.target.value.trim();
+                        setToAddress(value);
+                        // Validate address format
+                        if (value && value.length > 0) {
+                          try {
+                            new (window as any).solanaWeb3?.PublicKey(value);
+                            // Valid address
+                          } catch (e) {
+                            // Invalid address format - will show error on submit
+                          }
+                        }
+                      }}
+                      placeholder="วาง Solana Address ที่นี่ (44 characters)"
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg sm:rounded-xl p-2.5 sm:p-3 text-white text-sm sm:text-base focus:outline-none focus:border-emerald-500 transition-colors placeholder:text-zinc-600 font-mono"
                     />
-                    <button className="absolute right-2.5 sm:right-3 top-2.5 sm:top-3 text-emerald-400">
+                    <button 
+                      className="absolute right-2.5 sm:right-3 top-2.5 sm:top-3 text-emerald-400 hover:text-emerald-300 transition-colors"
+                      title="Scan QR Code"
+                    >
                        <QrCode size={18} className="sm:w-5 sm:h-5" />
                     </button>
                   </div>
+                  {toAddress && toAddress.length > 0 && toAddress.length !== 44 && (
+                    <p className="text-xs text-yellow-400 mt-1">⚠️ Solana address ควรมี 44 ตัวอักษร</p>
+                  )}
                </div>
                <div>
                   <label className="text-xs text-zinc-500 mb-1 block">จำนวน (Amount)</label>
