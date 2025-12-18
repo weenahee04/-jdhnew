@@ -284,33 +284,30 @@ export const getMultipleTokenMetadata = async (mintAddresses: string[]): Promise
 
     // Fetch all metadata in parallel
     await Promise.all(mintAddresses.map(async (mint) => {
-      // Check hardcoded metadata first
+      // ALWAYS check hardcoded metadata first - this is critical for JDH token
       const hardcoded = HARDCODED_TOKEN_METADATA[mint];
       if (hardcoded) {
         // Always try to fetch logo from Jupiter API for hardcoded tokens
-        // This ensures we get the latest logo from Jupiter
+        // BUT keep hardcoded name and symbol (don't override with Jupiter data)
         const jupiterData = await fetchJupiterMetadata(mint);
         
-        // Use Jupiter data if available, otherwise use hardcoded
-        if (jupiterData) {
-          metadataMap[mint] = {
-            ...hardcoded,
-            name: jupiterData.name || hardcoded.name,
-            symbol: jupiterData.symbol || hardcoded.symbol,
-            logoURI: jupiterData.logoURI || hardcoded.logoURI,
-            decimals: jupiterData.decimals || hardcoded.decimals,
-          };
-        } else {
-          // If Jupiter doesn't have it, try DEXScreener for logo
-          if (!hardcoded.logoURI) {
-            const logoURI = await fetchDEXScreenerLogo(mint);
-            if (logoURI) {
-              metadataMap[mint] = { ...hardcoded, logoURI };
-              return;
-            }
+        // Use hardcoded name and symbol, but try to get logo from Jupiter
+        metadataMap[mint] = {
+          ...hardcoded,
+          // Keep hardcoded name and symbol - these are correct
+          name: hardcoded.name,
+          symbol: hardcoded.symbol,
+          // Only update logoURI if we get it from Jupiter
+          logoURI: jupiterData?.logoURI || hardcoded.logoURI,
+          decimals: jupiterData?.decimals || hardcoded.decimals,
+        };
+        
+        // If still no logo, try DEXScreener as fallback
+        if (!metadataMap[mint].logoURI) {
+          const logoURI = await fetchDEXScreenerLogo(mint);
+          if (logoURI) {
+            metadataMap[mint].logoURI = logoURI;
           }
-          // Use hardcoded metadata as-is
-          metadataMap[mint] = hardcoded;
         }
         return;
       }
@@ -353,9 +350,10 @@ export const getMultipleTokenMetadata = async (mintAddresses: string[]): Promise
     return metadataMap;
   } catch (error) {
     console.error('Error fetching multiple token metadata:', error);
-    // Return fallback metadata with hardcoded check
+    // Return fallback metadata with hardcoded check - ALWAYS check hardcoded first
     const metadataMap: Record<string, TokenMetadata> = {};
     mintAddresses.forEach(mint => {
+      // ALWAYS check hardcoded metadata first, even in error case
       const hardcoded = HARDCODED_TOKEN_METADATA[mint];
       if (hardcoded) {
         metadataMap[mint] = hardcoded;
