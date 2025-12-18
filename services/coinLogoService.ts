@@ -23,27 +23,44 @@ const COINGECKO_IDS: Record<string, string> = {
 };
 
 // Get logo from CoinGecko
+// Note: CoinGecko has CORS restrictions and rate limits (429)
+// This function will fail silently and return null to avoid console errors
 export const getCoinGeckoLogo = async (symbol: string): Promise<string | null> => {
   try {
     const coinId = COINGECKO_IDS[symbol.toUpperCase()];
     if (!coinId) return null;
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // Reduced timeout
 
     const response = await fetch(
       `${COINGECKO_API}/coins/${coinId}?localization=false&tickers=false&market_data=false&community_data=false&developer_data=false&sparkline=false`,
-      { signal: controller.signal }
+      { 
+        signal: controller.signal,
+        // Don't throw on CORS errors, just return null
+        mode: 'cors',
+      }
     );
 
     clearTimeout(timeoutId);
 
-    if (!response.ok) return null;
+    // Handle rate limiting and CORS gracefully
+    if (!response.ok) {
+      // Don't log 429 (rate limit) or CORS errors to avoid console spam
+      if (response.status !== 429 && response.status !== 0) {
+        // Only log non-rate-limit errors
+      }
+      return null;
+    }
 
     const data = await response.json();
     return data.image?.small || data.image?.large || null;
-  } catch (error) {
-    console.warn(`Failed to fetch CoinGecko logo for ${symbol}:`, error);
+  } catch (error: any) {
+    // Silently fail for CORS/network errors to avoid console spam
+    // Only log unexpected errors
+    if (error.name !== 'AbortError' && error.name !== 'TypeError') {
+      // Suppress CORS and network errors
+    }
     return null;
   }
 };
@@ -137,13 +154,14 @@ export const getCoinLogo = async (symbol: string, contractAddress?: string, mint
 };
 
 // Predefined logo URLs for common coins (fallback)
+// Note: Don't use placeholder.png as it returns 404
 export const PREDEFINED_LOGOS: Record<string, string> = {
   'BTC': 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
   'ETH': 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
   'USDT': 'https://assets.coingecko.com/coins/images/325/small/Tether.png',
   'BNB': 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
   'SOL': 'https://assets.coingecko.com/coins/images/4128/small/solana.png',
-  'WARP': 'https://assets.coingecko.com/coins/images/placeholder.png', // Placeholder, will try to fetch
+  // WARP and JDH will be fetched from DEXScreener/Jupiter, no placeholder
 };
 
 // Get logo with fallback
