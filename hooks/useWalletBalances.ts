@@ -152,11 +152,25 @@ export const useWalletBalances = (publicKey: PublicKey | null) => {
         
         // Only add token if we have price data OR if balance > 0 (show even without price)
         if (token.uiAmount > 0) {
-          // Use fallback price if not available
-          const effectivePrice = priceInfo?.price || 0;
-          const effectiveChange24h = priceInfo?.priceChange24h || 0;
+          // For JDH token (GkDEVLZP), fetch price from DEXScreener token-pairs API
+          let effectivePrice = priceInfo?.price || 0;
+          let effectiveChange24h = priceInfo?.priceChange24h || 0;
+          
+          if (token.mint === 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR') {
+            try {
+              const { getJDHPrice } = await import('../services/priceService');
+              const jdhPriceData = await getJDHPrice();
+              if (jdhPriceData && jdhPriceData.price > 0) {
+                effectivePrice = jdhPriceData.price;
+                effectiveChange24h = jdhPriceData.priceChange24h || 0;
+              }
+            } catch (error) {
+              // Fallback to existing priceInfo
+            }
+          }
           
           // Priority: metadata > priceInfo > fallback
+          // ALWAYS use metadata name and symbol if available (for JDH token)
           const effectiveSymbol = meta?.symbol || priceInfo?.symbol || token.symbol || token.mint.slice(0, 4).toUpperCase();
           const effectiveName = meta?.name || priceInfo?.name || token.name || `Token ${token.mint.slice(0, 8)}`;
           const logoURI = meta?.logoURI;
