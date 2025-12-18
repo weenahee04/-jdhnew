@@ -11,7 +11,8 @@ export const MOCK_COINS: Coin[] = [
     balanceUsd: 105750,
     color: '#F7931A',
     about: 'Bitcoin is the first successful internet money based on peer-to-peer technology.',
-    chartData: [{ value: 2300000 }, { value: 2320000 }, { value: 2310000 }, { value: 2340000 }, { value: 2350000 }, { value: 2380000 }, { value: 2350000 }]
+    chartData: [{ value: 2300000 }, { value: 2320000 }, { value: 2310000 }, { value: 2340000 }, { value: 2350000 }, { value: 2380000 }, { value: 2350000 }],
+    logoURI: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png'
   },
   {
     id: 'ethereum',
@@ -23,7 +24,8 @@ export const MOCK_COINS: Coin[] = [
     balanceUsd: 102000,
     color: '#627EEA',
     about: 'Ethereum is a decentralized platform that runs smart contracts.',
-    chartData: [{ value: 87000 }, { value: 86000 }, { value: 86500 }, { value: 85500 }, { value: 85000 }, { value: 84500 }, { value: 85000 }]
+    chartData: [{ value: 87000 }, { value: 86000 }, { value: 86500 }, { value: 85500 }, { value: 85000 }, { value: 84500 }, { value: 85000 }],
+    logoURI: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png'
   },
   {
     id: 'tether',
@@ -35,7 +37,8 @@ export const MOCK_COINS: Coin[] = [
     balanceUsd: 172500,
     color: '#26A17B',
     about: 'Tether is a stablecoin pegged to the US Dollar.',
-    chartData: [{ value: 34.4 }, { value: 34.5 }, { value: 34.5 }, { value: 34.49 }, { value: 34.5 }, { value: 34.51 }, { value: 34.5 }]
+    chartData: [{ value: 34.4 }, { value: 34.5 }, { value: 34.5 }, { value: 34.49 }, { value: 34.5 }, { value: 34.51 }, { value: 34.5 }],
+    logoURI: 'https://assets.coingecko.com/coins/images/325/small/Tether.png'
   },
   {
     id: 'bnb',
@@ -47,7 +50,8 @@ export const MOCK_COINS: Coin[] = [
     balanceUsd: 9000,
     color: '#F3BA2F',
     about: 'BNB is the cryptocurrency coin that powers the Binance ecosystem.',
-    chartData: [{ value: 17000 }, { value: 17200 }, { value: 17500 }, { value: 17800 }, { value: 18000 }, { value: 18200 }, { value: 18000 }]
+    chartData: [{ value: 17000 }, { value: 17200 }, { value: 17500 }, { value: 17800 }, { value: 18000 }, { value: 18200 }, { value: 18000 }],
+    logoURI: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png'
   },
   {
     id: 'solana',
@@ -59,7 +63,8 @@ export const MOCK_COINS: Coin[] = [
     balanceUsd: 35000,
     color: '#14F195',
     about: 'Solana is a high-performance blockchain supporting builders around the world.',
-    chartData: [{ value: 3100 }, { value: 3200 }, { value: 3350 }, { value: 3400 }, { value: 3500 }, { value: 3600 }, { value: 3500 }]
+    chartData: [{ value: 3100 }, { value: 3200 }, { value: 3350 }, { value: 3400 }, { value: 3500 }, { value: 3600 }, { value: 3500 }],
+    logoURI: 'https://assets.coingecko.com/coins/images/4128/small/solana.png'
   },
   {
     id: 'warp',
