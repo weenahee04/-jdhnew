@@ -241,7 +241,87 @@ async function fetchMetadataUri(mint: string): Promise<string | null> {
   return null;
 }
 
-// Fetch logo from DEXScreener token-pairs API
+// Fetch logo from GMGN.ai (for JDH token)
+async function fetchGMGNLogo(mint: string): Promise<string | null> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    // GMGN.ai API endpoints to try
+    const apiEndpoints = [
+      `https://gmgn.ai/api/sol/token/${mint}`,
+      `https://api.gmgn.ai/sol/token/${mint}`,
+      `https://gmgn.ai/api/v1/sol/token/${mint}`,
+      `https://gmgn.ai/api/sol/token/solscan_${mint}`,
+    ];
+
+    for (const apiUrl of apiEndpoints) {
+      try {
+        const response = await fetch(apiUrl, {
+          signal: controller.signal,
+          headers: {
+            'Accept': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const token = data.data || data.token || data.result || data;
+          if (token) {
+            const logoURI = token.logo || token.logo_uri || token.logoURI || token.image || token.image_url;
+            if (logoURI) {
+              return logoURI;
+            }
+          }
+        }
+      } catch (err) {
+        continue;
+      }
+    }
+
+    // If API doesn't work, try to extract from HTML page using CORS proxy
+    try {
+      const pageUrl = `https://gmgn.ai/sol/token/solscan_${mint}`;
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(pageUrl)}`;
+      
+      const proxyResponse = await fetch(proxyUrl, {
+        signal: controller.signal,
+      });
+      
+      if (proxyResponse.ok) {
+        const proxyData = await proxyResponse.json();
+        const html = proxyData.contents;
+        
+        // Try to extract logo URL from HTML
+        const imgMatch = html.match(/<img[^>]+src=["']([^"']*logo[^"']*|https?:\/\/[^"']*\.(?:png|jpg|jpeg|svg|webp))[^"']*["']/i);
+        if (imgMatch && imgMatch[1]) {
+          return imgMatch[1];
+        }
+        
+        // Try JSON-LD
+        const jsonLdMatch = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i);
+        if (jsonLdMatch) {
+          try {
+            const jsonData = JSON.parse(jsonLdMatch[1]);
+            if (jsonData.image || jsonData.logo) {
+              return jsonData.image || jsonData.logo;
+            }
+          } catch (e) {
+            // Continue
+          }
+        }
+      }
+    } catch (error) {
+      // Silently fail
+    }
+
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
+// Fetch logo from DEXScreener token-pairs API (fallback)
 async function fetchDEXScreenerLogo(mint: string): Promise<string | null> {
   try {
     const controller = new AbortController();
@@ -284,8 +364,16 @@ export async function getTokenMeta(mint: string): Promise<TokenMeta> {
   // ALWAYS check hardcoded metadata first
   const hardcoded = HARDCODED_METADATA[mint];
   if (hardcoded) {
-    // For JDH token, try to fetch logo from DEXScreener
+    // For JDH token, try to fetch logo from GMGN.ai first (user requested)
     if (mint === 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR' || mint === '5FaVDbaQtdZ4dizCqZcmpDscByWfcc1ssvu8snbcemjx') {
+      const gmgnLogo = await fetchGMGNLogo(mint);
+      if (gmgnLogo) {
+        return {
+          ...hardcoded,
+          logoURI: gmgnLogo,
+        };
+      }
+      // Fallback to DEXScreener if GMGN fails
       const logoURI = await fetchDEXScreenerLogo(mint);
       if (logoURI) {
         return {

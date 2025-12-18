@@ -187,9 +187,9 @@ const fetchDEXScreenerMetadata = async (mintAddress: string): Promise<{ name?: s
   }
 };
 
-// Fetch token metadata from GMGN.ai (for JDH token)
-// GMGN.ai provides token data - try to fetch from their API
-const fetchGMGNMetadata = async (mintAddress: string): Promise<{ name?: string; symbol?: string; logoURI?: string } | null> => {
+// Fetch token logo from GMGN.ai (for JDH token)
+// GMGN.ai provides token data - try to fetch logo from their page
+const fetchGMGNLogo = async (mintAddress: string): Promise<string | null> => {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
@@ -218,12 +218,11 @@ const fetchGMGNMetadata = async (mintAddress: string): Promise<{ name?: string; 
           // Parse different possible response structures
           const token = data.data || data.token || data.result || data;
           
-          if (token && (token.name || token.symbol || token.logo)) {
-            return {
-              name: token.name || token.token_name || token.tokenName,
-              symbol: token.symbol || token.token_symbol || token.tokenSymbol,
-              logoURI: token.logo || token.logo_uri || token.logoURI || token.image || token.image_url,
-            };
+          if (token) {
+            const logoURI = token.logo || token.logo_uri || token.logoURI || token.image || token.image_url;
+            if (logoURI) {
+              return logoURI;
+            }
           }
         }
       } catch (err) {
@@ -232,12 +231,61 @@ const fetchGMGNMetadata = async (mintAddress: string): Promise<{ name?: string; 
       }
     }
 
-    // If direct API doesn't work, return null (will fallback to DEXScreener)
-    // Note: GMGN.ai may require authentication or have CORS restrictions
-    // In production, consider using a backend proxy for GMGN.ai
+    // If API doesn't work, try to extract from HTML page using CORS proxy
+    // Note: This may not work due to CORS, but worth trying
+    try {
+      // Use a CORS proxy to fetch the page
+      const pageUrl = `https://gmgn.ai/sol/token/solscan_${mintAddress}`;
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(pageUrl)}`;
+      
+      const proxyResponse = await fetch(proxyUrl, {
+        signal: controller.signal,
+      });
+      
+      if (proxyResponse.ok) {
+        const proxyData = await proxyResponse.json();
+        const html = proxyData.contents;
+        
+        // Try to extract logo URL from HTML
+        // Look for img tags with token logo or meta tags
+        const imgMatch = html.match(/<img[^>]+src=["']([^"']*logo[^"']*|https?:\/\/[^"']*\.(?:png|jpg|jpeg|svg|webp))[^"']*["']/i);
+        if (imgMatch && imgMatch[1]) {
+          return imgMatch[1];
+        }
+        
+        // Try to find logo in JSON-LD or script tags
+        const jsonLdMatch = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i);
+        if (jsonLdMatch) {
+          try {
+            const jsonData = JSON.parse(jsonLdMatch[1]);
+            if (jsonData.image || jsonData.logo) {
+              return jsonData.image || jsonData.logo;
+            }
+          } catch (e) {
+            // Continue to next method
+          }
+        }
+      }
+    } catch (error) {
+      // Silently fail
+    }
+
     return null;
   } catch (error) {
     // Silently fail for network errors
+    return null;
+  }
+};
+
+// Fetch token metadata from GMGN.ai (for JDH token) - legacy function
+const fetchGMGNMetadata = async (mintAddress: string): Promise<{ name?: string; symbol?: string; logoURI?: string } | null> => {
+  try {
+    const logoURI = await fetchGMGNLogo(mintAddress);
+    if (logoURI) {
+      return { logoURI };
+    }
+    return null;
+  } catch (error) {
     return null;
   }
 };
@@ -304,22 +352,30 @@ export const getTokenMetadata = async (mintAddress: string): Promise<TokenMetada
     // ALWAYS check hardcoded metadata first - this is critical for JDH token
     const hardcoded = HARDCODED_TOKEN_METADATA[mintAddress];
     if (hardcoded) {
-      // For JDH token (GkDEVLZP), try GMGN.ai first for logo
+      // For JDH token (GkDEVLZP), try GMGN.ai first for logo (user requested)
       if (mintAddress === 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR') {
-        const gmgnData = await fetchGMGNMetadata(mintAddress);
-        if (gmgnData?.logoURI) {
+        const gmgnLogo = await fetchGMGNLogo(mintAddress);
+        if (gmgnLogo) {
           return {
             ...hardcoded,
             // ALWAYS keep hardcoded name and symbol - these are correct
             name: hardcoded.name, // "JDH Token" - never override
             symbol: hardcoded.symbol, // "JDH" - never override
-            logoURI: gmgnData.logoURI, // Use GMGN logo
+            logoURI: gmgnLogo, // Use GMGN logo
             decimals: hardcoded.decimals,
+          };
+        }
+        // Fallback to DEXScreener token-pairs API if GMGN fails
+        const dexscreenerPairsData = await fetchDEXScreenerPairsMetadata(mintAddress);
+        if (dexscreenerPairsData?.logoURI) {
+          return {
+            ...hardcoded,
+            logoURI: dexscreenerPairsData.logoURI,
           };
         }
       }
       
-      // Always try to fetch logo from Jupiter API for hardcoded tokens
+      // For other hardcoded tokens, try Jupiter API for logo
       // BUT keep hardcoded name and symbol (don't override)
       const jupiterData = await fetchJupiterMetadata(mintAddress);
       if (jupiterData?.logoURI) {
@@ -331,19 +387,8 @@ export const getTokenMetadata = async (mintAddress: string): Promise<TokenMetada
           logoURI: jupiterData.logoURI,
         };
       }
-      // Try DEXScreener token-pairs API as fallback for logo (better data for JDH)
+      // Try DEXScreener as fallback for logo
       if (!hardcoded.logoURI) {
-        // For JDH token, use token-pairs API first
-        if (mintAddress === 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR') {
-          const dexscreenerPairsData = await fetchDEXScreenerPairsMetadata(mintAddress);
-          if (dexscreenerPairsData?.logoURI) {
-            return {
-              ...hardcoded,
-              logoURI: dexscreenerPairsData.logoURI,
-            };
-          }
-        }
-        // Try regular DEXScreener API
         const logoURI = await fetchDEXScreenerLogo(mintAddress);
         if (logoURI) {
           return { ...hardcoded, logoURI };
@@ -431,17 +476,17 @@ export const getMultipleTokenMetadata = async (mintAddresses: string[]): Promise
       // ALWAYS check hardcoded metadata first - this is critical for JDH token
       const hardcoded = HARDCODED_TOKEN_METADATA[mint];
       if (hardcoded) {
-        // For JDH token (GkDEVLZP), try GMGN.ai first for logo, then DEXScreener
+        // For JDH token (GkDEVLZP), try GMGN.ai first for logo (user requested)
         if (mint === 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR') {
           // Try GMGN.ai first (user requested this source) - mainly for logo
-          const gmgnData = await fetchGMGNMetadata(mint);
-          if (gmgnData?.logoURI) {
+          const gmgnLogo = await fetchGMGNLogo(mint);
+          if (gmgnLogo) {
             metadataMap[mint] = {
               ...hardcoded,
               // ALWAYS keep hardcoded name and symbol - these are correct
               name: hardcoded.name, // "JDH Token" - never override
               symbol: hardcoded.symbol, // "JDH" - never override
-              logoURI: gmgnData.logoURI, // Use GMGN logo
+              logoURI: gmgnLogo, // Use GMGN logo
               decimals: hardcoded.decimals,
             };
             return;
