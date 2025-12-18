@@ -290,11 +290,11 @@ export const sendToken = async (
     
     // Check balance - use BigInt for precision
     const balance = BigInt(fromAccount.amount.toString());
-    const amountRaw = BigInt(Math.floor(amount * Math.pow(10, tokenDecimals)));
+    const amountRawBigInt = BigInt(Math.floor(amount * Math.pow(10, tokenDecimals)));
     
     console.log('📊 Balance check:', {
       balance: balance.toString(),
-      amountRaw: amountRaw.toString(),
+      amountRaw: amountRawBigInt.toString(),
       balanceDecimal: Number(balance) / Math.pow(10, tokenDecimals),
       amountDecimal: amount,
     });
@@ -303,7 +303,7 @@ export const sendToken = async (
       throw new Error('คุณไม่มีเหรียญนี้ในกระเป๋า (Balance is zero)');
     }
     
-    if (balance < amountRaw) {
+    if (balance < amountRawBigInt) {
       const availableAmount = Number(balance) / Math.pow(10, tokenDecimals);
       throw new Error(`ยอดเงินไม่พอ (Insufficient balance). Available: ${availableAmount.toFixed(4)} tokens`);
     }
@@ -317,8 +317,8 @@ export const sendToken = async (
       needsCreateAccount = true;
     }
     
-    // Convert amount to smallest unit
-    const amountRaw = Math.floor(amount * Math.pow(10, tokenDecimals));
+    // Convert amount to smallest unit (use the same value we calculated above)
+    const amountRaw = Number(amountRawBigInt);
     
     // Build transaction
     const tx = new Transaction();
