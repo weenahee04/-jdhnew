@@ -19,6 +19,7 @@ const COINGECKO_IDS: Record<string, string> = {
   'BNB': 'binancecoin',
   'SOL': 'solana',
   'WARP': 'warp', // May not exist, will try
+  'JDH': 'jdh', // May not exist, will try DEXScreener
 };
 
 // Get logo from CoinGecko
@@ -86,12 +87,46 @@ export const getCoinGeckoCDNLogo = (symbol: string, size: 'small' | 'large' = 's
   return null;
 };
 
+// Get logo from DEXScreener for Solana tokens
+export const getDEXScreenerLogoSolana = async (mintAddress: string): Promise<string | null> => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(
+      `${DEXSCREENER_API}/${mintAddress}`,
+      { signal: controller.signal }
+    );
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    if (data.pairs && data.pairs.length > 0) {
+      const pair = data.pairs[0];
+      return pair.baseToken?.logoURI || null;
+    }
+
+    return null;
+  } catch (error) {
+    console.warn(`Failed to fetch DEXScreener logo for Solana token ${mintAddress}:`, error);
+    return null;
+  }
+};
+
 // Main function: Get logo for a coin
-export const getCoinLogo = async (symbol: string, contractAddress?: string): Promise<string | null> => {
-  // For BNB Chain tokens, try DEXScreener first
+export const getCoinLogo = async (symbol: string, contractAddress?: string, mintAddress?: string): Promise<string | null> => {
+  // For BNB Chain tokens (0x...), try DEXScreener first
   if (contractAddress && contractAddress.startsWith('0x')) {
     const dexscreenerLogo = await getDEXScreenerLogo(contractAddress);
     if (dexscreenerLogo) return dexscreenerLogo;
+  }
+
+  // For Solana tokens (mint address), try DEXScreener
+  if (mintAddress && !mintAddress.startsWith('0x')) {
+    const dexscreenerLogoSolana = await getDEXScreenerLogoSolana(mintAddress);
+    if (dexscreenerLogoSolana) return dexscreenerLogoSolana;
   }
 
   // Try CoinGecko
@@ -112,12 +147,26 @@ export const PREDEFINED_LOGOS: Record<string, string> = {
 };
 
 // Get logo with fallback
-export const getCoinLogoWithFallback = async (symbol: string, contractAddress?: string): Promise<string | null> => {
+export const getCoinLogoWithFallback = async (symbol: string, contractAddress?: string, mintAddress?: string): Promise<string | null> => {
   // Try to fetch from API
-  const logo = await getCoinLogo(symbol, contractAddress);
+  const logo = await getCoinLogo(symbol, contractAddress, mintAddress);
   if (logo) return logo;
 
   // Fallback to predefined logos
   return PREDEFINED_LOGOS[symbol.toUpperCase()] || null;
+};
+
+// Get JDH token logo specifically
+export const getJDHLogo = async (): Promise<string | null> => {
+  const JDH_MINT = '5FaVDbaQtdZ4dizCqZcmpDscByWfcc1ssvu8snbcemjx';
+  // Try DEXScreener first (most reliable for Solana tokens)
+  const dexscreenerLogo = await getDEXScreenerLogoSolana(JDH_MINT);
+  if (dexscreenerLogo) return dexscreenerLogo;
+  
+  // Try CoinGecko as fallback
+  const coingeckoLogo = await getCoinGeckoLogo('JDH');
+  if (coingeckoLogo) return coingeckoLogo;
+  
+  return null;
 };
 

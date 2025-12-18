@@ -13,6 +13,14 @@ const HARDCODED_TOKEN_METADATA: Record<string, TokenMetadata> = {
     logoURI: 'https://static.okx.com/cdn/oksupport/okx/logo.png', // OKX official logo
     tags: [],
   },
+  '5FaVDbaQtdZ4dizCqZcmpDscByWfcc1ssvu8snbcemjx': {
+    address: '5FaVDbaQtdZ4dizCqZcmpDscByWfcc1ssvu8snbcemjx',
+    name: 'JDH Token',
+    symbol: 'JDH',
+    decimals: 9,
+    logoURI: undefined, // Will be fetched from DEXScreener or Jupiter
+    tags: [],
+  },
 };
 
 export interface TokenMetadata {
@@ -27,6 +35,34 @@ export interface TokenMetadata {
 let cachedTokenList: TokenMetadata[] | null = null;
 let lastFetchTime: number = 0;
 const CACHE_DURATION = 1000 * 60 * 60; // 1 hour
+
+// Fetch logo from DEXScreener for Solana tokens
+const fetchDEXScreenerLogo = async (mintAddress: string): Promise<string | null> => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(
+      `https://api.dexscreener.com/latest/dex/tokens/${mintAddress}`,
+      { signal: controller.signal }
+    );
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    if (data.pairs && data.pairs.length > 0) {
+      const pair = data.pairs[0];
+      return pair.baseToken?.logoURI || null;
+    }
+
+    return null;
+  } catch (error) {
+    console.warn(`Failed to fetch DEXScreener logo for ${mintAddress}:`, error);
+    return null;
+  }
+};
 
 // Fetch token list from Jupiter (more comprehensive)
 export const fetchTokenList = async (): Promise<TokenMetadata[]> => {
@@ -90,6 +126,13 @@ export const getTokenMetadata = async (mintAddress: string): Promise<TokenMetada
     // Check hardcoded metadata first
     const hardcoded = HARDCODED_TOKEN_METADATA[mintAddress];
     if (hardcoded) {
+      // If logoURI is undefined, try to fetch from DEXScreener (for JDH token)
+      if (!hardcoded.logoURI && mintAddress === '5FaVDbaQtdZ4dizCqZcmpDscByWfcc1ssvu8snbcemjx') {
+        const logoURI = await fetchDEXScreenerLogo(mintAddress);
+        if (logoURI) {
+          return { ...hardcoded, logoURI };
+        }
+      }
       return hardcoded;
     }
 
@@ -97,16 +140,26 @@ export const getTokenMetadata = async (mintAddress: string): Promise<TokenMetada
     const token = tokenList.find(t => t.address.toLowerCase() === mintAddress.toLowerCase());
     
     if (token) {
+      // If token found but no logo, try DEXScreener
+      if (!token.logoURI) {
+        const logoURI = await fetchDEXScreenerLogo(mintAddress);
+        if (logoURI) {
+          return { ...token, logoURI };
+        }
+      }
       return token;
     }
 
+    // If not found, try DEXScreener for logo
+    const logoURI = await fetchDEXScreenerLogo(mintAddress);
+    
     // If not found, return basic metadata
     return {
       address: mintAddress,
       name: `Token ${mintAddress.slice(0, 8)}`,
       symbol: mintAddress.slice(0, 4).toUpperCase(),
       decimals: 9,
-      logoURI: undefined,
+      logoURI: logoURI || undefined,
     };
   } catch (error) {
     console.error('Error fetching token metadata:', error);
@@ -131,27 +184,46 @@ export const getMultipleTokenMetadata = async (mintAddresses: string[]): Promise
     const tokenList = await fetchTokenList();
     const metadataMap: Record<string, TokenMetadata> = {};
 
-    mintAddresses.forEach(mint => {
+    // Fetch all metadata in parallel
+    await Promise.all(mintAddresses.map(async (mint) => {
       // Check hardcoded metadata first
       const hardcoded = HARDCODED_TOKEN_METADATA[mint];
       if (hardcoded) {
+        // If logoURI is undefined, try to fetch from DEXScreener (for JDH token)
+        if (!hardcoded.logoURI && mint === '5FaVDbaQtdZ4dizCqZcmpDscByWfcc1ssvu8snbcemjx') {
+          const logoURI = await fetchDEXScreenerLogo(mint);
+          if (logoURI) {
+            metadataMap[mint] = { ...hardcoded, logoURI };
+            return;
+          }
+        }
         metadataMap[mint] = hardcoded;
         return;
       }
 
       const token = tokenList.find(t => t.address.toLowerCase() === mint.toLowerCase());
       if (token) {
+        // If token found but no logo, try DEXScreener
+        if (!token.logoURI) {
+          const logoURI = await fetchDEXScreenerLogo(mint);
+          if (logoURI) {
+            metadataMap[mint] = { ...token, logoURI };
+            return;
+          }
+        }
         metadataMap[mint] = token;
       } else {
+        // Try DEXScreener for logo
+        const logoURI = await fetchDEXScreenerLogo(mint);
         metadataMap[mint] = {
           address: mint,
           name: `Token ${mint.slice(0, 8)}`,
           symbol: mint.slice(0, 4).toUpperCase(),
           decimals: 9,
-          logoURI: undefined,
+          logoURI: logoURI || undefined,
         };
       }
-    });
+    }));
 
     return metadataMap;
   } catch (error) {
