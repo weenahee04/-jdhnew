@@ -201,8 +201,22 @@ const ActionModalContent: React.FC<ActionModalProps> = ({ type, onClose, coins, 
     }
     
     // Validate amount doesn't exceed balance
-    if (Number(amount) > selectedCoin.balance) {
-      alert(`ยอดเงินไม่พอ (Available: ${selectedCoin.balance} ${selectedCoin.symbol})`);
+    // Add small buffer for transaction fees (0.0001 for tokens, 0.001 SOL)
+    const feeBuffer = selectedCoin.symbol === 'SOL' ? 0.001 : 0.0001;
+    const maxAmount = selectedCoin.balance - feeBuffer;
+    
+    if (Number(amount) > maxAmount) {
+      alert(`ยอดเงินไม่พอ (Available: ${selectedCoin.balance.toFixed(4)} ${selectedCoin.symbol}, need ${feeBuffer} for fees)`);
+      return;
+    }
+    
+    if (Number(amount) <= 0) {
+      alert('กรุณากรอกจำนวนที่มากกว่า 0');
+      return;
+    }
+    
+    if (selectedCoin.balance <= 0) {
+      alert(`คุณไม่มี ${selectedCoin.symbol} ในกระเป๋า`);
       return;
     }
     

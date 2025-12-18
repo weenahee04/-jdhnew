@@ -269,19 +269,25 @@ export const sendToken = async (
     );
     
     // Check if sender has token account and sufficient balance
+    let fromAccount;
     try {
-      const fromAccount = await getAccount(connection, fromTokenAccount);
-      const balance = Number(fromAccount.amount);
-      const amountRaw = Math.floor(amount * Math.pow(10, tokenDecimals));
-      
-      if (balance < amountRaw) {
-        throw new Error('ยอดเงินไม่พอ (Insufficient balance)');
-      }
+      fromAccount = await getAccount(connection, fromTokenAccount);
     } catch (e: any) {
-      if (e.message?.includes('Insufficient')) {
-        throw e;
-      }
-      throw new Error('คุณไม่มีเหรียญนี้ในกระเป๋า');
+      // Token account doesn't exist
+      throw new Error('คุณไม่มีเหรียญนี้ในกระเป๋า (Token account not found)');
+    }
+    
+    // Check balance
+    const balance = Number(fromAccount.amount);
+    const amountRaw = Math.floor(amount * Math.pow(10, tokenDecimals));
+    
+    if (balance === 0) {
+      throw new Error('คุณไม่มีเหรียญนี้ในกระเป๋า (Balance is zero)');
+    }
+    
+    if (balance < amountRaw) {
+      const availableAmount = balance / Math.pow(10, tokenDecimals);
+      throw new Error(`ยอดเงินไม่พอ (Insufficient balance). Available: ${availableAmount.toFixed(4)} ${symbol || 'tokens'}`);
     }
     
     // Check if receiver token account exists, create if not
