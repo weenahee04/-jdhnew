@@ -17,7 +17,8 @@ interface ActionModalProps {
   walletPublicKey?: string;
 }
 
-export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, onSend, onSwap, receiveAddress, sending = false, sendError, walletPublicKey }) => {
+// Internal component - actual modal implementation
+const ActionModalContent: React.FC<ActionModalProps> = ({ type, onClose, coins, onSend, onSwap, receiveAddress, sending = false, sendError, walletPublicKey }) => {
   const [amount, setAmount] = useState('');
   const [toAddress, setToAddress] = useState('');
   const [selectedCoin, setSelectedCoin] = useState<Coin>(coins[0]);
@@ -697,4 +698,56 @@ export const ActionModal: React.FC<ActionModalProps> = ({ type, onClose, coins, 
       />
     </>
   );
+};
+
+// Wrapper with error boundary
+export const ActionModal: React.FC<ActionModalProps> = (props) => {
+  const [hasError, setHasError] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  // Reset error when modal type changes
+  useEffect(() => {
+    if (props.type) {
+      setHasError(false);
+      setError(null);
+    }
+  }, [props.type]);
+
+  if (hasError) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div className="bg-zinc-900 border border-red-500/20 w-full max-w-sm rounded-3xl p-8 text-center">
+          <h3 className="text-xl font-bold text-white mb-4">เกิดข้อผิดพลาด</h3>
+          <p className="text-red-400 text-sm mb-4">{error?.message || 'เกิดข้อผิดพลาดที่ไม่คาดคิด'}</p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                setHasError(false);
+                setError(null);
+              }}
+              className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl"
+            >
+              ลองใหม่
+            </button>
+            <button
+              onClick={props.onClose}
+              className="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl"
+            >
+              ปิด
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Use React Error Boundary pattern with componentDidCatch equivalent
+  try {
+    return <ActionModalContent {...props} />;
+  } catch (err: any) {
+    console.error('❌ ActionModal render error:', err);
+    setHasError(true);
+    setError(err instanceof Error ? err : new Error(String(err)));
+    return null; // Will show error UI above
+  }
 };
