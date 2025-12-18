@@ -186,6 +186,61 @@ const fetchDEXScreenerMetadata = async (mintAddress: string): Promise<{ name?: s
   }
 };
 
+// Fetch token metadata from GMGN.ai (for JDH token)
+// GMGN.ai provides token data - try to fetch from their API
+const fetchGMGNMetadata = async (mintAddress: string): Promise<{ name?: string; symbol?: string; logoURI?: string } | null> => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    // GMGN.ai API endpoints to try
+    // Based on URL pattern: https://gmgn.ai/sol/token/solscan_{mintAddress}
+    const apiEndpoints = [
+      `https://gmgn.ai/api/sol/token/${mintAddress}`,
+      `https://api.gmgn.ai/sol/token/${mintAddress}`,
+      `https://gmgn.ai/api/v1/sol/token/${mintAddress}`,
+      `https://gmgn.ai/api/sol/token/solscan_${mintAddress}`,
+    ];
+
+    for (const apiUrl of apiEndpoints) {
+      try {
+        const response = await fetch(apiUrl, {
+          signal: controller.signal,
+          headers: {
+            'Accept': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Parse different possible response structures
+          const token = data.data || data.token || data.result || data;
+          
+          if (token && (token.name || token.symbol || token.logo)) {
+            return {
+              name: token.name || token.token_name || token.tokenName,
+              symbol: token.symbol || token.token_symbol || token.tokenSymbol,
+              logoURI: token.logo || token.logo_uri || token.logoURI || token.image || token.image_url,
+            };
+          }
+        }
+      } catch (err) {
+        // Try next endpoint
+        continue;
+      }
+    }
+
+    // If direct API doesn't work, return null (will fallback to DEXScreener)
+    // Note: GMGN.ai may require authentication or have CORS restrictions
+    // In production, consider using a backend proxy for GMGN.ai
+    return null;
+  } catch (error) {
+    // Silently fail for network errors
+    return null;
+  }
+};
+
 // Fetch token list from Jupiter (more comprehensive)
 export const fetchTokenList = async (): Promise<TokenMetadata[]> => {
   const now = Date.now();
@@ -248,6 +303,21 @@ export const getTokenMetadata = async (mintAddress: string): Promise<TokenMetada
     // ALWAYS check hardcoded metadata first - this is critical for JDH token
     const hardcoded = HARDCODED_TOKEN_METADATA[mintAddress];
     if (hardcoded) {
+      // For JDH token (GkDEVLZP), try GMGN.ai first
+      if (mintAddress === 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR') {
+        const gmgnData = await fetchGMGNMetadata(mintAddress);
+        if (gmgnData) {
+          return {
+            ...hardcoded,
+            // Use GMGN data for name, symbol, and logo
+            name: gmgnData.name || hardcoded.name,
+            symbol: gmgnData.symbol || hardcoded.symbol,
+            logoURI: gmgnData.logoURI || hardcoded.logoURI,
+            decimals: hardcoded.decimals,
+          };
+        }
+      }
+      
       // Always try to fetch logo from Jupiter API for hardcoded tokens
       // BUT keep hardcoded name and symbol (don't override)
       const jupiterData = await fetchJupiterMetadata(mintAddress);
@@ -349,8 +419,23 @@ export const getMultipleTokenMetadata = async (mintAddresses: string[]): Promise
       // ALWAYS check hardcoded metadata first - this is critical for JDH token
       const hardcoded = HARDCODED_TOKEN_METADATA[mint];
       if (hardcoded) {
-        // For JDH token (GkDEVLZP), use DEXScreener token-pairs API for logo
+        // For JDH token (GkDEVLZP), try GMGN.ai first, then DEXScreener
         if (mint === 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR') {
+          // Try GMGN.ai first (user requested this source)
+          const gmgnData = await fetchGMGNMetadata(mint);
+          if (gmgnData) {
+            metadataMap[mint] = {
+              ...hardcoded,
+              // Use GMGN data for name, symbol, and logo
+              name: gmgnData.name || hardcoded.name,
+              symbol: gmgnData.symbol || hardcoded.symbol,
+              logoURI: gmgnData.logoURI || hardcoded.logoURI,
+              decimals: hardcoded.decimals,
+            };
+            return;
+          }
+          
+          // Fallback to DEXScreener token-pairs API
           const dexscreenerPairsData = await fetchDEXScreenerPairsMetadata(mint);
           if (dexscreenerPairsData?.logoURI) {
             metadataMap[mint] = {
