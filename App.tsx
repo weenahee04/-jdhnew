@@ -664,6 +664,18 @@ const App: React.FC = () => {
       // Check if sending SOL or SPL token
       if (symbol === 'SOL') {
         try {
+          // Double-check SOL balance from blockchain before sending
+          const solCoin = displayCoins.find(c => c.symbol === 'SOL');
+          if (solCoin && solCoin.balance <= 0) {
+            throw new Error(`คุณไม่มี SOL ในกระเป๋า (Balance: ${solCoin.balance})`);
+          }
+          
+          console.log('📤 SOL transfer:', { 
+            amount, 
+            to: to.trim(),
+            coinBalance: solCoin?.balance,
+          });
+          
           const result = await transferSol(to.trim(), amount);
           console.log('✅ SOL transfer successful:', result);
           // Refresh balances after send
