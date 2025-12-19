@@ -179,19 +179,7 @@ const App: React.FC = () => {
   } = useSolanaWallet();
 
   // Real wallet balances - uses publicKey from useSolanaWallet
-  // Use API if enabled, otherwise use direct RPC
-  const walletBalancesHook = USE_WALLET_API 
-    ? (async () => {
-        try {
-          const { useWalletBalancesApi } = await import('./hooks/useWalletBalancesApi');
-          return useWalletBalancesApi;
-        } catch {
-          return useWalletBalances;
-        }
-      })()
-    : useWalletBalances;
-
-  // For now, use the regular hook - API integration will be done via service layer
+  // API integration is done via service layer (walletApiService)
   const {
     coins: walletCoins,
     totalBalanceTHB,
