@@ -2,7 +2,7 @@
 import { USE_BACKEND_API } from '../config';
 
 // Import both implementations
-import * as localStorageAuth from './authServiceLocal';
+import * as localStorageAuth from './authServiceLocalImpl';
 import * as backendAuth from './authServiceBackend';
 
 // Re-export based on configuration
@@ -39,7 +39,7 @@ export const updateUserDisplayName = USE_BACKEND_API
   : localStorageAuth.updateUserDisplayName;
 
 // Export types
-export type { User, AuthResult } from './authServiceLocal';
+export type { User, AuthResult } from './authServiceLocalImpl';
 
 // Backend-only functions (only available when USE_BACKEND_API = true)
 export const saveWallet = USE_BACKEND_API && backendAuth.saveWallet 
