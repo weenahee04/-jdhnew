@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, BarChart2, Repeat, Wallet, Settings, Clock, Award, User, LogOut, HelpCircle, Lock, Gift, Pickaxe } from 'lucide-react';
+import { Home, BarChart2, Repeat, Wallet, Settings, Clock, Award, User, LogOut, HelpCircle, Lock, Gift, Pickaxe, Bell } from 'lucide-react';
 import { NavTab } from '../types';
 
 interface SidebarProps {
@@ -7,9 +7,10 @@ interface SidebarProps {
   setActiveTab: (tab: NavTab) => void;
   onLogout: () => void;
   currentUser?: { displayName?: string; email?: string } | null;
+  onShowUpdates?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, currentUser }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout, currentUser, onShowUpdates }) => {
   const mainNav = [
     { id: NavTab.HOME, label: 'ภาพรวม (Overview)', icon: Home },
     { id: NavTab.MARKET, label: 'ตลาด (Market)', icon: BarChart2 },
@@ -93,7 +94,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLog
       </div>
 
       {/* User Profile Footer */}
-      <div className="mt-auto pt-6 border-t border-white/5">
+      <div className="mt-auto pt-6 border-t border-white/5 space-y-2">
+        {onShowUpdates && (
+          <button
+            onClick={onShowUpdates}
+            className="w-full flex items-center gap-3 px-3 py-3 text-emerald-400 hover:bg-emerald-500/10 rounded-xl transition-colors relative"
+          >
+            <Bell size={18} />
+            <span className="font-medium text-sm">อัพเดตล่าสุด</span>
+            <span className="ml-auto w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+          </button>
+        )}
         <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-900/50 border border-white/5 cursor-pointer hover:bg-zinc-800 transition-colors">
            <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400">
               <User size={18} />

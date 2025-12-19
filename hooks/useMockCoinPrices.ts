@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Coin } from '../types';
 import { getWARPPrice, convertUsdToThb, getTokenPrices, TOKEN_MINTS, getJDHPrice, getCoinGeckoPrices } from '../services/priceService';
+import { getTokenPricesApi } from '../services/priceApiService';
+import { USE_WALLET_API } from '../config';
 import { getCoinLogoWithFallback, PREDEFINED_LOGOS, getJDHFromDEXScreenerPairs } from '../services/coinLogoService';
 
 // Hook to fetch real prices and logos for mock coins (like WARP)
@@ -44,9 +46,11 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
       // Fetch real prices from CoinGecko for all major coins (in parallel with SOL)
       const coinGeckoPromise = coinGeckoIds.length > 0 ? getCoinGeckoPrices(coinGeckoIds) : Promise.resolve({});
       
-      // Fetch SOL price from Jupiter API (in parallel with CoinGecko)
+      // Fetch SOL price from backend API or Jupiter API (in parallel with CoinGecko)
       const solIndex = updatedCoins.findIndex(coin => coin.symbol === 'SOL');
-      const solPricePromise = solIndex !== -1 ? getTokenPrices([TOKEN_MINTS.SOL]) : Promise.resolve({});
+      const solPricePromise = solIndex !== -1 
+        ? (USE_WALLET_API ? getTokenPricesApi([TOKEN_MINTS.SOL]) : getTokenPrices([TOKEN_MINTS.SOL]))
+        : Promise.resolve({});
       
       // Fetch both in parallel for faster loading
       const [coinGeckoPrices, solPriceData] = await Promise.all([

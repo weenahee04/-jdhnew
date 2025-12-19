@@ -1,0 +1,20 @@
+{
+  "address": "So11111111111111111111111111111111111111112",
+  "chain": "solana",
+  "totalBalanceUsd": 1500.50,
+  "tokens": [
+    {
+      "mintOrContract": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+      "symbol": "USDC",
+      "name": "USD Coin",
+      "decimals": 6,
+      "balance": "1000000000",
+      "balanceUsd": 1000.0,
+      "logoURI": "https://assets.coingecko.com/coins/images/6319/small/USD_Coin_icon.png",
+      "verified": true
+    }
+  ],
+  "nativeBalance": "5000000000",
+  "nativeBalanceUsd": 500.50
+}
+

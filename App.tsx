@@ -15,6 +15,7 @@ import { StakingPage } from './components/StakingPage';
 import { AirdropPage } from './components/AirdropPage';
 import { MiningPage } from './components/MiningPage';
 import { TermsModal, SecurityWarningModal, WelcomeModal } from './components/SecurityModals';
+import { UpdateModal } from './components/UpdateModal';
 import { Eye, EyeOff, Bell, User, Sparkles, Wallet, Settings, ArrowRight, Shield, Globe, Award, ChevronRight, ChevronLeft, LogOut, MessageSquare, Loader2, Copy, Check, ExternalLink } from 'lucide-react';
 import { getMarketInsight } from './services/geminiService';
 import { useSolanaWallet } from './hooks/useSolanaWallet';
@@ -24,6 +25,7 @@ import { registerUser, loginUser, getCurrentUser, setCurrentUser, updateUserWall
 import { USE_BACKEND_API } from './config';
 import { getTransactionHistory } from './services/helius';
 import { getQuote, getSwapTransaction } from './services/jupiter';
+import { getSwapQuoteApi, buildSwapTransactionApi } from './services/jupiterApi';
 import { connection, explorerUrl } from './services/solanaClient';
 import { VersionedTransaction } from '@solana/web3.js';
 import { Buffer } from 'buffer';
@@ -154,6 +156,7 @@ const App: React.FC = () => {
   const [showSecurityWarning, setShowSecurityWarning] = useState(false);
   const [securityWarningType, setSecurityWarningType] = useState<'seed' | 'import'>('seed');
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [walletSetupShowSeed, setWalletSetupShowSeed] = useState<(() => void) | null>(null);
   
@@ -176,6 +179,19 @@ const App: React.FC = () => {
   } = useSolanaWallet();
 
   // Real wallet balances - uses publicKey from useSolanaWallet
+  // Use API if enabled, otherwise use direct RPC
+  const walletBalancesHook = USE_WALLET_API 
+    ? (async () => {
+        try {
+          const { useWalletBalancesApi } = await import('./hooks/useWalletBalancesApi');
+          return useWalletBalancesApi;
+        } catch {
+          return useWalletBalances;
+        }
+      })()
+    : useWalletBalances;
+
+  // For now, use the regular hook - API integration will be done via service layer
   const {
     coins: walletCoins,
     totalBalanceTHB,
@@ -250,7 +266,28 @@ const App: React.FC = () => {
       const fetchHistory = async () => {
         setLoadingHistory(true);
         try {
-          // Using static import
+          // Try backend API first if enabled
+          let transactions: Transaction[] = [];
+          
+          if (USE_WALLET_API) {
+            const apiHistory = await getHistoryFromApi(publicKey.toString(), 'solana', 20);
+            if (apiHistory && apiHistory.length > 0) {
+              transactions = apiHistory.map((tx) => ({
+                id: tx.signature,
+                type: tx.type === 'receive' ? 'receive' : tx.type === 'send' ? 'send' : 'swap',
+                coinSymbol: tx.symbol || 'SOL',
+                amount: tx.amount,
+                amountTHB: tx.amount * 34.5,
+                date: new Date(tx.timestamp).toLocaleString('th-TH'),
+                status: tx.status === 'success' ? 'completed' : 'failed',
+              }));
+              setTransactionHistory(transactions);
+              setLoadingHistory(false);
+              return;
+            }
+          }
+
+          // Fallback to Helius
           const heliusTxs = await getTransactionHistory(publicKey, 20);
           
           // Convert to Transaction format
@@ -662,6 +699,15 @@ const App: React.FC = () => {
       }
       
       setShowWelcomeModal(true);
+      
+      // Show update modal after a delay (if user hasn't seen it)
+      setTimeout(() => {
+        const hasSeenUpdates = localStorage.getItem('jdh_seen_updates_v1');
+        if (!hasSeenUpdates) {
+          setShowUpdateModal(true);
+          localStorage.setItem('jdh_seen_updates_v1', 'true');
+        }
+      }, 2000);
     } catch (error) {
       console.error('❌ Failed to create wallet:', error);
       setAuthError('ไม่สามารถสร้าง wallet ได้ กรุณาลองอีกครั้ง');
@@ -677,6 +723,14 @@ const App: React.FC = () => {
   const handleWelcomeClose = () => {
     setShowWelcomeModal(false);
     setCurrentView('APP');
+    // Show update modal after welcome modal (only if not seen before)
+    setTimeout(() => {
+      const hasSeenUpdates = localStorage.getItem('jdh_seen_updates_v1');
+      if (!hasSeenUpdates) {
+        setShowUpdateModal(true);
+        localStorage.setItem('jdh_seen_updates_v1', 'true');
+      }
+    }, 500);
   };
 
   const handleSendAsset = async ({ to, amount, symbol, mintAddress }: { to: string; amount: number; symbol: string; mintAddress?: string }) => {
@@ -1655,6 +1709,7 @@ const App: React.FC = () => {
         isOpen={showWelcomeModal}
         onClose={handleWelcomeClose}
       />
+      <UpdateModal isOpen={showUpdateModal} onClose={() => setShowUpdateModal(false)} />
     </>
   );
 
@@ -1749,7 +1804,13 @@ const App: React.FC = () => {
       <AnimatedBackground intensity="low" theme="emerald" />
 
       {/* Desktop Sidebar */}
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => setShowLogoutConfirm(true)} currentUser={currentUser} />
+      <Sidebar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        onLogout={() => setShowLogoutConfirm(true)} 
+        currentUser={currentUser}
+        onShowUpdates={() => setShowUpdateModal(true)}
+      />
 
       {/* Main Content Area */}
       <div className="flex-1 md:ml-64 relative z-10 p-4 sm:p-5 md:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-20 md:pb-8">
@@ -1799,6 +1860,7 @@ const App: React.FC = () => {
       
       {/* Security Modals - Also render here for APP view */}
       {globalModals}
+      <UpdateModal isOpen={showUpdateModal} onClose={() => setShowUpdateModal(false)} />
     </div>
   );
 };

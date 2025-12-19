@@ -1,0 +1,18 @@
+[
+  {
+    "signature": "5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp8uirBgmQpjKhoR4tjF3ZpRzrFmBV6UjKdiSZkQUW",
+    "timestamp": 1704067200000,
+    "type": "send",
+    "from": "So11111111111111111111111111111111111111112",
+    "to": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    "amount": "1000000000",
+    "token": {
+      "mintOrContract": "So11111111111111111111111111111111111111112",
+      "symbol": "SOL",
+      "decimals": 9
+    },
+    "fee": "5000",
+    "status": "success"
+  }
+]
+
