@@ -1510,7 +1510,16 @@ const App: React.FC = () => {
     </div>
   );
 
+  // Temporarily disabled: Rewards, Staking, Airdrop, Mining
   const renderRewards = () => (
+    <div className="animate-fade-in space-y-6 pb-24 md:pb-0">
+      <div className="text-center py-12">
+        <p className="text-zinc-400">ระบบรางวัลปิดชั่วคราว</p>
+      </div>
+    </div>
+  );
+  
+  const renderRewards_OLD = () => (
     <div className="animate-fade-in pb-24 md:pb-0">
        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-3xl p-8 mb-8 text-center relative overflow-hidden shadow-2xl">
           <div className="absolute top-0 right-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>

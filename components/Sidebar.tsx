@@ -19,10 +19,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLog
   ];
 
   const secondaryNav = [
-    { id: NavTab.REWARDS, label: 'รางวัล (Rewards)', icon: Award },
-    { id: NavTab.STAKING, label: 'Staking (สเตค)', icon: Lock },
-    { id: NavTab.AIRDROP, label: 'Airdrop', icon: Gift },
-    { id: NavTab.MINING, label: 'Mining (ขุดเหรียญ)', icon: Pickaxe },
+    // Temporarily disabled: Rewards, Staking, Airdrop, Mining
+    // { id: NavTab.REWARDS, label: 'รางวัล (Rewards)', icon: Award },
+    // { id: NavTab.STAKING, label: 'Staking (สเตค)', icon: Lock },
+    // { id: NavTab.AIRDROP, label: 'Airdrop', icon: Gift },
+    // { id: NavTab.MINING, label: 'Mining (ขุดเหรียญ)', icon: Pickaxe },
     { id: NavTab.SETTINGS, label: 'ตั้งค่า (Settings)', icon: Settings },
     { id: NavTab.HELP, label: 'ช่วยเหลือ (Help)', icon: HelpCircle },
   ];

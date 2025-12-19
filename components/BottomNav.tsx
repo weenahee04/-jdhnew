@@ -13,7 +13,9 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
     { id: NavTab.MARKET, label: 'ตลาด', icon: BarChart2 },
     { id: NavTab.SWAP, label: 'Swap', icon: Repeat }, 
     { id: NavTab.WALLET, label: 'กระเป๋า', icon: Wallet },
-    { id: NavTab.STAKING, label: 'Staking', icon: Lock },
+    { id: NavTab.HISTORY, label: 'ประวัติ', icon: Clock }, // Replaced Staking with History
+    // Temporarily disabled: Staking
+    // { id: NavTab.STAKING, label: 'Staking', icon: Lock },
   ];
 
   return (
