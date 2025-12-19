@@ -195,7 +195,7 @@ const App: React.FC = () => {
   // Use wallet coins if connected, otherwise use market coins with real prices
   const baseDisplayCoins = publicKey && walletCoins.length > 0 ? walletCoins : marketCoinsWithPrices;
   
-  // Ensure SOL, BTC, WARP and JDH are always included in display coins (with real prices)
+  // Ensure SOL, BTC, WARP and JDH are always included in display coins
   const displayCoins = React.useMemo(() => {
     const solCoin = marketCoinsWithPrices.find(c => c.symbol === 'SOL');
     const btcCoin = marketCoinsWithPrices.find(c => c.symbol === 'BTC');
@@ -204,13 +204,13 @@ const App: React.FC = () => {
     
     let result = [...baseDisplayCoins];
     
-    // Add SOL if not already present (only if it has real price)
-    if (solCoin && solCoin.price > 0 && !result.some(c => c.symbol === 'SOL')) {
+    // Always add SOL if not already present (even if price is 0, it's a major coin)
+    if (solCoin && !result.some(c => c.symbol === 'SOL')) {
       result.push(solCoin);
     }
     
-    // Add BTC if not already present (only if it has real price)
-    if (btcCoin && btcCoin.price > 0 && !result.some(c => c.symbol === 'BTC')) {
+    // Always add BTC if not already present (even if price is 0, it's a major coin)
+    if (btcCoin && !result.some(c => c.symbol === 'BTC')) {
       result.push(btcCoin);
     }
     
@@ -224,9 +224,13 @@ const App: React.FC = () => {
       result.push(jdhCoin);
     }
     
-    // In production: Filter out coins without real prices
+    // In production: Filter out coins without real prices (except SOL and BTC which are always shown)
     if (process.env.NODE_ENV === 'production') {
       result = result.filter(coin => {
+        // Always keep SOL and BTC (major coins)
+        if (coin.symbol === 'SOL' || coin.symbol === 'BTC') {
+          return true;
+        }
         // Keep coins with real prices or wallet balance > 0
         return coin.price > 0 || coin.balance > 0;
       });

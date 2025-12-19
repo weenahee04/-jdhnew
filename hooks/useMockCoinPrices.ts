@@ -55,31 +55,43 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
       ]);
       
       // Update SOL price
-      if (solIndex !== -1 && solPriceData[TOKEN_MINTS.SOL]) {
-        const solData = solPriceData[TOKEN_MINTS.SOL];
-        if (solData && solData.price > 0) {
-          const priceTHB = convertUsdToThb(solData.price);
-          const change24h = solData.priceChange24h || 0;
-          
-          const basePrice = solData.price;
-          const chartData = [
-            { value: basePrice * 0.98 },
-            { value: basePrice * 1.01 },
-            { value: basePrice * 0.99 },
-            { value: basePrice },
-            { value: basePrice * 1.02 },
-            { value: basePrice * 0.97 },
-            { value: basePrice },
-          ];
-          
-          updatedCoins[solIndex] = {
-            ...updatedCoins[solIndex],
-            price: priceTHB,
-            change24h: change24h,
-            chartData,
-          };
+      if (solIndex !== -1) {
+        if (solPriceData[TOKEN_MINTS.SOL]) {
+          const solData = solPriceData[TOKEN_MINTS.SOL];
+          if (solData && solData.price > 0) {
+            const priceTHB = convertUsdToThb(solData.price);
+            const change24h = solData.priceChange24h || 0;
+            
+            const basePrice = solData.price;
+            const chartData = [
+              { value: basePrice * 0.98 },
+              { value: basePrice * 1.01 },
+              { value: basePrice * 0.99 },
+              { value: basePrice },
+              { value: basePrice * 1.02 },
+              { value: basePrice * 0.97 },
+              { value: basePrice },
+            ];
+            
+            updatedCoins[solIndex] = {
+              ...updatedCoins[solIndex],
+              price: priceTHB,
+              change24h: change24h,
+              chartData,
+            };
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`✅ SOL price updated: ${priceTHB.toLocaleString()} THB (${change24h.toFixed(2)}%)`);
+            }
+          } else {
+            // SOL price fetch failed but keep SOL coin visible (it's a major coin)
+            if (process.env.NODE_ENV === 'development') {
+              console.warn('⚠️ SOL price data is invalid, but keeping SOL coin visible');
+            }
+          }
+        } else {
+          // SOL price fetch failed but keep SOL coin visible (it's a major coin)
           if (process.env.NODE_ENV === 'development') {
-            console.log(`✅ SOL price updated: ${priceTHB.toLocaleString()} THB (${change24h.toFixed(2)}%)`);
+            console.warn('⚠️ SOL price not available from Jupiter API, but keeping SOL coin visible');
           }
         }
       }
