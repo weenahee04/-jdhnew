@@ -1197,7 +1197,10 @@ const App: React.FC = () => {
             <Loader2 size={32} className="animate-spin text-emerald-400" />
           </div>
         ) : (
-          <AssetList coins={[...displayCoins].sort((a,b) => b.change24h - a.change24h)} onSelectCoin={setSelectedCoin} />
+          <AssetList 
+            coins={[...mockCoinsWithPrices].sort((a,b) => b.change24h - a.change24h)} 
+            onSelectCoin={setSelectedCoin} 
+          />
         )}
     </div>
   );
