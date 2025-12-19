@@ -22,7 +22,7 @@ import { useSolanaWallet } from './hooks/useSolanaWallet';
 import { useWalletBalances } from './hooks/useWalletBalances';
 import { useMockCoinPrices } from './hooks/useMockCoinPrices';
 import { registerUser, loginUser, getCurrentUser, setCurrentUser, updateUserWallet, updateUserDisplayName, logoutUser as authLogout, saveWallet, getWallet } from './services/authService';
-import { USE_BACKEND_API } from './config';
+import { USE_BACKEND_API, USE_WALLET_API } from './config';
 import { getTransactionHistory } from './services/helius';
 import { getQuote, getSwapTransaction } from './services/jupiter';
 import { getSwapQuoteApi, buildSwapTransactionApi } from './services/jupiterApi';
