@@ -13,29 +13,48 @@ export async function extractSeedPhrase(page: Page): Promise<string[]> {
   // Wait for seed phrase backup screen to appear
   await page.waitForSelector('text=/จดบันทึก Seed Phrase|Seed Phrase/i', { timeout: 15000 });
   
-  // Wait for the "กดเพื่อแสดง Key" button to appear (seed is hidden initially)
-  const showSeedButton = page.locator('button:has-text("กดเพื่อแสดง Key"), button:has-text("Show")').first();
-  if (await showSeedButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-    // Check if security warning modal appears
-    const securityModal = page.locator('text=/คำเตือน|Warning|ห้ามแคปหน้าจอ/i');
-    if (await securityModal.isVisible({ timeout: 2000 }).catch(() => false)) {
-      // Click confirm/accept button in security warning
-      const confirmButton = page.locator('button:has-text("ยอมรับ"), button:has-text("Accept"), button:has-text("Confirm")').first();
-      if (await confirmButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await confirmButton.click();
-        await page.waitForTimeout(500);
-      }
+  // CRITICAL: Must click Eye Icon to reveal seed words before "I have written it down" button becomes enabled
+  // Wait for the "กดเพื่อแสดง Key" button (Eye Icon) to appear (seed is hidden initially)
+  const showSeedButton = page.locator('button:has-text("กดเพื่อแสดง Key"), button:has-text("Show"), button:has([data-lucide="eye"])').first();
+  
+  // Wait for the button to be visible and enabled
+  await showSeedButton.waitFor({ timeout: 10000, state: 'visible' });
+  
+  // Check if security warning modal appears before showing seed
+  const securityModal = page.locator('text=/คำเตือน|Warning|ห้ามแคปหน้าจอ/i');
+  if (await securityModal.isVisible({ timeout: 2000 }).catch(() => false)) {
+    console.log('🔒 Security warning modal detected, accepting...');
+    // Click confirm/accept button in security warning
+    const confirmButton = page.locator('button:has-text("ยอมรับ"), button:has-text("Accept"), button:has-text("Confirm")').first();
+    if (await confirmButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await confirmButton.click();
+      await page.waitForTimeout(500);
     }
-    
-    // Click to show seed phrase
-    await showSeedButton.click();
-    await page.waitForTimeout(1000);
   }
   
+  // Click Eye Icon button to reveal seed phrase
+  console.log('👁️ Clicking Eye Icon to reveal seed words...');
+  await showSeedButton.scrollIntoViewIfNeeded();
+  await showSeedButton.click({ timeout: 10000 });
+  await page.waitForTimeout(1000); // Wait for seed to be revealed
+  
+  // Verify that seed words are now visible (not blurred)
   // Wait for seed words to be visible (not blurred)
   // Seed words are in a grid with class "grid grid-cols-3"
   // Each word is in a div with the word text in a span
   await page.waitForSelector('.grid.grid-cols-3 span.text-emerald-50', { timeout: 10000 });
+  
+  // Verify that "ฉันจดบันทึกเรียบร้อยแล้ว" button is now enabled
+  const proceedButton = page.locator('button:has-text("ฉันจดบันทึกเรียบร้อยแล้ว"), button:has-text("I have written it down")').first();
+  await proceedButton.waitFor({ timeout: 5000, state: 'visible' });
+  
+  // Check if button is enabled (not disabled)
+  const isDisabled = await proceedButton.isDisabled().catch(() => true);
+  if (isDisabled) {
+    throw new Error('Proceed button is still disabled after clicking Eye Icon. Seed words may not be revealed.');
+  }
+  
+  console.log('✅ Seed words revealed and proceed button is enabled');
   
   // Extract all 12 words from the DOM
   // Structure from WalletSetup.tsx line 262-267:
@@ -231,12 +250,21 @@ export async function solveSeedChallenge(page: Page, seedWords: string[]): Promi
  * 4. Wait for success
  */
 export async function completeWalletCreation(page: Page): Promise<string[]> {
-  // Step 1: Extract seed phrase
+  // Step 1: Extract seed phrase (this will click Eye Icon to reveal seed words)
   const seedWords = await extractSeedPhrase(page);
   
   // Step 2: Click "ฉันจดบันทึกเรียบร้อยแล้ว" button to proceed to verification
+  // This button should now be enabled after seed words are revealed
   const proceedButton = page.locator('button:has-text("ฉันจดบันทึกเรียบร้อยแล้ว"), button:has-text("I have written it down")').first();
   await proceedButton.waitFor({ timeout: 10000, state: 'visible' });
+  
+  // Double-check that button is enabled before clicking
+  const isDisabled = await proceedButton.isDisabled().catch(() => true);
+  if (isDisabled) {
+    throw new Error('Cannot proceed: "ฉันจดบันทึกเรียบร้อยแล้ว" button is still disabled. Make sure Eye Icon was clicked to reveal seed words.');
+  }
+  
+  console.log('✅ Clicking "ฉันจดบันทึกเรียบร้อยแล้ว" button...');
   await proceedButton.click({ timeout: 10000 });
   
   // Wait for verification screen
