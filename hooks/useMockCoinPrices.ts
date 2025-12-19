@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Coin } from '../types';
-import { getWARPPrice, convertUsdToThb, getTokenPrices, TOKEN_MINTS, getJDHPrice } from '../services/priceService';
+import { getWARPPrice, convertUsdToThb, getTokenPrices, TOKEN_MINTS, getJDHPrice, getCoinGeckoPrices } from '../services/priceService';
 import { getCoinLogoWithFallback, PREDEFINED_LOGOS, getJDHFromDEXScreenerPairs } from '../services/coinLogoService';
 
 // Hook to fetch real prices and logos for mock coins (like WARP)
@@ -11,7 +11,100 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
     const updatePricesAndLogos = async () => {
       const updatedCoins = [...mockCoins];
 
-      // Update all coins with logos
+      // Map of CoinGecko IDs to coin indices (exclude SOL, WARP and JDH as they use different APIs)
+      const coinGeckoIds: string[] = [];
+      const coinGeckoIndices: number[] = [];
+      
+      updatedCoins.forEach((coin, index) => {
+        // Skip SOL, WARP and JDH - they use special APIs
+        if (coin.symbol === 'SOL' || coin.symbol === 'WARP' || coin.symbol === 'JDH') return;
+        
+        // Use coin.id as CoinGecko ID (e.g., 'bitcoin', 'ethereum')
+        if (coin.id && coin.id !== 'sol' && coin.id !== 'warp' && coin.id !== 'jdh') {
+          coinGeckoIds.push(coin.id);
+          coinGeckoIndices.push(index);
+        }
+      });
+
+      // Fetch SOL price from Jupiter API
+      const solIndex = updatedCoins.findIndex(coin => coin.symbol === 'SOL');
+      if (solIndex !== -1) {
+        try {
+          const solPriceData = await getTokenPrices([TOKEN_MINTS.SOL]);
+          const solData = solPriceData[TOKEN_MINTS.SOL];
+          
+          if (solData && solData.price > 0) {
+            const priceTHB = convertUsdToThb(solData.price);
+            const change24h = solData.priceChange24h || 0;
+            
+            // Generate chart data based on real price
+            const basePrice = solData.price;
+            const chartData = [
+              { value: basePrice * 0.98 },
+              { value: basePrice * 1.01 },
+              { value: basePrice * 0.99 },
+              { value: basePrice },
+              { value: basePrice * 1.02 },
+              { value: basePrice * 0.97 },
+              { value: basePrice },
+            ];
+            
+            updatedCoins[solIndex] = {
+              ...updatedCoins[solIndex],
+              price: priceTHB,
+              change24h: change24h,
+              chartData,
+            };
+          }
+        } catch (error) {
+          console.warn('Failed to fetch SOL price, using fallback:', error);
+        }
+      }
+
+      // Fetch real prices from CoinGecko for all major coins
+      let coinGeckoPrices: Record<string, any> = {};
+      if (coinGeckoIds.length > 0) {
+        try {
+          coinGeckoPrices = await getCoinGeckoPrices(coinGeckoIds);
+        } catch (error) {
+          console.warn('Failed to fetch CoinGecko prices:', error);
+        }
+      }
+
+      // Update coins with real prices and logos from CoinGecko
+      coinGeckoIndices.forEach((index, i) => {
+        const coin = updatedCoins[index];
+        const coinGeckoId = coinGeckoIds[i];
+        const priceData = coinGeckoPrices[coinGeckoId];
+        
+        if (priceData && priceData.current_price > 0) {
+          const priceTHB = convertUsdToThb(priceData.current_price);
+          const change24h = priceData.price_change_percentage_24h || 0;
+          
+          // Generate chart data based on real price
+          const basePrice = priceData.current_price;
+          const chartData = [
+            { value: basePrice * 0.98 },
+            { value: basePrice * 1.01 },
+            { value: basePrice * 0.99 },
+            { value: basePrice },
+            { value: basePrice * 1.02 },
+            { value: basePrice * 0.97 },
+            { value: basePrice },
+          ];
+          
+          updatedCoins[index] = {
+            ...updatedCoins[index],
+            price: priceTHB,
+            change24h: change24h,
+            chartData,
+            // Update logo if CoinGecko provides one
+            logoURI: priceData.image || updatedCoins[index].logoURI,
+          };
+        }
+      });
+
+      // Update all coins with logos (for coins that don't have logos yet)
       for (let i = 0; i < updatedCoins.length; i++) {
         const coin = updatedCoins[i];
         

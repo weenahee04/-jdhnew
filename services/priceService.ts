@@ -170,6 +170,84 @@ const USD_TO_THB = 34.5;
 
 export const convertUsdToThb = (usd: number) => usd * USD_TO_THB;
 
+// CoinGecko API for major cryptocurrencies
+const COINGECKO_API = 'https://api.coingecko.com/api/v3';
+
+export interface CoinGeckoPrice {
+  id: string;
+  symbol: string;
+  name: string;
+  current_price: number;
+  price_change_percentage_24h: number;
+  image?: string;
+}
+
+// Fetch prices from CoinGecko for multiple coins
+export const getCoinGeckoPrices = async (coinIds: string[]): Promise<Record<string, CoinGeckoPrice>> => {
+  try {
+    if (coinIds.length === 0) return {};
+    
+    // CoinGecko allows up to 250 coins per request
+    const ids = coinIds.slice(0, 250).join(',');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    const response = await fetch(
+      `${COINGECKO_API}/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=false&include_last_updated_at=false`,
+      { signal: controller.signal }
+    );
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      return {};
+    }
+    
+    const data = await response.json();
+    const prices: Record<string, CoinGeckoPrice> = {};
+    
+    // CoinGecko returns data in a different format, need to fetch with market data endpoint for 24h change
+    const marketDataResponse = await fetch(
+      `${COINGECKO_API}/coins/markets?ids=${ids}&vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`,
+      { signal: controller.signal }
+    );
+    
+    if (marketDataResponse.ok) {
+      const marketData = await marketDataResponse.json();
+      for (const coin of marketData) {
+        prices[coin.id] = {
+          id: coin.id,
+          symbol: coin.symbol?.toUpperCase() || '',
+          name: coin.name || '',
+          current_price: coin.current_price || 0,
+          price_change_percentage_24h: coin.price_change_percentage_24h || 0,
+          image: coin.image,
+        };
+      }
+    } else {
+      // Fallback to simple price endpoint
+      for (const [id, priceData] of Object.entries(data)) {
+        const p = priceData as any;
+        prices[id] = {
+          id,
+          symbol: id.toUpperCase(),
+          name: id,
+          current_price: p.usd || 0,
+          price_change_percentage_24h: 0,
+        };
+      }
+    }
+    
+    return prices;
+  } catch (error: any) {
+    // Silently fail for network errors
+    if (error.name !== 'AbortError' && process.env.NODE_ENV === 'development') {
+      console.warn('CoinGecko price fetch error:', error.message || error);
+    }
+    return {};
+  }
+};
+
 // BNB Chain token price fetching
 // WARP token on BNB Chain: 0x5218B89C38Fa966493Cd380E0cB4906342A01a6C
 export interface BNBTokenPrice {
