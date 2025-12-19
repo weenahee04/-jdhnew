@@ -6,9 +6,14 @@ import { getCoinLogoWithFallback, PREDEFINED_LOGOS, getJDHFromDEXScreenerPairs }
 // Hook to fetch real prices and logos for mock coins (like WARP)
 export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
   const [coinsWithPrices, setCoinsWithPrices] = useState<Coin[]>(mockCoins);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const updatePricesAndLogos = async () => {
+      console.log('🔄 Starting price update...');
+      setIsLoading(true);
       const updatedCoins = [...mockCoins];
 
       // Map of CoinGecko IDs to coin indices (exclude SOL, WARP and JDH as they use different APIs)
@@ -29,50 +34,56 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
         }
       });
 
-      // Fetch SOL price from Jupiter API
+
+      // Fetch real prices from CoinGecko for all major coins (in parallel with SOL)
+      const coinGeckoPromise = coinGeckoIds.length > 0 ? getCoinGeckoPrices(coinGeckoIds) : Promise.resolve({});
+      
+      // Fetch SOL price from Jupiter API (in parallel with CoinGecko)
       const solIndex = updatedCoins.findIndex(coin => coin.symbol === 'SOL');
-      if (solIndex !== -1) {
-        try {
-          const solPriceData = await getTokenPrices([TOKEN_MINTS.SOL]);
-          const solData = solPriceData[TOKEN_MINTS.SOL];
+      const solPricePromise = solIndex !== -1 ? getTokenPrices([TOKEN_MINTS.SOL]) : Promise.resolve({});
+      
+      // Fetch both in parallel for faster loading
+      const [coinGeckoPrices, solPriceData] = await Promise.all([
+        coinGeckoPromise,
+        solPricePromise,
+      ]);
+      
+      // Update SOL price
+      if (solIndex !== -1 && solPriceData[TOKEN_MINTS.SOL]) {
+        const solData = solPriceData[TOKEN_MINTS.SOL];
+        if (solData && solData.price > 0) {
+          const priceTHB = convertUsdToThb(solData.price);
+          const change24h = solData.priceChange24h || 0;
           
-          if (solData && solData.price > 0) {
-            const priceTHB = convertUsdToThb(solData.price);
-            const change24h = solData.priceChange24h || 0;
-            
-            // Generate chart data based on real price
-            const basePrice = solData.price;
-            const chartData = [
-              { value: basePrice * 0.98 },
-              { value: basePrice * 1.01 },
-              { value: basePrice * 0.99 },
-              { value: basePrice },
-              { value: basePrice * 1.02 },
-              { value: basePrice * 0.97 },
-              { value: basePrice },
-            ];
-            
-            updatedCoins[solIndex] = {
-              ...updatedCoins[solIndex],
-              price: priceTHB,
-              change24h: change24h,
-              chartData,
-            };
-          }
-        } catch (error) {
-          console.warn('Failed to fetch SOL price, using fallback:', error);
+          const basePrice = solData.price;
+          const chartData = [
+            { value: basePrice * 0.98 },
+            { value: basePrice * 1.01 },
+            { value: basePrice * 0.99 },
+            { value: basePrice },
+            { value: basePrice * 1.02 },
+            { value: basePrice * 0.97 },
+            { value: basePrice },
+          ];
+          
+          updatedCoins[solIndex] = {
+            ...updatedCoins[solIndex],
+            price: priceTHB,
+            change24h: change24h,
+            chartData,
+          };
+          console.log(`✅ SOL price updated: ${priceTHB.toLocaleString()} THB (${change24h.toFixed(2)}%)`);
         }
       }
-
-      // Fetch real prices from CoinGecko for all major coins
-      let coinGeckoPrices: Record<string, any> = {};
+      
+      // Log CoinGecko results
       if (coinGeckoIds.length > 0) {
-        try {
-          console.log('📊 Fetching CoinGecko prices for:', coinGeckoIds);
-          coinGeckoPrices = await getCoinGeckoPrices(coinGeckoIds);
-          console.log('✅ CoinGecko prices fetched:', Object.keys(coinGeckoPrices).length, 'coins');
-        } catch (error) {
-          console.warn('❌ Failed to fetch CoinGecko prices:', error);
+        console.log('📊 CoinGecko prices fetched:', Object.keys(coinGeckoPrices).length, 'out of', coinGeckoIds.length, 'coins');
+        
+        // If we got fewer prices than requested, log which ones are missing
+        if (Object.keys(coinGeckoPrices).length < coinGeckoIds.length) {
+          const missing = coinGeckoIds.filter(id => !coinGeckoPrices[id]);
+          console.warn('⚠️ Missing prices for:', missing);
         }
       }
 
@@ -269,15 +280,27 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
         }
       }
 
-      setCoinsWithPrices(updatedCoins);
+      if (isMounted) {
+        setCoinsWithPrices(updatedCoins);
+        setIsLoading(false);
+        console.log('✅ Price update completed. Updated', updatedCoins.length, 'coins');
+      }
     };
 
+    // Fetch immediately on mount
     updatePricesAndLogos();
     
-    // Refresh price every 30 seconds
-    const interval = setInterval(updatePricesAndLogos, 30000);
+    // Refresh price every 15 seconds (more frequent updates)
+    const interval = setInterval(() => {
+      if (isMounted) {
+        updatePricesAndLogos();
+      }
+    }, 15000);
     
-    return () => clearInterval(interval);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, [mockCoins]);
 
   return coinsWithPrices;
