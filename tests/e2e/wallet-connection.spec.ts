@@ -22,8 +22,12 @@ test.describe('Wallet Connection', () => {
   });
 
   test('should connect wallet successfully', async ({ page }) => {
-    // Click connect button
-    const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+    
+    // Click "Open account" button
+    const connectButton = page.locator('button:has-text("Open account")').first();
+    await connectButton.waitFor({ timeout: 10000, state: 'visible' });
     await connectButton.click();
     
     // Wait for wallet connection flow
@@ -98,9 +102,9 @@ test.describe('Wallet Connection', () => {
   });
 
   test('should update UI when wallet is connected', async ({ page }) => {
-    // Initially, should show connect button
-    const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
-    await expect(connectButton).toBeVisible({ timeout: 5000 });
+    // Initially, should show "Open account" button on landing page
+    const connectButton = page.locator('button:has-text("Open account")').first();
+    await expect(connectButton).toBeVisible({ timeout: 10000 });
     
     // Connect wallet
     await connectMockWallet(page);

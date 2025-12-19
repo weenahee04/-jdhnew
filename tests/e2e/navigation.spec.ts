@@ -100,9 +100,11 @@ test.describe('Navigation Smoke Tests', () => {
 
   test('should navigate to login page', async ({ page }) => {
     await page.goto(BASE_URL);
+    await page.waitForLoadState('networkidle');
     
-    // Click "Login" button
-    const loginButton = page.locator('text=/Login|เข้าสู่ระบบ/i').first();
+    // Click "Login" button (exact text match)
+    const loginButton = page.locator('button:has-text("Login")').first();
+    await loginButton.waitFor({ timeout: 10000, state: 'visible' });
     await loginButton.click();
     
     // Wait for navigation
@@ -204,7 +206,8 @@ test.describe('Navigation Smoke Tests', () => {
     await page.goto(BASE_URL);
     
     // Navigate to registration
-    const registerButton = page.locator('text=/Open account|Create account/i').first();
+    const registerButton = page.locator('button:has-text("Open account")').first();
+    await registerButton.waitFor({ timeout: 10000, state: 'visible' });
     await registerButton.click();
     await page.waitForTimeout(1000);
     

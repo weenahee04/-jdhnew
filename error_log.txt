@@ -1,0 +1,1288 @@
+
+Running 50 tests using 2 workers
+
+=== Test: Profile matches registration data ===
+Test email: test_1766184298617_j7nv168@e2e.test
+=== Test: Register success ===
+Test email: test_1766184298778_309rsp9@e2e.test
+  ✘   1 [chromium] › tests/e2e/auth-profile.spec.ts:127:3 › Authentication & Profile Flow › Profile created and matches registration data (15.4s)
+  ✘   2 [chromium] › tests/e2e/auth-profile.spec.ts:50:3 › Authentication & Profile Flow › Register success - verify redirect and session (16.1s)
+=== Test: Data persists after refresh and re-login ===
+Test email: test_1766184317440_1vyy7yw@e2e.test
+=== Test: Duplicate email error ===
+Test email: test_1766184319027_8uj57cf@e2e.test
+  ✘   3 [chromium] › tests/e2e/auth-profile.spec.ts:200:3 › Authentication & Profile Flow › User data persists after refresh and re-login (15.6s)
+  ✘   4 [chromium] › tests/e2e/auth-profile.spec.ts:287:3 › Authentication & Profile Flow › Duplicate email shows correct error (15.0s)
+=== Test: Login success ===
+Test email: test_1766184334975_ltlogkb@e2e.test
+=== Test: Login with wrong password ===
+Test email: test_1766184337371_w1erg0x@e2e.test
+  ✘   5 [chromium] › tests/e2e/auth-profile.spec.ts:366:3 › Authentication & Profile Flow › Login with correct credentials succeeds (13.2s)
+=== Test: Update displayName persists ===
+Test email: test_1766184349795_ujyra2p@e2e.test
+  ✘   6 [chromium] › tests/e2e/auth-profile.spec.ts:433:3 › Authentication & Profile Flow › Login with incorrect credentials shows error (14.0s)
+  ✓   8 [chromium] › tests/e2e/navigation.spec.ts:54:3 › Navigation Smoke Tests › should load landing page without errors (2.4s)
+  ✘   9 [chromium] › tests/e2e/navigation.spec.ts:78:3 › Navigation Smoke Tests › should display header/footer on landing page (7.7s)
+  ✘   7 [chromium] › tests/e2e/auth-profile.spec.ts:502:3 › Authentication & Profile Flow › Update displayName persists after refresh and re-login (13.5s)
+  ✘  10 [chromium] › tests/e2e/navigation.spec.ts:86:3 › Navigation Smoke Tests › should navigate to registration page (34.6s)
+  ✘  11 [chromium] › tests/e2e/navigation.spec.ts:101:3 › Navigation Smoke Tests › should navigate to login page (34.4s)
+  ✓  12 [chromium] › tests/e2e/navigation.spec.ts:116:3 › Navigation Smoke Tests › should navigate through all main navigation tabs when logged in (2.6s)
+  ✓  13 [chromium] › tests/e2e/navigation.spec.ts:180:3 › Navigation Smoke Tests › should have working bottom navigation on mobile (3.3s)
+  ✓  14 [chromium] › tests/e2e/navigation.spec.ts:158:3 › Navigation Smoke Tests › should have working sidebar navigation (3.4s)
+  ✓  16 [chromium] › tests/e2e/navigation.spec.ts:223:3 › Navigation Smoke Tests › should not have console errors on any page (3.1s)
+  ✘  17 [chromium] › tests/e2e/send-receive.spec.ts:23:5 › Send and Receive › Receive › should open receive modal (8.7s)
+  ✘  18 [chromium] › tests/e2e/send-receive.spec.ts:34:5 › Send and Receive › Receive › should display QR code in receive modal (8.9s)
+  ✘  15 [chromium] › tests/e2e/navigation.spec.ts:203:3 › Navigation Smoke Tests › should handle back navigation (37.0s)
+  ✘  19 [chromium] › tests/e2e/send-receive.spec.ts:45:5 › Send and Receive › Receive › should display wallet address in receive modal (10.6s)
+  ✘  20 [chromium] › tests/e2e/send-receive.spec.ts:56:5 › Send and Receive › Receive › should copy address to clipboard (9.0s)
+  ✘  21 [chromium] › tests/e2e/send-receive.spec.ts:90:5 › Send and Receive › Receive › should close receive modal (11.8s)
+  ✘  22 [chromium] › tests/e2e/send-receive.spec.ts:108:5 › Send and Receive › Send - Happy Path › should open send modal (11.3s)
+  ✘  23 [chromium] › tests/e2e/send-receive.spec.ts:119:5 › Send and Receive › Send - Happy Path › should fill send form with valid data (10.2s)
+  ✘  24 [chromium] › tests/e2e/send-receive.spec.ts:140:5 › Send and Receive › Send - Happy Path › should show confirmation modal before sending (9.5s)
+  ✘  25 [chromium] › tests/e2e/send-receive.spec.ts:163:5 › Send and Receive › Send - Happy Path › should complete send transaction successfully (12.5s)
+  ✘  26 [chromium] › tests/e2e/send-receive.spec.ts:195:5 › Send and Receive › Send - Error Path › should show error for invalid address (13.2s)
+  ✘  27 [chromium] › tests/e2e/send-receive.spec.ts:218:5 › Send and Receive › Send - Error Path › should show error for zero amount (8.9s)
+  ✘  28 [chromium] › tests/e2e/send-receive.spec.ts:248:5 › Send and Receive › Send - Error Path › should show error for insufficient balance (9.1s)
+  ✘  29 [chromium] › tests/e2e/send-receive.spec.ts:274:5 › Send and Receive › Send - Error Path › should disable confirm button when balance is insufficient (9.4s)
+  ✘  30 [chromium] › tests/e2e/send-receive.spec.ts:306:5 › Send and Receive › Send - Error Path › should show error for negative amount (9.6s)
+  ✘  31 [chromium] › tests/e2e/staking.spec.ts:22:3 › Staking › should navigate to staking page (10.4s)
+  ✘  32 [chromium] › tests/e2e/staking.spec.ts:43:3 › Staking › should display staking APY data (9.8s)
+  ✘  33 [chromium] › tests/e2e/staking.spec.ts:64:3 › Staking › should display staking form when available (11.2s)
+  ✘  34 [chromium] › tests/e2e/staking.spec.ts:87:3 › Staking › should allow entering stake amount (11.0s)
+  ✘  35 [chromium] › tests/e2e/staking.spec.ts:110:3 › Staking › should show success feedback after staking (12.6s)
+  ✘  36 [chromium] › tests/e2e/swap.spec.ts:22:3 › Swap › should navigate to swap page (11.5s)
+  ✘  37 [chromium] › tests/e2e/swap.spec.ts:33:3 › Swap › should open swap modal (9.3s)
+  ✘  38 [chromium] › tests/e2e/swap.spec.ts:44:3 › Swap › should allow selecting from and to tokens (10.1s)
+  ✘  39 [chromium] › tests/e2e/swap.spec.ts:64:3 › Swap › should fetch swap quote when amount is entered (8.7s)
+  ✘  40 [chromium] › tests/e2e/swap.spec.ts:83:3 › Swap › should show price impact warning for high slippage (9.6s)
+  ✘  41 [chromium] › tests/e2e/swap.spec.ts:102:3 › Swap › should execute swap transaction (9.6s)
+  ✘  42 [chromium] › tests/e2e/wallet-connection.spec.ts:18:3 › Wallet Connection › should display connect wallet button when not connected (9.6s)
+  ✘  44 [chromium] › tests/e2e/wallet-connection.spec.ts:59:3 › Wallet Connection › should display wallet address after connection (9.6s)
+  ✘  45 [chromium] › tests/e2e/wallet-connection.spec.ts:88:3 › Wallet Connection › should display wallet balance after connection (8.9s)
+  ✘  43 [chromium] › tests/e2e/wallet-connection.spec.ts:24:3 › Wallet Connection › should connect wallet successfully (35.6s)
+  ✘  46 [chromium] › tests/e2e/wallet-connection.spec.ts:100:3 › Wallet Connection › should update UI when wallet is connected (8.5s)
+  ✘  47 [chromium] › tests/e2e/wallet-connection.spec.ts:120:3 › Wallet Connection › should disconnect wallet successfully (8.7s)
+  ✘  48 [chromium] › tests/e2e/wallet-connection.spec.ts:138:3 › Wallet Connection › should return to guest state after disconnect (9.0s)
+  ✓  50 [chromium] › tests/e2e/wallet-connection.spec.ts:175:3 › Wallet Connection › should handle wallet connection errors gracefully (3.5s)
+  ✘  49 [chromium] › tests/e2e/wallet-connection.spec.ts:152:3 › Wallet Connection › should persist wallet connection across page reload (8.7s)
+
+
+  1) [chromium] › tests/e2e/auth-profile.spec.ts:50:3 › Authentication & Profile Flow › Register success - verify redirect and session 
+
+    TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('input[type="email"], input[placeholder*="email" i], input[placeholder*="อีเมล" i]') to be visible[22m
+
+
+      61 |
+      62 |     // Wait for registration form
+    > 63 |     await page.waitForSelector('input[type="email"], input[placeholder*="email" i], input[placeholder*="อีเมล" i]', { timeout: 10000 });
+         |                ^
+      64 |
+      65 |     // Fill registration form
+      66 |     const emailInput = page.locator('input[type="email"], input[placeholder*="email" i], input[placeholder*="อีเมล" i]').first();
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/auth-profile.spec.ts:63:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/auth-profile-Authenticatio-dcda5-verify-redirect-and-session-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/auth-profile-Authenticatio-dcda5-verify-redirect-and-session-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › tests/e2e/auth-profile.spec.ts:127:3 › Authentication & Profile Flow › Profile created and matches registration data 
+
+    TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('input[type="email"], input[placeholder*="email" i]') to be visible[22m
+
+
+      136 |     }
+      137 |
+    > 138 |     await page.waitForSelector('input[type="email"], input[placeholder*="email" i]', { timeout: 10000 });
+          |                ^
+      139 |     
+      140 |     const emailInput = page.locator('input[type="email"], input[placeholder*="email" i]').first();
+      141 |     const passwordInput = page.locator('input[type="password"]').first();
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/auth-profile.spec.ts:138:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/auth-profile-Authenticatio-3798f-d-matches-registration-data-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/auth-profile-Authenticatio-3798f-d-matches-registration-data-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › tests/e2e/auth-profile.spec.ts:200:3 › Authentication & Profile Flow › User data persists after refresh and re-login 
+
+    TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('input[type="email"], input[placeholder*="email" i]') to be visible[22m
+
+
+      209 |     }
+      210 |
+    > 211 |     await page.waitForSelector('input[type="email"], input[placeholder*="email" i]', { timeout: 10000 });
+          |                ^
+      212 |     
+      213 |     const emailInput = page.locator('input[type="email"], input[placeholder*="email" i]').first();
+      214 |     const passwordInput = page.locator('input[type="password"]').first();
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/auth-profile.spec.ts:211:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/auth-profile-Authenticatio-bdcf1--after-refresh-and-re-login-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/auth-profile-Authenticatio-bdcf1--after-refresh-and-re-login-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [chromium] › tests/e2e/auth-profile.spec.ts:287:3 › Authentication & Profile Flow › Duplicate email shows correct error 
+
+    TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('input[type="email"], input[placeholder*="email" i]') to be visible[22m
+
+
+      296 |     }
+      297 |
+    > 298 |     await page.waitForSelector('input[type="email"], input[placeholder*="email" i]', { timeout: 10000 });
+          |                ^
+      299 |     
+      300 |     const emailInput = page.locator('input[type="email"], input[placeholder*="email" i]').first();
+      301 |     const passwordInput = page.locator('input[type="password"]').first();
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/auth-profile.spec.ts:298:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/auth-profile-Authenticatio-5c465-e-email-shows-correct-error-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/auth-profile-Authenticatio-5c465-e-email-shows-correct-error-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) [chromium] › tests/e2e/auth-profile.spec.ts:366:3 › Authentication & Profile Flow › Login with correct credentials succeeds 
+
+    TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('input[type="email"], input[placeholder*="email" i]') to be visible[22m
+
+
+      375 |     }
+      376 |
+    > 377 |     await page.waitForSelector('input[type="email"], input[placeholder*="email" i]', { timeout: 10000 });
+          |                ^
+      378 |     
+      379 |     const emailInput = page.locator('input[type="email"], input[placeholder*="email" i]').first();
+      380 |     const passwordInput = page.locator('input[type="password"]').first();
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/auth-profile.spec.ts:377:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/auth-profile-Authenticatio-1bca3-orrect-credentials-succeeds-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/auth-profile-Authenticatio-1bca3-orrect-credentials-succeeds-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6) [chromium] › tests/e2e/auth-profile.spec.ts:433:3 › Authentication & Profile Flow › Login with incorrect credentials shows error 
+
+    TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('input[type="email"], input[placeholder*="email" i]') to be visible[22m
+
+
+      442 |     }
+      443 |
+    > 444 |     await page.waitForSelector('input[type="email"], input[placeholder*="email" i]', { timeout: 10000 });
+          |                ^
+      445 |     
+      446 |     const emailInput = page.locator('input[type="email"], input[placeholder*="email" i]').first();
+      447 |     const passwordInput = page.locator('input[type="password"]').first();
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/auth-profile.spec.ts:444:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/auth-profile-Authenticatio-798c9-ect-credentials-shows-error-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/auth-profile-Authenticatio-798c9-ect-credentials-shows-error-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  7) [chromium] › tests/e2e/auth-profile.spec.ts:502:3 › Authentication & Profile Flow › Update displayName persists after refresh and re-login 
+
+    TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('input[type="email"], input[placeholder*="email" i]') to be visible[22m
+
+
+      511 |     }
+      512 |
+    > 513 |     await page.waitForSelector('input[type="email"], input[placeholder*="email" i]', { timeout: 10000 });
+          |                ^
+      514 |     
+      515 |     const emailInput = page.locator('input[type="email"], input[placeholder*="email" i]').first();
+      516 |     const passwordInput = page.locator('input[type="password"]').first();
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/auth-profile.spec.ts:513:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/auth-profile-Authenticatio-e8a30--after-refresh-and-re-login-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/auth-profile-Authenticatio-e8a30--after-refresh-and-re-login-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  8) [chromium] › tests/e2e/navigation.spec.ts:78:3 › Navigation Smoke Tests › should display header/footer on landing page 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('text=/jdh|JDH/i').first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('text=/jdh|JDH/i').first()[22m
+
+
+      81 |     // Check for brand/logo
+      82 |     const brand = page.locator('text=/jdh|JDH/i');
+    > 83 |     await expect(brand.first()).toBeVisible({ timeout: 5000 });
+         |                                 ^
+      84 |   });
+      85 |
+      86 |   test('should navigate to registration page', async ({ page }) => {
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/navigation.spec.ts:83:33
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/navigation-Navigation-Smok-96765-ader-footer-on-landing-page-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/navigation-Navigation-Smok-96765-ader-footer-on-landing-page-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  9) [chromium] › tests/e2e/navigation.spec.ts:86:3 › Navigation Smoke Tests › should navigate to registration page 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Open account|Create account|สมัคร/i').first()[22m
+
+
+      89 |     // Click "Open account" or "Create account"
+      90 |     const registerButton = page.locator('text=/Open account|Create account|สมัคร/i').first();
+    > 91 |     await registerButton.click();
+         |                          ^
+      92 |     
+      93 |     // Wait for navigation
+      94 |     await page.waitForTimeout(1000);
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/navigation.spec.ts:91:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/navigation-Navigation-Smok-043f0-vigate-to-registration-page-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  10) [chromium] › tests/e2e/navigation.spec.ts:101:3 › Navigation Smoke Tests › should navigate to login page 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Login|เข้าสู่ระบบ/i').first()[22m
+
+
+      104 |     // Click "Login" button
+      105 |     const loginButton = page.locator('text=/Login|เข้าสู่ระบบ/i').first();
+    > 106 |     await loginButton.click();
+          |                       ^
+      107 |     
+      108 |     // Wait for navigation
+      109 |     await page.waitForTimeout(1000);
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/navigation.spec.ts:106:23
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/navigation-Navigation-Smok-e6f34-ould-navigate-to-login-page-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  11) [chromium] › tests/e2e/navigation.spec.ts:203:3 › Navigation Smoke Tests › should handle back navigation 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Open account|Create account/i').first()[22m
+
+
+      206 |     // Navigate to registration
+      207 |     const registerButton = page.locator('text=/Open account|Create account/i').first();
+    > 208 |     await registerButton.click();
+          |                          ^
+      209 |     await page.waitForTimeout(1000);
+      210 |     
+      211 |     // Click back button
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/navigation.spec.ts:208:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/navigation-Navigation-Smok-a76c8-ould-handle-back-navigation-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  12) [chromium] › tests/e2e/send-receive.spec.ts:23:5 › Send and Receive › Receive › should open receive modal 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/send-receive.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-176c2-e-should-open-receive-modal-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-176c2-e-should-open-receive-modal-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  13) [chromium] › tests/e2e/send-receive.spec.ts:34:5 › Send and Receive › Receive › should display QR code in receive modal 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/send-receive.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-4c940-ay-QR-code-in-receive-modal-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-4c940-ay-QR-code-in-receive-modal-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  14) [chromium] › tests/e2e/send-receive.spec.ts:45:5 › Send and Receive › Receive › should display wallet address in receive modal 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/send-receive.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-442dc-et-address-in-receive-modal-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-442dc-et-address-in-receive-modal-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  15) [chromium] › tests/e2e/send-receive.spec.ts:56:5 › Send and Receive › Receive › should copy address to clipboard 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/send-receive.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-78723-d-copy-address-to-clipboard-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-78723-d-copy-address-to-clipboard-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  16) [chromium] › tests/e2e/send-receive.spec.ts:90:5 › Send and Receive › Receive › should close receive modal 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/send-receive.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-2a8b5--should-close-receive-modal-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-2a8b5--should-close-receive-modal-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  17) [chromium] › tests/e2e/send-receive.spec.ts:108:5 › Send and Receive › Send - Happy Path › should open send modal 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/send-receive.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-b7230-Path-should-open-send-modal-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-b7230-Path-should-open-send-modal-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  18) [chromium] › tests/e2e/send-receive.spec.ts:119:5 › Send and Receive › Send - Happy Path › should fill send form with valid data 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/send-receive.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-c527e-l-send-form-with-valid-data-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-c527e-l-send-form-with-valid-data-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  19) [chromium] › tests/e2e/send-receive.spec.ts:140:5 › Send and Receive › Send - Happy Path › should show confirmation modal before sending 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/send-receive.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-4f19b-mation-modal-before-sending-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-4f19b-mation-modal-before-sending-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  20) [chromium] › tests/e2e/send-receive.spec.ts:163:5 › Send and Receive › Send - Happy Path › should complete send transaction successfully 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/send-receive.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-7041f-nd-transaction-successfully-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-7041f-nd-transaction-successfully-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  21) [chromium] › tests/e2e/send-receive.spec.ts:195:5 › Send and Receive › Send - Error Path › should show error for invalid address 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/send-receive.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-86f02-w-error-for-invalid-address-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-86f02-w-error-for-invalid-address-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  22) [chromium] › tests/e2e/send-receive.spec.ts:218:5 › Send and Receive › Send - Error Path › should show error for zero amount 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/send-receive.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-06399--show-error-for-zero-amount-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-06399--show-error-for-zero-amount-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  23) [chromium] › tests/e2e/send-receive.spec.ts:248:5 › Send and Receive › Send - Error Path › should show error for insufficient balance 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/send-receive.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-5dc67-or-for-insufficient-balance-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-5dc67-or-for-insufficient-balance-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  24) [chromium] › tests/e2e/send-receive.spec.ts:274:5 › Send and Receive › Send - Error Path › should disable confirm button when balance is insufficient 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/send-receive.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-ff0a6-hen-balance-is-insufficient-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-ff0a6-hen-balance-is-insufficient-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  25) [chromium] › tests/e2e/send-receive.spec.ts:306:5 › Send and Receive › Send - Error Path › should show error for negative amount 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/send-receive.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-3b9e2-w-error-for-negative-amount-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/send-receive-Send-and-Rece-3b9e2-w-error-for-negative-amount-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  26) [chromium] › tests/e2e/staking.spec.ts:22:3 › Staking › should navigate to staking page ──────
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/staking.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/staking-Staking-should-navigate-to-staking-page-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/staking-Staking-should-navigate-to-staking-page-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  27) [chromium] › tests/e2e/staking.spec.ts:43:3 › Staking › should display staking APY data ──────
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/staking.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/staking-Staking-should-display-staking-APY-data-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/staking-Staking-should-display-staking-APY-data-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  28) [chromium] › tests/e2e/staking.spec.ts:64:3 › Staking › should display staking form when available 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/staking.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/staking-Staking-should-display-staking-form-when-available-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/staking-Staking-should-display-staking-form-when-available-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  29) [chromium] › tests/e2e/staking.spec.ts:87:3 › Staking › should allow entering stake amount ───
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/staking.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/staking-Staking-should-allow-entering-stake-amount-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/staking-Staking-should-allow-entering-stake-amount-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  30) [chromium] › tests/e2e/staking.spec.ts:110:3 › Staking › should show success feedback after staking 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/staking.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/staking-Staking-should-show-success-feedback-after-staking-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/staking-Staking-should-show-success-feedback-after-staking-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  31) [chromium] › tests/e2e/swap.spec.ts:22:3 › Swap › should navigate to swap page ───────────────
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/swap.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/swap-Swap-should-navigate-to-swap-page-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/swap-Swap-should-navigate-to-swap-page-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  32) [chromium] › tests/e2e/swap.spec.ts:33:3 › Swap › should open swap modal ─────────────────────
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/swap.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/swap-Swap-should-open-swap-modal-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/swap-Swap-should-open-swap-modal-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  33) [chromium] › tests/e2e/swap.spec.ts:44:3 › Swap › should allow selecting from and to tokens ──
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/swap.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/swap-Swap-should-allow-selecting-from-and-to-tokens-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/swap-Swap-should-allow-selecting-from-and-to-tokens-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  34) [chromium] › tests/e2e/swap.spec.ts:64:3 › Swap › should fetch swap quote when amount is entered 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/swap.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/swap-Swap-should-fetch-swap-quote-when-amount-is-entered-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/swap-Swap-should-fetch-swap-quote-when-amount-is-entered-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  35) [chromium] › tests/e2e/swap.spec.ts:83:3 › Swap › should show price impact warning for high slippage 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/swap.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/swap-Swap-should-show-price-impact-warning-for-high-slippage-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/swap-Swap-should-show-price-impact-warning-for-high-slippage-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  36) [chromium] › tests/e2e/swap.spec.ts:102:3 › Swap › should execute swap transaction ───────────
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/swap.spec.ts:18:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/swap-Swap-should-execute-swap-transaction-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/swap-Swap-should-execute-swap-transaction-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  37) [chromium] › tests/e2e/wallet-connection.spec.ts:18:3 › Wallet Connection › should display connect wallet button when not connected 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('text=/Connect|เชื่อมต่อ|Open account/i').first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first()[22m
+
+
+      19 |     // Check for connect button
+      20 |     const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 21 |     await expect(connectButton).toBeVisible({ timeout: 5000 });
+         |                                 ^
+      22 |   });
+      23 |
+      24 |   test('should connect wallet successfully', async ({ page }) => {
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/wallet-connection.spec.ts:21:33
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/wallet-connection-Wallet-C-d05d2-t-button-when-not-connected-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/wallet-connection-Wallet-C-d05d2-t-button-when-not-connected-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  38) [chromium] › tests/e2e/wallet-connection.spec.ts:24:3 › Wallet Connection › should connect wallet successfully 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first()[22m
+
+
+      25 |     // Click connect button
+      26 |     const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 27 |     await connectButton.click();
+         |                         ^
+      28 |     
+      29 |     // Wait for wallet connection flow
+      30 |     await page.waitForTimeout(2000);
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/wallet-connection.spec.ts:27:25
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/wallet-connection-Wallet-C-15293-connect-wallet-successfully-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  39) [chromium] › tests/e2e/wallet-connection.spec.ts:59:3 › Wallet Connection › should display wallet address after connection 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/wallet-connection.spec.ts:61:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/wallet-connection-Wallet-C-6ff0c-et-address-after-connection-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/wallet-connection-Wallet-C-6ff0c-et-address-after-connection-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  40) [chromium] › tests/e2e/wallet-connection.spec.ts:88:3 › Wallet Connection › should display wallet balance after connection 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/wallet-connection.spec.ts:90:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/wallet-connection-Wallet-C-c5e4b-et-balance-after-connection-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/wallet-connection-Wallet-C-c5e4b-et-balance-after-connection-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  41) [chromium] › tests/e2e/wallet-connection.spec.ts:100:3 › Wallet Connection › should update UI when wallet is connected 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('text=/Connect|เชื่อมต่อ|Open account/i').first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first()[22m
+
+
+      101 |     // Initially, should show connect button
+      102 |     const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 103 |     await expect(connectButton).toBeVisible({ timeout: 5000 });
+          |                                 ^
+      104 |     
+      105 |     // Connect wallet
+      106 |     await connectMockWallet(page);
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/wallet-connection.spec.ts:103:33
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/wallet-connection-Wallet-C-28831-UI-when-wallet-is-connected-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/wallet-connection-Wallet-C-28831-UI-when-wallet-is-connected-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  42) [chromium] › tests/e2e/wallet-connection.spec.ts:120:3 › Wallet Connection › should disconnect wallet successfully 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/wallet-connection.spec.ts:122:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/wallet-connection-Wallet-C-df7d0-connect-wallet-successfully-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/wallet-connection-Wallet-C-df7d0-connect-wallet-successfully-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  43) [chromium] › tests/e2e/wallet-connection.spec.ts:138:3 › Wallet Connection › should return to guest state after disconnect 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/wallet-connection.spec.ts:140:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/wallet-connection-Wallet-C-d4793-uest-state-after-disconnect-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/wallet-connection-Wallet-C-d4793-uest-state-after-disconnect-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  44) [chromium] › tests/e2e/wallet-connection.spec.ts:152:3 › Wallet Connection › should persist wallet connection across page reload 
+
+    TimeoutError: locator.waitFor: Timeout 5000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=/Connect|เชื่อมต่อ|Open account/i').first() to be visible[22m
+
+
+       at helpers/mock-wallet.ts:64
+
+      62 |   // Wait for connect button and click it
+      63 |   const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
+    > 64 |   await connectButton.waitFor({ timeout: 5000 });
+         |                       ^
+      65 |   await connectButton.click();
+      66 |   
+      67 |   // Wait for wallet to be connected
+        at connectMockWallet (/Users/stmichael/jdhwallets/-jdhnew/tests/e2e/helpers/mock-wallet.ts:64:23)
+        at /Users/stmichael/jdhwallets/-jdhnew/tests/e2e/wallet-connection.spec.ts:154:11
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/wallet-connection-Wallet-C-9f117-nnection-across-page-reload-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/wallet-connection-Wallet-C-9f117-nnection-across-page-reload-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  44 failed
+    [chromium] › tests/e2e/auth-profile.spec.ts:50:3 › Authentication & Profile Flow › Register success - verify redirect and session 
+    [chromium] › tests/e2e/auth-profile.spec.ts:127:3 › Authentication & Profile Flow › Profile created and matches registration data 
+    [chromium] › tests/e2e/auth-profile.spec.ts:200:3 › Authentication & Profile Flow › User data persists after refresh and re-login 
+    [chromium] › tests/e2e/auth-profile.spec.ts:287:3 › Authentication & Profile Flow › Duplicate email shows correct error 
+    [chromium] › tests/e2e/auth-profile.spec.ts:366:3 › Authentication & Profile Flow › Login with correct credentials succeeds 
+    [chromium] › tests/e2e/auth-profile.spec.ts:433:3 › Authentication & Profile Flow › Login with incorrect credentials shows error 
+    [chromium] › tests/e2e/auth-profile.spec.ts:502:3 › Authentication & Profile Flow › Update displayName persists after refresh and re-login 
+    [chromium] › tests/e2e/navigation.spec.ts:78:3 › Navigation Smoke Tests › should display header/footer on landing page 
+    [chromium] › tests/e2e/navigation.spec.ts:86:3 › Navigation Smoke Tests › should navigate to registration page 
+    [chromium] › tests/e2e/navigation.spec.ts:101:3 › Navigation Smoke Tests › should navigate to login page 
+    [chromium] › tests/e2e/navigation.spec.ts:203:3 › Navigation Smoke Tests › should handle back navigation 
+    [chromium] › tests/e2e/send-receive.spec.ts:23:5 › Send and Receive › Receive › should open receive modal 
+    [chromium] › tests/e2e/send-receive.spec.ts:34:5 › Send and Receive › Receive › should display QR code in receive modal 
+    [chromium] › tests/e2e/send-receive.spec.ts:45:5 › Send and Receive › Receive › should display wallet address in receive modal 
+    [chromium] › tests/e2e/send-receive.spec.ts:56:5 › Send and Receive › Receive › should copy address to clipboard 
+    [chromium] › tests/e2e/send-receive.spec.ts:90:5 › Send and Receive › Receive › should close receive modal 
+    [chromium] › tests/e2e/send-receive.spec.ts:108:5 › Send and Receive › Send - Happy Path › should open send modal 
+    [chromium] › tests/e2e/send-receive.spec.ts:119:5 › Send and Receive › Send - Happy Path › should fill send form with valid data 
+    [chromium] › tests/e2e/send-receive.spec.ts:140:5 › Send and Receive › Send - Happy Path › should show confirmation modal before sending 
+    [chromium] › tests/e2e/send-receive.spec.ts:163:5 › Send and Receive › Send - Happy Path › should complete send transaction successfully 
+    [chromium] › tests/e2e/send-receive.spec.ts:195:5 › Send and Receive › Send - Error Path › should show error for invalid address 
+    [chromium] › tests/e2e/send-receive.spec.ts:218:5 › Send and Receive › Send - Error Path › should show error for zero amount 
+    [chromium] › tests/e2e/send-receive.spec.ts:248:5 › Send and Receive › Send - Error Path › should show error for insufficient balance 
+    [chromium] › tests/e2e/send-receive.spec.ts:274:5 › Send and Receive › Send - Error Path › should disable confirm button when balance is insufficient 
+    [chromium] › tests/e2e/send-receive.spec.ts:306:5 › Send and Receive › Send - Error Path › should show error for negative amount 
+    [chromium] › tests/e2e/staking.spec.ts:22:3 › Staking › should navigate to staking page ────────
+    [chromium] › tests/e2e/staking.spec.ts:43:3 › Staking › should display staking APY data ────────
+    [chromium] › tests/e2e/staking.spec.ts:64:3 › Staking › should display staking form when available 
+    [chromium] › tests/e2e/staking.spec.ts:87:3 › Staking › should allow entering stake amount ─────
+    [chromium] › tests/e2e/staking.spec.ts:110:3 › Staking › should show success feedback after staking 
+    [chromium] › tests/e2e/swap.spec.ts:22:3 › Swap › should navigate to swap page ─────────────────
+    [chromium] › tests/e2e/swap.spec.ts:33:3 › Swap › should open swap modal ───────────────────────
+    [chromium] › tests/e2e/swap.spec.ts:44:3 › Swap › should allow selecting from and to tokens ────
+    [chromium] › tests/e2e/swap.spec.ts:64:3 › Swap › should fetch swap quote when amount is entered 
+    [chromium] › tests/e2e/swap.spec.ts:83:3 › Swap › should show price impact warning for high slippage 
+    [chromium] › tests/e2e/swap.spec.ts:102:3 › Swap › should execute swap transaction ─────────────
+    [chromium] › tests/e2e/wallet-connection.spec.ts:18:3 › Wallet Connection › should display connect wallet button when not connected 
+    [chromium] › tests/e2e/wallet-connection.spec.ts:24:3 › Wallet Connection › should connect wallet successfully 
+    [chromium] › tests/e2e/wallet-connection.spec.ts:59:3 › Wallet Connection › should display wallet address after connection 
+    [chromium] › tests/e2e/wallet-connection.spec.ts:88:3 › Wallet Connection › should display wallet balance after connection 
+    [chromium] › tests/e2e/wallet-connection.spec.ts:100:3 › Wallet Connection › should update UI when wallet is connected 
+    [chromium] › tests/e2e/wallet-connection.spec.ts:120:3 › Wallet Connection › should disconnect wallet successfully 
+    [chromium] › tests/e2e/wallet-connection.spec.ts:138:3 › Wallet Connection › should return to guest state after disconnect 
+    [chromium] › tests/e2e/wallet-connection.spec.ts:152:3 › Wallet Connection › should persist wallet connection across page reload 
+  6 passed (6.3m)
+
+[36m  Serving HTML report at http://localhost:59164. Press Ctrl+C to quit.[39m
+� should execute swap transaction ─────────────
+    [chromium] › tests/e2e/wallet-connection.spec.ts:18:3 › Wallet Connection › should display connect wallet button when not connected 
+    [chromium] › tests/e2e/wallet-connection.spec.ts:24:3 › Wallet Connection › should connect wallet successfully 
+    [chromium] › tests/e2e/wallet-connection.spec.ts:59:3 › Wallet Connection › should display wallet address after connection 
+    [chromium] › tests/e2e/wallet-connection.spec.ts:88:3 › Wallet Connection › should display wallet balance after connection 
+    [chromium] › tests/e2e/wallet-connection.spec.ts:100:3 › Wallet Connection › should update UI when wallet is connected 
+    [chromium] › tests/e2e/wallet-connection.spec.ts:120:3 › Wallet Connection › should disconnect wallet successfully 
+    [chromium] › tests/e2e/wallet-connection.spec.ts:138:3 › Wallet Connection › should return to guest state after disconnect 
+    [chromium] › tests/e2e/wallet-connection.spec.ts:152:3 › Wallet Connection › should persist wallet connection across page reload 
+  6 passed (6.3m)
+
+[36m  Serving HTML report at http://localhost:59099. Press Ctrl+C to quit.[39m

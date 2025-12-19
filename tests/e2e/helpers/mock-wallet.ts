@@ -59,13 +59,21 @@ export async function setupMockWallet(page: Page, config: MockWalletConfig = DEF
  * Connect mock wallet in the app
  */
 export async function connectMockWallet(page: Page) {
-  // Wait for connect button and click it
-  const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
-  await connectButton.waitFor({ timeout: 5000 });
+  // First, ensure we're on the landing page
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+  
+  // Wait for the "Open account" button on landing page
+  // The button text is exactly "Open account" (not "Connect" or "เชื่อมต่อ")
+  const connectButton = page.locator('button:has-text("Open account")').first();
+  await connectButton.waitFor({ timeout: 10000, state: 'visible' });
   await connectButton.click();
   
-  // Wait for wallet to be connected
+  // Wait for navigation to registration/auth page
   await page.waitForTimeout(1000);
+  
+  // Note: This function connects to the registration flow, not a wallet directly
+  // For actual wallet connection, tests should use the wallet creation flow
 }
 
 /**

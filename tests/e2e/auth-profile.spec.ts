@@ -59,11 +59,12 @@ test.describe('Authentication & Profile Flow', () => {
       await page.waitForTimeout(500);
     }
 
-    // Wait for registration form
-    await page.waitForSelector('input[type="email"], input[placeholder*="email" i], input[placeholder*="อีเมล" i]', { timeout: 10000 });
-
-    // Fill registration form
-    const emailInput = page.locator('input[type="email"], input[placeholder*="email" i], input[placeholder*="อีเมล" i]').first();
+    // Wait for registration form to be visible
+    // The email input has type="email" and placeholder="hello@jdh.com"
+    // Also wait for the form container to ensure it's fully rendered
+    await page.waitForSelector('form', { timeout: 10000 });
+    const emailInput = page.locator('input[type="email"]').first();
+    await emailInput.waitFor({ timeout: 10000, state: 'visible' });
     const passwordInput = page.locator('input[type="password"]').first();
     const submitButton = page.locator('button:has-text("Sign Up"), button:has-text("สมัคร"), button[type="submit"]').first();
 
@@ -135,9 +136,10 @@ test.describe('Authentication & Profile Flow', () => {
       await page.waitForTimeout(500);
     }
 
-    await page.waitForSelector('input[type="email"], input[placeholder*="email" i]', { timeout: 10000 });
-    
-    const emailInput = page.locator('input[type="email"], input[placeholder*="email" i]').first();
+    // Wait for form and email input to be visible
+    await page.waitForSelector('form', { timeout: 10000 });
+    const emailInput = page.locator('input[type="email"]').first();
+    await emailInput.waitFor({ timeout: 10000, state: 'visible' });
     const passwordInput = page.locator('input[type="password"]').first();
     const submitButton = page.locator('button:has-text("Sign Up"), button:has-text("สมัคร"), button[type="submit"]').first();
 
@@ -208,9 +210,10 @@ test.describe('Authentication & Profile Flow', () => {
       await page.waitForTimeout(500);
     }
 
-    await page.waitForSelector('input[type="email"], input[placeholder*="email" i]', { timeout: 10000 });
-    
-    const emailInput = page.locator('input[type="email"], input[placeholder*="email" i]').first();
+    // Wait for form and email input to be visible
+    await page.waitForSelector('form', { timeout: 10000 });
+    const emailInput = page.locator('input[type="email"]').first();
+    await emailInput.waitFor({ timeout: 10000, state: 'visible' });
     const passwordInput = page.locator('input[type="password"]').first();
     const submitButton = page.locator('button:has-text("Sign Up"), button:has-text("สมัคร"), button[type="submit"]').first();
 
@@ -256,7 +259,8 @@ test.describe('Authentication & Profile Flow', () => {
 
     await page.waitForSelector('input[type="email"], input[placeholder*="email" i]', { timeout: 10000 });
 
-    const loginEmailInput = page.locator('input[type="email"], input[placeholder*="email" i]').first();
+    const loginEmailInput = page.locator('input[type="email"]').first();
+    await loginEmailInput.waitFor({ timeout: 10000, state: 'visible' });
     const loginPasswordInput = page.locator('input[type="password"]').first();
     const loginSubmitButton = page.locator('button:has-text("Log in"), button:has-text("เข้าสู่ระบบ"), button:has-text("Login"), button[type="submit"]').first();
 
@@ -295,9 +299,10 @@ test.describe('Authentication & Profile Flow', () => {
       await page.waitForTimeout(500);
     }
 
-    await page.waitForSelector('input[type="email"], input[placeholder*="email" i]', { timeout: 10000 });
-    
-    const emailInput = page.locator('input[type="email"], input[placeholder*="email" i]').first();
+    // Wait for form and email input to be visible
+    await page.waitForSelector('form', { timeout: 10000 });
+    const emailInput = page.locator('input[type="email"]').first();
+    await emailInput.waitFor({ timeout: 10000, state: 'visible' });
     const passwordInput = page.locator('input[type="password"]').first();
     const submitButton = page.locator('button:has-text("Sign Up"), button:has-text("สมัคร"), button[type="submit"]').first();
 
@@ -330,7 +335,8 @@ test.describe('Authentication & Profile Flow', () => {
 
     await page.waitForSelector('input[type="email"], input[placeholder*="email" i]', { timeout: 10000 });
 
-    const emailInput2 = page.locator('input[type="email"], input[placeholder*="email" i]').first();
+    const emailInput2 = page.locator('input[type="email"]').first();
+    await emailInput2.waitFor({ timeout: 10000, state: 'visible' });
     const passwordInput2 = page.locator('input[type="password"]').first();
     const submitButton2 = page.locator('button:has-text("Sign Up"), button:has-text("สมัคร"), button[type="submit"]').first();
 
@@ -374,9 +380,10 @@ test.describe('Authentication & Profile Flow', () => {
       await page.waitForTimeout(500);
     }
 
-    await page.waitForSelector('input[type="email"], input[placeholder*="email" i]', { timeout: 10000 });
-    
-    const emailInput = page.locator('input[type="email"], input[placeholder*="email" i]').first();
+    // Wait for form and email input to be visible
+    await page.waitForSelector('form', { timeout: 10000 });
+    const emailInput = page.locator('input[type="email"]').first();
+    await emailInput.waitFor({ timeout: 10000, state: 'visible' });
     const passwordInput = page.locator('input[type="password"]').first();
     const submitButton = page.locator('button:has-text("Sign Up"), button:has-text("สมัคร"), button[type="submit"]').first();
 
@@ -409,7 +416,8 @@ test.describe('Authentication & Profile Flow', () => {
     await page.waitForSelector('input[type="email"], input[placeholder*="email" i]', { timeout: 10000 });
 
     // Step 4: Login with correct credentials
-    const loginEmailInput = page.locator('input[type="email"], input[placeholder*="email" i]').first();
+    const loginEmailInput = page.locator('input[type="email"]').first();
+    await loginEmailInput.waitFor({ timeout: 10000, state: 'visible' });
     const loginPasswordInput = page.locator('input[type="password"]').first();
     const loginSubmitButton = page.locator('button:has-text("Log in"), button:has-text("เข้าสู่ระบบ"), button:has-text("Login"), button[type="submit"]').first();
 
@@ -441,9 +449,10 @@ test.describe('Authentication & Profile Flow', () => {
       await page.waitForTimeout(500);
     }
 
-    await page.waitForSelector('input[type="email"], input[placeholder*="email" i]', { timeout: 10000 });
-    
-    const emailInput = page.locator('input[type="email"], input[placeholder*="email" i]').first();
+    // Wait for form and email input to be visible
+    await page.waitForSelector('form', { timeout: 10000 });
+    const emailInput = page.locator('input[type="email"]').first();
+    await emailInput.waitFor({ timeout: 10000, state: 'visible' });
     const passwordInput = page.locator('input[type="password"]').first();
     const submitButton = page.locator('button:has-text("Sign Up"), button:has-text("สมัคร"), button[type="submit"]').first();
 
@@ -475,7 +484,8 @@ test.describe('Authentication & Profile Flow', () => {
     await page.waitForSelector('input[type="email"], input[placeholder*="email" i]', { timeout: 10000 });
 
     // Step 3: Try to login with wrong password
-    const loginEmailInput = page.locator('input[type="email"], input[placeholder*="email" i]').first();
+    const loginEmailInput = page.locator('input[type="email"]').first();
+    await loginEmailInput.waitFor({ timeout: 10000, state: 'visible' });
     const loginPasswordInput = page.locator('input[type="password"]').first();
     const loginSubmitButton = page.locator('button:has-text("Log in"), button:has-text("เข้าสู่ระบบ"), button:has-text("Login"), button[type="submit"]').first();
 
@@ -510,9 +520,10 @@ test.describe('Authentication & Profile Flow', () => {
       await page.waitForTimeout(500);
     }
 
-    await page.waitForSelector('input[type="email"], input[placeholder*="email" i]', { timeout: 10000 });
-    
-    const emailInput = page.locator('input[type="email"], input[placeholder*="email" i]').first();
+    // Wait for form and email input to be visible
+    await page.waitForSelector('form', { timeout: 10000 });
+    const emailInput = page.locator('input[type="email"]').first();
+    await emailInput.waitFor({ timeout: 10000, state: 'visible' });
     const passwordInput = page.locator('input[type="password"]').first();
     const submitButton = page.locator('button:has-text("Sign Up"), button:has-text("สมัคร"), button[type="submit"]').first();
 
