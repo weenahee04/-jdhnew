@@ -11,6 +11,7 @@ import {
   fillField,
   clickButton,
 } from './helpers/auth-helpers';
+import { extractSeedPhrase, solveSeedChallenge, completeWalletCreation } from './helpers/seed-helpers';
 
 /**
  * E2E Tests for Authentication and Profile Flow
