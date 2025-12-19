@@ -90,10 +90,15 @@ test.describe('Authentication & Profile Flow', () => {
 
     // Navigate to registration page
     // Look for "Open account" or "Sign Up" button on landing page
+    console.log('🔍 Looking for sign up button...');
     const signUpButton = page.locator('button:has-text("Open account"), button:has-text("Sign Up"), button:has-text("สมัครสมาชิก")').first();
     if (await signUpButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+      console.log('✅ Sign up button found, clicking...');
       await signUpButton.click();
       await page.waitForTimeout(500);
+      console.log('📍 Current URL after clicking sign up:', page.url());
+    } else {
+      console.warn('⚠️ Sign up button not found, may already be on registration page');
     }
 
     // Wait for email input to be visible (more reliable than waiting for form)
