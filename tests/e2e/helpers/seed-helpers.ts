@@ -20,38 +20,78 @@ export async function extractSeedPhrase(page: Page): Promise<string[]> {
   // Wait for the button to be visible and enabled
   await showSeedButton.waitFor({ timeout: 10000, state: 'visible' });
   
-  // Check if security warning modal appears before showing seed
-  const securityModal = page.locator('text=/คำเตือน|Warning|ห้ามแคปหน้าจอ/i');
-  if (await securityModal.isVisible({ timeout: 2000 }).catch(() => false)) {
-    console.log('🔒 Security warning modal detected, accepting...');
-    // Click confirm/accept button in security warning
-    const confirmButton = page.locator('button:has-text("ยอมรับ"), button:has-text("Accept"), button:has-text("Confirm")').first();
-    if (await confirmButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await confirmButton.click();
-      await page.waitForTimeout(500);
-    }
-  }
-  
   // Click Eye Icon button to reveal seed phrase
+  // This will trigger SecurityWarningModal to appear
   console.log('👁️ Clicking Eye Icon to reveal seed words...');
   await showSeedButton.scrollIntoViewIfNeeded();
   await showSeedButton.click({ timeout: 10000 });
-  await page.waitForTimeout(1000); // Wait for seed to be revealed
+  await page.waitForTimeout(500); // Wait for modal to appear
   
-  // Verify that seed words are now visible (not blurred)
-  // Wait for seed words to be visible (not blurred)
+  // CRITICAL: After clicking Eye Icon, SecurityWarningModal appears
+  // We MUST click "ฉันเข้าใจแล้ว" (I Understand) button in the modal
+  // before seed words are revealed and proceed button becomes enabled
+  console.log('🔒 Waiting for SecurityWarningModal to appear...');
+  
+  // Wait for SecurityWarningModal to be visible
+  // Modal has text "คำเตือนความปลอดภัย" or "คำเตือนก่อน Import"
+  const securityModal = page.locator('text=/คำเตือนความปลอดภัย|คำเตือนก่อน Import|Security Warning/i');
+  await securityModal.waitFor({ timeout: 5000, state: 'visible' }).catch(() => {
+    console.log('⚠️ SecurityWarningModal not found, may have already been dismissed');
+  });
+  
+  // Check if modal is visible
+  const isModalVisible = await securityModal.isVisible({ timeout: 2000 }).catch(() => false);
+  
+  if (isModalVisible) {
+    console.log('🔒 SecurityWarningModal detected, looking for "ฉันเข้าใจแล้ว" button...');
+    
+    // Find and click the "ฉันเข้าใจแล้ว" (I Understand) button
+    // This is the red button that confirms the security warning
+    // Button text: "ฉันเข้าใจแล้ว" (I Understand)
+    const confirmButton = page.locator('button:has-text("ฉันเข้าใจแล้ว"), button:has-text("I Understand"), button:has-text("ยืนยัน")').first();
+    
+    // Wait for button to be visible
+    await confirmButton.waitFor({ timeout: 5000, state: 'visible' });
+    
+    console.log('✅ Clicking "ฉันเข้าใจแล้ว" button in SecurityWarningModal...');
+    await confirmButton.click({ timeout: 10000 });
+    
+    // Wait for modal to close and seed to be revealed
+    await page.waitForTimeout(1000);
+    
+    // Verify modal is closed
+    const isModalStillVisible = await securityModal.isVisible({ timeout: 1000 }).catch(() => false);
+    if (isModalStillVisible) {
+      throw new Error('SecurityWarningModal did not close after clicking "ฉันเข้าใจแล้ว"');
+    }
+    
+    console.log('✅ SecurityWarningModal closed, seed words should now be revealed');
+  } else {
+    console.log('⚠️ SecurityWarningModal not visible, seed may already be revealed or modal was skipped');
+  }
+  
+  // Now wait for seed words to be visible (not blurred)
   // Seed words are in a grid with class "grid grid-cols-3"
   // Each word is in a div with the word text in a span
+  console.log('⏳ Waiting for seed words to be visible...');
   await page.waitForSelector('.grid.grid-cols-3 span.text-emerald-50', { timeout: 10000 });
   
   // Verify that "ฉันจดบันทึกเรียบร้อยแล้ว" button is now enabled
   const proceedButton = page.locator('button:has-text("ฉันจดบันทึกเรียบร้อยแล้ว"), button:has-text("I have written it down")').first();
   await proceedButton.waitFor({ timeout: 5000, state: 'visible' });
   
+  // Wait a bit more for button to become enabled (state change may take time)
+  await page.waitForTimeout(500);
+  
   // Check if button is enabled (not disabled)
   const isDisabled = await proceedButton.isDisabled().catch(() => true);
   if (isDisabled) {
-    throw new Error('Proceed button is still disabled after clicking Eye Icon. Seed words may not be revealed.');
+    // Try waiting a bit more
+    await page.waitForTimeout(1000);
+    const isStillDisabled = await proceedButton.isDisabled().catch(() => true);
+    if (isStillDisabled) {
+      throw new Error('Proceed button is still disabled after clicking Eye Icon and confirming SecurityWarningModal. Seed words may not be revealed.');
+    }
   }
   
   console.log('✅ Seed words revealed and proceed button is enabled');
