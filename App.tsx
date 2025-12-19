@@ -848,25 +848,58 @@ const App: React.FC = () => {
     if (!amount || amount <= 0) throw new Error('จำนวนไม่ถูกต้อง');
 
     try {
-      // Using static imports instead of dynamic
-
-      // Get quote
+      // Get quote - try API first if enabled, fallback to direct Jupiter
       const amountLamports = Math.floor(amount * 1e9);
-      const quote = await getQuote({
-        inputMint: fromMint,
-        outputMint: toMint,
-        amount: amountLamports,
-        slippageBps: slippage || 100,
-      });
+      let quote;
+      let swapResponse;
 
-      // Get swap transaction
-      const swapResponse = await getSwapTransaction({
-        userPublicKey: publicKey.toBase58(),
-        quoteResponse: quote,
-        wrapAndUnwrapSol: true,
-        dynamicComputeUnitLimit: true,
-        dynamicSlippage: true,
-      });
+      if (USE_WALLET_API) {
+        try {
+          quote = await getSwapQuoteApi({
+            userPublicKey: publicKey,
+            inputMint: fromMint,
+            outputMint: toMint,
+            amount: amountLamports.toString(),
+            slippageBps: slippage || 100,
+          });
+          
+          // Build swap transaction via API
+          swapResponse = await buildSwapTransactionApi(publicKey, quote);
+        } catch (apiError) {
+          // Fallback to direct Jupiter
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('API swap failed, using direct Jupiter:', apiError);
+          }
+          quote = await getQuote({
+            inputMint: fromMint,
+            outputMint: toMint,
+            amount: amountLamports,
+            slippageBps: slippage || 100,
+          });
+          swapResponse = await getSwapTransaction({
+            userPublicKey: publicKey.toBase58(),
+            quoteResponse: quote,
+            wrapAndUnwrapSol: true,
+            dynamicComputeUnitLimit: true,
+            dynamicSlippage: true,
+          });
+        }
+      } else {
+        // Direct Jupiter
+        quote = await getQuote({
+          inputMint: fromMint,
+          outputMint: toMint,
+          amount: amountLamports,
+          slippageBps: slippage || 100,
+        });
+        swapResponse = await getSwapTransaction({
+          userPublicKey: publicKey.toBase58(),
+          quoteResponse: quote,
+          wrapAndUnwrapSol: true,
+          dynamicComputeUnitLimit: true,
+          dynamicSlippage: true,
+        });
+      }
 
       // Deserialize and sign transaction
       const swapTransactionBuf = Buffer.from(swapResponse.swapTransaction, 'base64');

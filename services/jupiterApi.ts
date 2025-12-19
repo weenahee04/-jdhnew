@@ -64,12 +64,12 @@ export async function getSwapQuoteApi(params: SwapParams): Promise<JupiterQuote>
   }
 
   // Fallback to direct Jupiter API
-  return getQuote(
-    params.inputMint,
-    params.outputMint,
-    params.amount,
-    params.slippageBps || 50
-  );
+  return getQuote({
+    inputMint: params.inputMint,
+    outputMint: params.outputMint,
+    amount: Number(params.amount),
+    slippageBps: params.slippageBps || 50,
+  });
 }
 
 /**
