@@ -418,6 +418,44 @@ const App: React.FC = () => {
           setCurrentUserState(result.user);
           setCurrentUser(result.user);
           
+          // E2E Test Mode: Skip wallet creation for test email
+          if (email.toLowerCase() === 'e2e-test@example.com') {
+            console.log('🧪 E2E Test Mode: Skipping wallet creation, creating wallet automatically...');
+            try {
+              // Create wallet automatically for test user
+              const testMnemonic = await createWallet();
+              console.log('✅ Test wallet created:', testMnemonic);
+              
+              // Save wallet for test user
+              if (USE_BACKEND_API) {
+                await saveWallet(result.user.id, testMnemonic);
+              } else {
+                localStorage.setItem(`jdh_wallet_${result.user.id}`, testMnemonic);
+              }
+              
+              // Update user wallet address
+              const walletPublicKey = wallet.publicKey || publicKey?.toBase58();
+              if (walletPublicKey) {
+                await updateUserWallet(result.user.email, walletPublicKey);
+                const updatedUser = {
+                  ...result.user,
+                  hasWallet: true,
+                  walletAddress: walletPublicKey,
+                };
+                setCurrentUserState(updatedUser);
+                setCurrentUser(updatedUser);
+              }
+              
+              // Go directly to APP (skip wallet creation UI)
+              setCurrentView('APP');
+              setAuthLoading(false);
+              return;
+            } catch (error) {
+              console.error('❌ Failed to create test wallet:', error);
+              // Fall through to normal flow if test wallet creation fails
+            }
+          }
+          
           // Show Terms & Conditions before creating wallet
           if (!termsAccepted) {
             setShowTermsModal(true);
