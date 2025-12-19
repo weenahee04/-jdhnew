@@ -29,13 +29,49 @@ test.describe('Authentication & Profile Flow', () => {
   let testPassword: string;
 
   test.beforeEach(async ({ page }) => {
+    // Setup console and error logging for debugging
+    page.on('console', msg => {
+      const type = msg.type();
+      const text = msg.text();
+      if (type === 'error') {
+        console.error('🔴 PAGE CONSOLE ERROR:', text);
+      } else if (type === 'warning') {
+        console.warn('⚠️ PAGE CONSOLE WARNING:', text);
+      } else {
+        console.log('📝 PAGE CONSOLE:', `[${type.toUpperCase()}]`, text);
+      }
+    });
+
+    page.on('pageerror', exception => {
+      console.error('💥 PAGE ERROR (uncaught exception):', exception.message);
+      console.error('Stack:', exception.stack);
+    });
+
+    page.on('requestfailed', request => {
+      console.error('❌ REQUEST FAILED:', request.url(), request.failure()?.errorText);
+    });
+
     // Generate unique credentials for each test
     testEmail = generateUniqueEmail();
     testPassword = generateUniquePassword();
     
     // Navigate to app first (required for localStorage access)
-    await page.goto('/');
+    console.log('🌐 Navigating to /');
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    console.log('📍 Current URL after navigation:', page.url());
+    
     await page.waitForLoadState('networkidle');
+    console.log('✅ Network idle, page loaded');
+    
+    // Check if page is blank/black by looking for body content
+    const bodyContent = await page.evaluate(() => {
+      return {
+        bodyText: document.body?.innerText?.substring(0, 200) || 'EMPTY',
+        bodyChildren: document.body?.children?.length || 0,
+        hasReactRoot: !!document.getElementById('root') || !!document.querySelector('[data-reactroot]'),
+      };
+    });
+    console.log('📄 Page body check:', bodyContent);
     
     // Clear storage after navigation
     await clearStorage(page);
