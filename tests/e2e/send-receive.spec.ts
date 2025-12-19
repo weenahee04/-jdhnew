@@ -4,9 +4,13 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { setupMockWallet, connectMockWallet, setMockWalletBalance, getMockWalletBalance } from './helpers/mock-wallet';
+import { setupMockWallet, loginTestUser, setMockWalletBalance, getMockWalletBalance } from './helpers/mock-wallet';
 
 const BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
+
+// Test user credentials (should be registered before running tests)
+const TEST_EMAIL = 'test@example.com';
+const TEST_PASSWORD = 'Test123456';
 
 test.describe('Send and Receive', () => {
   test.beforeEach(async ({ page }) => {
@@ -14,9 +18,9 @@ test.describe('Send and Receive', () => {
     await page.goto(BASE_URL);
     await page.waitForLoadState('networkidle');
     
-    // Connect wallet
-    await connectMockWallet(page);
-    await page.waitForTimeout(2000);
+    // Login with email/password (replaces old "connect wallet" flow)
+    // The app automatically loads wallet after successful login
+    await loginTestUser(page, TEST_EMAIL, TEST_PASSWORD);
   });
 
   test.describe('Receive', () => {

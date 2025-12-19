@@ -4,9 +4,11 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { setupMockWallet, connectMockWallet } from './helpers/mock-wallet';
+import { setupMockWallet, loginTestUser } from './helpers/mock-wallet';
 
 const BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
+const TEST_EMAIL = 'test@example.com';
+const TEST_PASSWORD = 'Test123456';
 
 test.describe('Staking', () => {
   test.beforeEach(async ({ page }) => {
@@ -14,9 +16,8 @@ test.describe('Staking', () => {
     await page.goto(BASE_URL);
     await page.waitForLoadState('networkidle');
     
-    // Connect wallet
-    await connectMockWallet(page);
-    await page.waitForTimeout(2000);
+    // Login with email/password (app automatically loads wallet after login)
+    await loginTestUser(page, TEST_EMAIL, TEST_PASSWORD);
   });
 
   test('should navigate to staking page', async ({ page }) => {

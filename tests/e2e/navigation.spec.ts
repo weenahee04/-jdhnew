@@ -4,7 +4,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { setupMockWallet, connectMockWallet } from './helpers/mock-wallet';
+import { setupMockWallet, loginTestUser } from './helpers/mock-wallet';
 
 const BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
 

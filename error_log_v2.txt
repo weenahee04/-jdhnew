@@ -1,0 +1,30 @@
+
+Running 50 tests using 2 workers
+
+=== Test: Profile matches registration data ===
+Test email: test_1766185072663_8go23gh@e2e.test
+=== Test: Register success ===
+Test email: test_1766185072669_j58sf0y@e2e.test
+  ✘   1 [chromium] › tests/e2e/auth-profile.spec.ts:128:3 › Authentication & Profile Flow › Profile created and matches registration data (15.8s)
+  ✘   2 [chromium] › tests/e2e/auth-profile.spec.ts:50:3 › Authentication & Profile Flow › Register success - verify redirect and session (15.9s)
+=== Test: Data persists after refresh and re-login ===
+Test email: test_1766185089174_nlc6qxs@e2e.test
+=== Test: Duplicate email error ===
+Test email: test_1766185091081_m5cawzw@e2e.test
+  ✘   3 [chromium] › tests/e2e/auth-profile.spec.ts:202:3 › Authentication & Profile Flow › User data persists after refresh and re-login (12.8s)
+  ✘   4 [chromium] › tests/e2e/auth-profile.spec.ts:291:3 › Authentication & Profile Flow › Duplicate email shows correct error (13.6s)
+=== Test: Login success ===
+Test email: test_1766185103666_xcwudjw@e2e.test
+=== Test: Login with wrong password ===
+Test email: test_1766185105824_f3elc62@e2e.test
+  ✘   5 [chromium] › tests/e2e/auth-profile.spec.ts:372:3 › Authentication & Profile Flow › Login with correct credentials succeeds (12.7s)
+=== Test: Update displayName persists ===
+Test email: test_1766185118350_fym4ok8@e2e.test
+  ✘   6 [chromium] › tests/e2e/auth-profile.spec.ts:441:3 › Authentication & Profile Flow › Login with incorrect credentials shows error (15.1s)
+  ✓   8 [chromium] › tests/e2e/navigation.spec.ts:54:3 › Navigation Smoke Tests › should load landing page without errors (2.6s)
+  ✘   7 [chromium] › tests/e2e/auth-profile.spec.ts:512:3 › Authentication & Profile Flow › Update displayName persists after refresh and re-login (13.5s)
+  ✘   9 [chromium] › tests/e2e/navigation.spec.ts:78:3 › Navigation Smoke Tests › should display header/footer on landing page (8.0s)
+  ✘  11 [chromium] › tests/e2e/navigation.spec.ts:101:3 › Navigation Smoke Tests › should navigate to login page (13.5s)
+  ✓  12 [chromium] › tests/e2e/navigation.spec.ts:118:3 › Navigation Smoke Tests › should navigate through all main navigation tabs when logged in (2.4s)
+  ✓  13 [chromium] › tests/e2e/navigation.spec.ts:160:3 › Navigation Smoke Tests › should have working sidebar navigation (2.0s)
+  ✓  14 [chromium] › tests/e2e/navigation.spec.ts:182:3 › Navigation Smoke Tests › should have working bottom navigation on mobile (1.9s)

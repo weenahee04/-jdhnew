@@ -4,66 +4,57 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { setupMockWallet, connectMockWallet, disconnectMockWallet, getMockWalletBalance } from './helpers/mock-wallet';
+import { setupMockWallet, loginTestUser, disconnectMockWallet, getMockWalletBalance } from './helpers/mock-wallet';
 
 const BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
+const TEST_EMAIL = 'test@example.com';
+const TEST_PASSWORD = 'Test123456';
 
 test.describe('Wallet Connection', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockWallet(page);
     await page.goto(BASE_URL);
     await page.waitForLoadState('networkidle');
+    
+    // Login with email/password (app automatically loads wallet after login)
+    await loginTestUser(page, TEST_EMAIL, TEST_PASSWORD);
   });
 
-  test('should display connect wallet button when not connected', async ({ page }) => {
-    // Check for connect button
-    const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
-    await expect(connectButton).toBeVisible({ timeout: 5000 });
-  });
-
-  test('should connect wallet successfully', async ({ page }) => {
-    await page.goto('/');
+  test('should display login button when not logged in', async ({ page }) => {
+    // Logout first to test guest state
+    await page.evaluate(() => {
+      sessionStorage.clear();
+      localStorage.removeItem('jdh_current_user');
+    });
+    await page.reload();
     await page.waitForLoadState('networkidle');
     
-    // Click "Open account" button
-    const connectButton = page.locator('button:has-text("Open account")').first();
-    await connectButton.waitFor({ timeout: 10000, state: 'visible' });
-    await connectButton.click();
-    
-    // Wait for wallet connection flow
-    await page.waitForTimeout(2000);
-    
-    // If registration/login is required, handle it
-    const emailInput = page.locator('input[type="email"]').first();
-    if (await emailInput.isVisible({ timeout: 2000 })) {
-      await emailInput.fill('test@example.com');
-      const passwordInput = page.locator('input[type="password"]').first();
-      await passwordInput.fill('Test123456');
-      
-      const submitButton = page.locator('button[type="submit"]').first();
-      await submitButton.click();
-      await page.waitForTimeout(3000);
-    }
-    
-    // Check for wallet address display (after connection)
-    await page.waitForTimeout(2000);
-    const walletAddress = page.locator('text=/MockAddress|Wallet Address/i');
-    
-    // Wallet should be connected (address visible or balance shown)
-    const balanceDisplay = page.locator('text=/SOL|Balance|ยอด/i');
-    const addressDisplay = page.locator('[class*="address"], code').first();
-    
-    // At least one should be visible
-    const isConnected = await balanceDisplay.isVisible({ timeout: 5000 }) || 
-                       await addressDisplay.isVisible({ timeout: 5000 });
-    
-    expect(isConnected).toBeTruthy();
+    // Check for login button on landing page
+    const loginButton = page.locator('button:has-text("Login")').first();
+    await expect(loginButton).toBeVisible({ timeout: 10000 });
   });
 
-  test('should display wallet address after connection', async ({ page }) => {
-    // Connect wallet
-    await connectMockWallet(page);
-    await page.waitForTimeout(2000);
+  test('should login successfully and load wallet', async ({ page }) => {
+    // Logout first
+    await page.evaluate(() => {
+      sessionStorage.clear();
+      localStorage.removeItem('jdh_current_user');
+    });
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+    
+    // Login with email/password
+    await loginTestUser(page, TEST_EMAIL, TEST_PASSWORD);
+    
+    // Wallet should be loaded automatically after login
+    // Check for balance display (confirms wallet is loaded)
+    const balanceDisplay = page.locator('text=/Total Balance|฿|SOL|Balance/i').first();
+    await expect(balanceDisplay).toBeVisible({ timeout: 10000 });
+  });
+
+  test('should display wallet address after login', async ({ page }) => {
+    // User is already logged in from beforeEach
+    // Wallet should be loaded automatically
     
     // Look for wallet address display
     // Address might be truncated, so check for partial match
@@ -89,10 +80,9 @@ test.describe('Wallet Connection', () => {
     expect(addressFound).toBeTruthy();
   });
 
-  test('should display wallet balance after connection', async ({ page }) => {
-    // Connect wallet
-    await connectMockWallet(page);
-    await page.waitForTimeout(2000);
+  test('should display wallet balance after login', async ({ page }) => {
+    // User is already logged in from beforeEach
+    // Wallet should be loaded automatically
     
     // Look for balance display
     const balanceDisplay = page.locator('text=/100|SOL|Balance|ยอด/i').first();
@@ -101,30 +91,19 @@ test.describe('Wallet Connection', () => {
     await expect(balanceDisplay).toBeVisible({ timeout: 5000 });
   });
 
-  test('should update UI when wallet is connected', async ({ page }) => {
-    // Initially, should show "Open account" button on landing page
-    const connectButton = page.locator('button:has-text("Open account")').first();
-    await expect(connectButton).toBeVisible({ timeout: 10000 });
+  test('should update UI when logged in', async ({ page }) => {
+    // User is already logged in from beforeEach
+    // Dashboard should be visible with balance
+    const balanceDisplay = page.locator('text=/Total Balance|฿|SOL|Balance/i').first();
+    await expect(balanceDisplay).toBeVisible({ timeout: 10000 });
     
-    // Connect wallet
-    await connectMockWallet(page);
-    await page.waitForTimeout(2000);
-    
-    // Connect button should be gone or replaced
-    const stillShowingConnect = await connectButton.isVisible({ timeout: 2000 });
-    
-    // Either button is gone or UI has updated
-    if (stillShowingConnect) {
-      // Check if balance/address is now visible instead
-      const balanceDisplay = page.locator('text=/SOL|Balance/i');
-      expect(await balanceDisplay.isVisible({ timeout: 2000 })).toBeTruthy();
-    }
+    // Landing page buttons should not be visible
+    const loginButton = page.locator('button:has-text("Login")').first();
+    await expect(loginButton).not.toBeVisible({ timeout: 2000 });
   });
 
-  test('should disconnect wallet successfully', async ({ page }) => {
-    // Connect wallet first
-    await connectMockWallet(page);
-    await page.waitForTimeout(2000);
+  test('should logout successfully', async ({ page }) => {
+    // User is already logged in from beforeEach
     
     // Find and click disconnect/logout button
     const disconnectButton = page.locator('text=/Disconnect|Logout|ออกจากระบบ/i').first();
@@ -139,24 +118,20 @@ test.describe('Wallet Connection', () => {
     }
   });
 
-  test('should return to guest state after disconnect', async ({ page }) => {
-    // Connect wallet
-    await connectMockWallet(page);
-    await page.waitForTimeout(2000);
+  test('should return to guest state after logout', async ({ page }) => {
+    // User is already logged in from beforeEach
     
-    // Disconnect
+    // Logout
     await disconnectMockWallet(page);
     await page.waitForTimeout(1000);
     
-    // Should show landing page or connect button
-    const landingContent = page.locator('text=/Open account|Login|Connect/i');
-    await expect(landingContent.first()).toBeVisible({ timeout: 5000 });
+    // Should show landing page with login button
+    const landingContent = page.locator('button:has-text("Login"), button:has-text("Open account")').first();
+    await expect(landingContent).toBeVisible({ timeout: 10000 });
   });
 
-  test('should persist wallet connection across page reload', async ({ page }) => {
-    // Connect wallet
-    await connectMockWallet(page);
-    await page.waitForTimeout(2000);
+  test('should persist login across page reload', async ({ page }) => {
+    // User is already logged in from beforeEach
     
     // Reload page
     await page.reload();
@@ -176,27 +151,35 @@ test.describe('Wallet Connection', () => {
     expect(isConnected || needsReconnect).toBeTruthy();
   });
 
-  test('should handle wallet connection errors gracefully', async ({ page }) => {
-    // Try to connect with invalid/missing wallet
-    // This tests error handling
-    
-    // Remove mock wallet
+  test('should handle login errors gracefully', async ({ page }) => {
+    // Logout first
     await page.evaluate(() => {
-      (window as any).solana = null;
+      sessionStorage.clear();
+      localStorage.removeItem('jdh_current_user');
     });
+    await page.reload();
+    await page.waitForLoadState('networkidle');
     
-    // Try to connect
-    const connectButton = page.locator('text=/Connect|เชื่อมต่อ|Open account/i').first();
-    if (await connectButton.isVisible({ timeout: 2000 })) {
-      await connectButton.click();
-      await page.waitForTimeout(2000);
-      
-      // Should show error message or handle gracefully
-      const errorMessage = page.locator('text=/Error|ไม่พบ|ไม่สามารถ/i');
-      // Error might be shown or handled silently
-      // Just verify page doesn't crash
-      await expect(page.locator('body')).toBeVisible();
-    }
+    // Try to login with invalid credentials
+    const loginButton = page.locator('button:has-text("Login")').first();
+    await loginButton.click();
+    await page.waitForTimeout(1000);
+    
+    // Fill invalid credentials
+    const emailInput = page.locator('input[type="email"]').first();
+    await emailInput.fill('invalid@example.com');
+    const passwordInput = page.locator('input[type="password"]').first();
+    await passwordInput.fill('WrongPassword123');
+    
+    const signInButton = page.locator('button:has-text("Sign In")').first();
+    await signInButton.click();
+    await page.waitForTimeout(2000);
+    
+    // Should show error message
+    const errorMessage = page.locator('text=/อีเมล|รหัสผ่าน|email|password|incorrect|invalid/i').first();
+    // Error might be shown or handled gracefully
+    // Just verify page doesn't crash
+    await expect(page.locator('body')).toBeVisible();
   });
 });
 

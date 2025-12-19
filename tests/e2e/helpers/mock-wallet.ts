@@ -56,52 +56,68 @@ export async function setupMockWallet(page: Page, config: MockWalletConfig = DEF
 }
 
 /**
- * Connect mock wallet in the app
+ * Login a test user with email and password
+ * This replaces the old "connectMockWallet" - the app uses email/password auth, not wallet extensions
  */
-export async function connectMockWallet(page: Page) {
-  // First, ensure we're on the landing page
+export async function loginTestUser(
+  page: Page,
+  email: string = 'test@example.com',
+  password: string = 'Test123456'
+): Promise<void> {
+  // Step 1: Navigate to landing page
   await page.goto('/');
   await page.waitForLoadState('networkidle');
   await page.waitForLoadState('domcontentloaded');
   
-  // The button is in App.tsx line 998-999:
-  // <button onClick={() => setCurrentView('AUTH_REGISTER')} className="w-full py-3 sm:py-4 bg-gradient-to-r from-emerald-600 to-emerald-500...">
-  //   Open account
-  // </button>
+  // Step 2: Click "Login" button to go to login page
+  // Button is in App.tsx line 1001: <button onClick={() => setCurrentView('AUTH_LOGIN')}>
+  const loginButton = page.locator('button:has-text("Login")').first();
+  await loginButton.waitFor({ timeout: 15000, state: 'visible' });
+  await loginButton.scrollIntoViewIfNeeded();
+  await loginButton.click({ timeout: 10000 });
   
-  // Use multiple selector strategies for reliability:
-  // 1. Exact text match (most reliable)
-  // 2. Button with specific onClick behavior (setCurrentView)
-  // 3. Button with gradient background classes
+  // Step 3: Wait for login form to appear
+  await page.waitForSelector('form', { timeout: 10000 });
+  const emailInput = page.locator('input[type="email"]').first();
+  await emailInput.waitFor({ timeout: 10000, state: 'visible' });
   
-  // Strategy 1: Exact text match with button element
-  let connectButton = page.locator('button:has-text("Open account")').first();
+  // Step 4: Fill email and password
+  // Email input: App.tsx line 1041-1049
+  // Password input: App.tsx line 1053-1062
+  await emailInput.fill(email);
+  const passwordInput = page.locator('input[type="password"]').first();
+  await passwordInput.fill(password);
   
-  // Wait for button to be visible and enabled
-  await connectButton.waitFor({ 
-    timeout: 15000, 
-    state: 'visible' 
-  });
+  // Step 5: Click "Sign In" button
+  // Submit button: App.tsx line 1077-1090, text is "Sign In" for login
+  const signInButton = page.locator('button:has-text("Sign In"), button[type="submit"]').first();
+  await signInButton.waitFor({ timeout: 5000, state: 'visible' });
+  await signInButton.click({ timeout: 10000 });
   
-  // Ensure button is enabled
-  await connectButton.waitFor({ 
-    timeout: 5000, 
-    state: 'attached' 
-  });
+  // Step 6: Wait for successful login
+  // After login, the app:
+  // - Loads wallet automatically if user has one
+  // - Sets currentView to 'APP' (dashboard)
+  // - Shows "Total Balance" element
   
-  // Scroll into view if needed
-  await connectButton.scrollIntoViewIfNeeded();
+  // Wait for APP view to load (dashboard)
+  // Look for "Total Balance" text which appears in the dashboard (App.tsx line 1138)
+  await page.waitForSelector('text=/Total Balance|ภาพรวม|Dashboard/i', { timeout: 15000 });
   
-  // Click the button
-  await connectButton.click({ timeout: 10000 });
+  // Also wait for balance element to confirm wallet is loaded
+  // Balance is shown in App.tsx around line 1142-1143
+  await page.waitForSelector('text=/฿|SOL|Balance/i', { timeout: 10000 });
   
-  // Wait for navigation to registration/auth page
-  // The button sets currentView to 'AUTH_REGISTER', so wait for the form to appear
-  await page.waitForSelector('form, input[type="email"]', { timeout: 10000 });
-  await page.waitForTimeout(500);
-  
-  // Note: This function connects to the registration flow, not a wallet directly
-  // For actual wallet connection, tests should use the wallet creation flow
+  // Give a moment for wallet to fully load
+  await page.waitForTimeout(1000);
+}
+
+/**
+ * @deprecated Use loginTestUser instead. This app uses email/password auth, not wallet extensions.
+ */
+export async function connectMockWallet(page: Page) {
+  console.warn('connectMockWallet is deprecated. Use loginTestUser instead.');
+  return loginTestUser(page);
 }
 
 /**
