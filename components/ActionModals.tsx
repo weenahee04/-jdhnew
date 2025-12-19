@@ -4,8 +4,6 @@ import { Coin } from '../types';
 import Confetti from 'react-confetti';
 import { SendConfirmationModal, SwapConfirmationModal } from './ConfirmationModals';
 import { getQuote } from '../services/jupiter';
-import { getSwapQuoteApi } from '../services/jupiterApi';
-import { USE_WALLET_API } from '../config';
 
 interface ActionModalProps {
   type: 'send' | 'receive' | 'swap' | null;

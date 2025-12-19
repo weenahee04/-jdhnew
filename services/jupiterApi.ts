@@ -10,13 +10,15 @@ export interface JupiterQuote {
   outputMint: string;
   outAmount: string;
   otherAmountThreshold: string;
-  swapMode: string;
+  swapMode: 'ExactIn' | 'ExactOut';
   slippageBps: number;
   platformFee?: {
     amount?: string;
     feeBps?: number;
   };
   priceImpactPct: number;
+  contextSlot?: number;
+  timeTaken?: number;
   routePlan: any;
 }
 
@@ -96,7 +98,7 @@ export async function buildSwapTransactionApi(
         'solana'
       );
 
-      if (tx) {
+      if (tx && tx.transaction) {
         return { swapTransaction: tx.transaction };
       }
     } catch (error) {

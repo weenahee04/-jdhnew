@@ -24,6 +24,7 @@ import { useMockCoinPrices } from './hooks/useMockCoinPrices';
 import { registerUser, loginUser, getCurrentUser, setCurrentUser, updateUserWallet, updateUserDisplayName, logoutUser as authLogout, saveWallet, getWallet } from './services/authService';
 import { USE_BACKEND_API, USE_WALLET_API } from './config';
 import { getTransactionHistory } from './services/helius';
+import { getHistoryFromApi } from './services/walletApiService';
 import { getQuote, getSwapTransaction } from './services/jupiter';
 import { getSwapQuoteApi, buildSwapTransactionApi } from './services/jupiterApi';
 import { connection, explorerUrl } from './services/solanaClient';
@@ -258,20 +259,27 @@ const App: React.FC = () => {
           let transactions: Transaction[] = [];
           
           if (USE_WALLET_API) {
-            const apiHistory = await getHistoryFromApi(publicKey.toString(), 'solana', 20);
-            if (apiHistory && apiHistory.length > 0) {
-              transactions = apiHistory.map((tx) => ({
-                id: tx.signature,
-                type: tx.type === 'receive' ? 'receive' : tx.type === 'send' ? 'send' : 'swap',
-                coinSymbol: tx.symbol || 'SOL',
-                amount: tx.amount,
-                amountTHB: tx.amount * 34.5,
-                date: new Date(tx.timestamp).toLocaleString('th-TH'),
-                status: tx.status === 'success' ? 'completed' : 'failed',
-              }));
-              setTransactionHistory(transactions);
-              setLoadingHistory(false);
-              return;
+            try {
+              const apiHistory = await getHistoryFromApi(publicKey.toString(), 'solana', 20);
+              if (apiHistory && Array.isArray(apiHistory) && apiHistory.length > 0) {
+                transactions = apiHistory.map((tx) => ({
+                  id: tx.signature,
+                  type: tx.type === 'receive' ? 'receive' : tx.type === 'send' ? 'send' : 'swap',
+                  coinSymbol: tx.symbol || 'SOL',
+                  amount: tx.amount,
+                  amountTHB: tx.amount * 34.5,
+                  date: new Date(tx.timestamp).toLocaleString('th-TH'),
+                  status: tx.status === 'success' ? 'completed' : 'failed',
+                }));
+                setTransactionHistory(transactions);
+                setLoadingHistory(false);
+                return;
+              }
+            } catch (apiError) {
+              // Silently fall through to Helius if API fails
+              if (process.env.NODE_ENV === 'development') {
+                console.warn('API history fetch failed, using Helius fallback:', apiError);
+              }
             }
           }
 
