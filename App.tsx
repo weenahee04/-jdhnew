@@ -1549,16 +1549,29 @@ const App: React.FC = () => {
     </div>
   );
 
+  // Temporarily disabled: Staking, Airdrop, Mining
   const renderStaking = () => (
-    <StakingPage coins={displayCoins} publicKey={publicKey} />
+    <div className="animate-fade-in space-y-6 pb-24 md:pb-0">
+      <div className="text-center py-12">
+        <p className="text-zinc-400">ระบบ Staking ปิดชั่วคราว</p>
+      </div>
+    </div>
   );
 
   const renderAirdrop = () => (
-    <AirdropPage publicKey={publicKey} />
+    <div className="animate-fade-in space-y-6 pb-24 md:pb-0">
+      <div className="text-center py-12">
+        <p className="text-zinc-400">ระบบ Airdrop ปิดชั่วคราว</p>
+      </div>
+    </div>
   );
 
   const renderMining = () => (
-    <MiningPage publicKey={publicKey} wallet={wallet} />
+    <div className="animate-fade-in space-y-6 pb-24 md:pb-0">
+      <div className="text-center py-12">
+        <p className="text-zinc-400">ระบบ Mining ปิดชั่วคราว</p>
+      </div>
+    </div>
   );
 
   const renderSettings = () => {
