@@ -195,12 +195,24 @@ const App: React.FC = () => {
   // Use wallet coins if connected, otherwise use market coins with real prices
   const baseDisplayCoins = publicKey && walletCoins.length > 0 ? walletCoins : marketCoinsWithPrices;
   
-  // Ensure WARP and JDH are always included in display coins (with real prices)
+  // Ensure SOL, BTC, WARP and JDH are always included in display coins (with real prices)
   const displayCoins = React.useMemo(() => {
+    const solCoin = marketCoinsWithPrices.find(c => c.symbol === 'SOL');
+    const btcCoin = marketCoinsWithPrices.find(c => c.symbol === 'BTC');
     const warpCoin = marketCoinsWithPrices.find(c => c.symbol === 'WARP');
     const jdhCoin = marketCoinsWithPrices.find(c => c.symbol === 'JDH');
     
     let result = [...baseDisplayCoins];
+    
+    // Add SOL if not already present (only if it has real price)
+    if (solCoin && solCoin.price > 0 && !result.some(c => c.symbol === 'SOL')) {
+      result.push(solCoin);
+    }
+    
+    // Add BTC if not already present (only if it has real price)
+    if (btcCoin && btcCoin.price > 0 && !result.some(c => c.symbol === 'BTC')) {
+      result.push(btcCoin);
+    }
     
     // Add WARP if not already present (only if it has real price)
     if (warpCoin && warpCoin.price > 0 && !result.some(c => c.symbol === 'WARP')) {
