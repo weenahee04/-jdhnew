@@ -171,6 +171,7 @@ const App: React.FC = () => {
     wallet,
     publicKey,
     loadFromMnemonic,
+    create: createWallet,
     transferSol,
     transferToken,
     signAndSendVersioned,
