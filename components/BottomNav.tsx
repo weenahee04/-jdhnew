@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, BarChart2, Repeat, Wallet, Settings, Lock } from 'lucide-react';
+import { Home, BarChart2, Repeat, Wallet, Clock } from 'lucide-react';
 import { NavTab } from '../types';
 
 interface BottomNavProps {
