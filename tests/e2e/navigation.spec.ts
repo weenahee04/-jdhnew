@@ -120,26 +120,8 @@ test.describe('Navigation Smoke Tests', () => {
     await setupMockWallet(page);
     await page.goto(BASE_URL);
     
-    // Login/Register and connect wallet
-    const registerButton = page.locator('text=/Open account|Create account/i').first();
-    if (await registerButton.isVisible({ timeout: 2000 })) {
-      await registerButton.click();
-      await page.waitForTimeout(1000);
-      
-      // Fill registration form (if needed)
-      const emailInput = page.locator('input[type="email"]').first();
-      const passwordInput = page.locator('input[type="password"]').first();
-      
-      if (await emailInput.isVisible({ timeout: 2000 })) {
-        await emailInput.fill('test@example.com');
-        await passwordInput.fill('Test123456');
-        
-        // Submit form
-        const submitButton = page.locator('button[type="submit"], button:has-text("Register|สมัคร")').first();
-        await submitButton.click();
-        await page.waitForTimeout(2000);
-      }
-    }
+    // Login with email/password (app automatically loads wallet after login)
+    await loginTestUser(page, 'test@example.com', 'Test123456');
     
     // Navigate through each tab
     for (const tab of NAV_TABS) {
