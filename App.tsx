@@ -1170,7 +1170,7 @@ const App: React.FC = () => {
             <div className="flex items-center gap-2">
               <h2 className="text-2xl font-bold text-white tracking-tight">ตลาด <span className="text-zinc-500 text-lg font-normal">(Market)</span></h2>
               <span className="text-sm text-zinc-400 font-medium">
-                ({displayCoins.length} {displayCoins.length === 1 ? 'coin' : 'coins'})
+                ({mockCoinsWithPrices.length} {mockCoinsWithPrices.length === 1 ? 'coin' : 'coins'})
               </span>
             </div>
         </header>
@@ -1178,7 +1178,7 @@ const App: React.FC = () => {
            <div className="flex items-center gap-3 mb-2">
              <h1 className="text-3xl font-bold text-white">Market Trends</h1>
              <span className="text-base text-zinc-400 font-medium">
-               ({displayCoins.length} {displayCoins.length === 1 ? 'coin' : 'coins'})
+               ({mockCoinsWithPrices.length} {mockCoinsWithPrices.length === 1 ? 'coin' : 'coins'})
              </span>
            </div>
            <p className="text-zinc-400">Real-time cryptocurrency prices and charts</p>
