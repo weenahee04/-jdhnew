@@ -62,15 +62,43 @@ export async function connectMockWallet(page: Page) {
   // First, ensure we're on the landing page
   await page.goto('/');
   await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
   
-  // Wait for the "Open account" button on landing page
-  // The button text is exactly "Open account" (not "Connect" or "เชื่อมต่อ")
-  const connectButton = page.locator('button:has-text("Open account")').first();
-  await connectButton.waitFor({ timeout: 10000, state: 'visible' });
-  await connectButton.click();
+  // The button is in App.tsx line 998-999:
+  // <button onClick={() => setCurrentView('AUTH_REGISTER')} className="w-full py-3 sm:py-4 bg-gradient-to-r from-emerald-600 to-emerald-500...">
+  //   Open account
+  // </button>
+  
+  // Use multiple selector strategies for reliability:
+  // 1. Exact text match (most reliable)
+  // 2. Button with specific onClick behavior (setCurrentView)
+  // 3. Button with gradient background classes
+  
+  // Strategy 1: Exact text match with button element
+  let connectButton = page.locator('button:has-text("Open account")').first();
+  
+  // Wait for button to be visible and enabled
+  await connectButton.waitFor({ 
+    timeout: 15000, 
+    state: 'visible' 
+  });
+  
+  // Ensure button is enabled
+  await connectButton.waitFor({ 
+    timeout: 5000, 
+    state: 'attached' 
+  });
+  
+  // Scroll into view if needed
+  await connectButton.scrollIntoViewIfNeeded();
+  
+  // Click the button
+  await connectButton.click({ timeout: 10000 });
   
   // Wait for navigation to registration/auth page
-  await page.waitForTimeout(1000);
+  // The button sets currentView to 'AUTH_REGISTER', so wait for the form to appear
+  await page.waitForSelector('form, input[type="email"]', { timeout: 10000 });
+  await page.waitForTimeout(500);
   
   // Note: This function connects to the registration flow, not a wallet directly
   // For actual wallet connection, tests should use the wallet creation flow
