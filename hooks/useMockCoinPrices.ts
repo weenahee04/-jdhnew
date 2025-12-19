@@ -23,6 +23,9 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
         if (coin.id && coin.id !== 'sol' && coin.id !== 'warp' && coin.id !== 'jdh') {
           coinGeckoIds.push(coin.id);
           coinGeckoIndices.push(index);
+          console.log(`📌 Mapping ${coin.symbol} -> CoinGecko ID: ${coin.id}`);
+        } else {
+          console.warn(`⚠️ Coin ${coin.symbol} has no valid CoinGecko ID (id: ${coin.id})`);
         }
       });
 

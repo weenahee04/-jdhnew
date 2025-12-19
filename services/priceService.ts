@@ -193,22 +193,24 @@ export const getCoinGeckoPrices = async (coinIds: string[]): Promise<Record<stri
     const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
     
     // Use /coins/markets endpoint which provides price and 24h change
-    const response = await fetch(
-      `${COINGECKO_API}/coins/markets?ids=${ids}&vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`,
-      { 
-        signal: controller.signal,
-        headers: {
-          'Accept': 'application/json',
-        }
+    const url = `${COINGECKO_API}/coins/markets?ids=${ids}&vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🌐 Fetching CoinGecko prices from:', url.substring(0, 100) + '...');
+    }
+    
+    const response = await fetch(url, { 
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json',
       }
-    );
+    });
     
     clearTimeout(timeoutId);
     
     if (!response.ok) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn(`CoinGecko API returned ${response.status}: ${response.statusText}`);
-      }
+      const errorText = await response.text().catch(() => 'Unknown error');
+      console.error(`❌ CoinGecko API error ${response.status}:`, errorText.substring(0, 200));
       return {};
     }
     
@@ -217,6 +219,7 @@ export const getCoinGeckoPrices = async (coinIds: string[]): Promise<Record<stri
     
     // CoinGecko returns array of coin objects
     if (Array.isArray(marketData)) {
+      console.log(`✅ CoinGecko returned ${marketData.length} coins`);
       for (const coin of marketData) {
         if (coin.id && coin.current_price !== undefined) {
           prices[coin.id] = {
@@ -227,8 +230,13 @@ export const getCoinGeckoPrices = async (coinIds: string[]): Promise<Record<stri
             price_change_percentage_24h: coin.price_change_percentage_24h || 0,
             image: coin.image,
           };
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`  ✓ ${coin.symbol?.toUpperCase()}: $${coin.current_price} (${coin.price_change_percentage_24h?.toFixed(2)}%)`);
+          }
         }
       }
+    } else {
+      console.warn('⚠️ CoinGecko returned non-array data:', typeof marketData);
     }
     
     return prices;
