@@ -47,15 +47,17 @@ export async function getSwapQuoteApi(params: SwapParams): Promise<JupiterQuote>
       if (quote) {
         // Convert to JupiterQuote format
         return {
-          inputMint: quote.inputMint,
-          inAmount: quote.inputAmount,
-          outputMint: quote.outputMint,
-          outAmount: quote.outputAmount,
-          otherAmountThreshold: quote.outputAmount,
-          swapMode: 'ExactIn',
+          inputMint: quote.inputMint || params.inputMint,
+          inAmount: quote.inputAmount || params.amount,
+          outputMint: quote.outputMint || params.outputMint,
+          outAmount: quote.outputAmount || '0',
+          otherAmountThreshold: quote.outputAmount || '0',
+          swapMode: 'ExactIn' as const,
           slippageBps: params.slippageBps || 50,
-          priceImpactPct: quote.priceImpact,
-          routePlan: quote.route,
+          priceImpactPct: quote.priceImpact || 0,
+          contextSlot: 0,
+          timeTaken: 0,
+          routePlan: quote.route || [],
         };
       }
     } catch (error) {
@@ -107,6 +109,12 @@ export async function buildSwapTransactionApi(
   }
 
   // Fallback to direct Jupiter API
-  return getSwapTransaction(userPublicKey, quote);
+  return getSwapTransaction({
+    userPublicKey: userPublicKey.toString(),
+    quoteResponse: quote,
+    wrapAndUnwrapSol: true,
+    dynamicComputeUnitLimit: true,
+    dynamicSlippage: true,
+  });
 }
 

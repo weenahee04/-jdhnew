@@ -51,6 +51,9 @@ export default defineConfig(({ mode }) => {
           'bn.js',
           '@solana/web3.js',
           '@solana/spl-token',
+          'ed25519-hd-key',
+          'bs58',
+          '@scure/bip39',
         ],
         esbuildOptions: {
           target: 'esnext',
