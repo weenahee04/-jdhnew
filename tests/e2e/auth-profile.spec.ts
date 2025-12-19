@@ -269,7 +269,7 @@ test.describe('Authentication & Profile Flow', () => {
       await page.waitForTimeout(500);
     }
 
-    await page.waitForSelector('input[type="email"], input[placeholder*="email" i]', { timeout: 10000 });
+    await page.waitForSelector('input[type="email"]', { state: 'visible', timeout: 15000 });
 
     const loginEmailInput = page.locator('input[type="email"]').first();
     await loginEmailInput.waitFor({ timeout: 10000, state: 'visible' });
@@ -349,7 +349,7 @@ test.describe('Authentication & Profile Flow', () => {
       await page.waitForTimeout(500);
     }
 
-    await page.waitForSelector('input[type="email"], input[placeholder*="email" i]', { timeout: 10000 });
+    await page.waitForSelector('input[type="email"]', { state: 'visible', timeout: 15000 });
 
     const emailInput2 = page.locator('input[type="email"]').first();
     await emailInput2.waitFor({ timeout: 10000, state: 'visible' });
@@ -433,7 +433,7 @@ test.describe('Authentication & Profile Flow', () => {
       await page.waitForTimeout(500);
     }
 
-    await page.waitForSelector('input[type="email"], input[placeholder*="email" i]', { timeout: 10000 });
+    await page.waitForSelector('input[type="email"]', { state: 'visible', timeout: 15000 });
 
     // Step 4: Login with correct credentials
     const loginEmailInput = page.locator('input[type="email"]').first();
@@ -505,7 +505,7 @@ test.describe('Authentication & Profile Flow', () => {
       await page.waitForTimeout(500);
     }
 
-    await page.waitForSelector('input[type="email"], input[placeholder*="email" i]', { timeout: 10000 });
+    await page.waitForSelector('input[type="email"]', { state: 'visible', timeout: 15000 });
 
     // Step 3: Try to login with wrong password
     const loginEmailInput = page.locator('input[type="email"]').first();
