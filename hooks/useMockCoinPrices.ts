@@ -165,8 +165,18 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
 
           // Special handling for WARP (BNB Chain token)
           if (coin.symbol === 'WARP') {
-            const WARP_CONTRACT = '0x5218B89C38Fa966493Cd380E0cB4906342A01a6C';
-            logoURI = await getCoinLogoWithFallback(coin.symbol, WARP_CONTRACT);
+            // Use logoURI from constants.ts if available (user-provided logo)
+            if (coin.logoURI) {
+              logoURI = coin.logoURI;
+            } else {
+              // Fallback to API fetch if no logoURI in constants
+              const WARP_CONTRACT = '0x5218B89C38Fa966493Cd380E0cB4906342A01a6C';
+              logoURI = await getCoinLogoWithFallback(coin.symbol, WARP_CONTRACT);
+              // If API fetch fails, use predefined logo
+              if (!logoURI) {
+                logoURI = PREDEFINED_LOGOS['WARP'] || null;
+              }
+            }
           } else if (coin.symbol === 'JDH') {
             // Special handling for JDH (Solana token) - fetch from GMGN.ai or DEXScreener
             const JDH_MINT = TOKEN_MINTS.JDH;
@@ -213,11 +223,13 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
             const priceTHB = convertUsdToThb(warpPriceData.price);
             const change24h = warpPriceData.priceChange24h || 0;
             
-            // Update WARP coin with real price
+            // Update WARP coin with real price (preserve logoURI from constants.ts)
             updatedCoins[warpIndex] = {
               ...updatedCoins[warpIndex],
               price: priceTHB,
               change24h: change24h,
+              // Preserve logoURI from constants.ts (user-provided logo)
+              logoURI: updatedCoins[warpIndex].logoURI || PREDEFINED_LOGOS['WARP'] || undefined,
               // Update chart data based on real price
               chartData: [
                 { value: warpPriceData.price * 0.98 },

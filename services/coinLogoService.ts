@@ -164,7 +164,8 @@ export const PREDEFINED_LOGOS: Record<string, string> = {
   'USDT': 'https://assets.coingecko.com/coins/images/325/small/Tether.png',
   'BNB': 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
   'SOL': 'https://assets.coingecko.com/coins/images/4128/small/solana.png',
-  // WARP and JDH will be fetched from DEXScreener/Jupiter, no placeholder
+  'WARP': 'https://img2.pic.in.th/pic/IMG_1413b7af4379d9e4f4a8.th.jpeg',
+  // JDH will be fetched from DEXScreener/Jupiter, no placeholder
 };
 
 // Get logo with fallback
