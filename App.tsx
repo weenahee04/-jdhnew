@@ -119,6 +119,22 @@ const App: React.FC = () => {
   const [marketInsight, setMarketInsight] = useState<string | null>(null);
   const [loadingInsight, setLoadingInsight] = useState(false);
   
+  // Market Filter State
+  const [marketFilter, setMarketFilter] = useState<'all' | 'favorites' | 'top-gainers' | 'top-losers' | 'new-listing' | 'metaverse'>('all');
+  const [favoriteCoins, setFavoriteCoins] = useState<Set<string>>(new Set());
+  
+  // Load favorites from localStorage on mount
+  React.useEffect(() => {
+    const saved = localStorage.getItem('favoriteCoins');
+    if (saved) {
+      try {
+        setFavoriteCoins(new Set(JSON.parse(saved)));
+      } catch (e) {
+        console.error('Failed to load favorites:', e);
+      }
+    }
+  }, []);
+  
   // Modals & Overlays
   const [activeModal, setActiveModal] = useState<'send' | 'receive' | 'swap' | null>(null);
   const [selectedCoin, setSelectedCoin] = useState<Coin | null>(null); // For Coin Detail View
@@ -1164,46 +1180,134 @@ const App: React.FC = () => {
     </div>
   );
 
-  const renderMarket = () => (
-    <div className="animate-fade-in space-y-6 pb-24 md:pb-0">
-        <header className="flex justify-between items-center py-2 md:hidden">
-            <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-bold text-white tracking-tight">ตลาด <span className="text-zinc-500 text-lg font-normal">(Market)</span></h2>
-              <span className="text-sm text-zinc-400 font-medium">
-                ({mockCoinsWithPrices.length} {mockCoinsWithPrices.length === 1 ? 'coin' : 'coins'})
-              </span>
-            </div>
-        </header>
-        <div className="hidden md:block mb-6">
-           <div className="flex items-center gap-3 mb-2">
-             <h1 className="text-3xl font-bold text-white">Market Trends</h1>
-             <span className="text-base text-zinc-400 font-medium">
-               ({mockCoinsWithPrices.length} {mockCoinsWithPrices.length === 1 ? 'coin' : 'coins'})
-             </span>
-           </div>
-           <p className="text-zinc-400">Real-time cryptocurrency prices and charts</p>
-        </div>
+  // Get filtered coins based on selected filter
+  const getFilteredCoins = React.useMemo(() => {
+    let filtered = [...mockCoinsWithPrices];
 
-        <div className="flex gap-2 overflow-x-auto no-scrollbar">
-          {['Favorites', 'Top Gainers', 'Top Losers', 'New Listing', 'Metaverse'].map((filter, i) => (
-              <button key={filter} className={`px-4 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-colors ${i === 0 ? 'bg-white text-black' : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:border-zinc-700'}`}>
-                {filter}
-              </button>
-          ))}
-        </div>
+    switch (marketFilter) {
+      case 'favorites':
+        filtered = filtered.filter(coin => favoriteCoins.has(coin.symbol));
+        break;
+      case 'top-gainers':
+        filtered = filtered.filter(coin => coin.change24h > 0).sort((a, b) => b.change24h - a.change24h);
+        break;
+      case 'top-losers':
+        filtered = filtered.filter(coin => coin.change24h < 0).sort((a, b) => a.change24h - b.change24h);
+        break;
+      case 'new-listing':
+        // Show newer coins (WARP, JDH, SHIB, TRX) - coins with lower market cap or newer
+        const newCoins = ['WARP', 'JDH', 'SHIB', 'TRX', 'DOGE'];
+        filtered = filtered.filter(coin => newCoins.includes(coin.symbol));
+        break;
+      case 'metaverse':
+        // Show metaverse/gaming related coins
+        const metaverseCoins = ['AXS', 'SAND', 'MANA', 'ENJ', 'GALA', 'MATIC', 'AVAX'];
+        filtered = filtered.filter(coin => metaverseCoins.includes(coin.symbol));
+        // If no metaverse coins, show MATIC and AVAX as they're related
+        if (filtered.length === 0) {
+          filtered = mockCoinsWithPrices.filter(coin => ['MATIC', 'AVAX'].includes(coin.symbol));
+        }
+        break;
+      case 'all':
+      default:
+        // Sort by change24h descending
+        filtered = filtered.sort((a, b) => b.change24h - a.change24h);
+        break;
+    }
 
-        {balancesLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 size={32} className="animate-spin text-emerald-400" />
+    return filtered;
+  }, [mockCoinsWithPrices, marketFilter, favoriteCoins]);
+
+  const toggleFavorite = (symbol: string) => {
+    setFavoriteCoins(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(symbol)) {
+        newSet.delete(symbol);
+      } else {
+        newSet.add(symbol);
+      }
+      // Save to localStorage
+      localStorage.setItem('favoriteCoins', JSON.stringify(Array.from(newSet)));
+      return newSet;
+    });
+  };
+
+  const renderMarket = () => {
+
+    return (
+      <div className="animate-fade-in space-y-6 pb-24 md:pb-0">
+          <header className="flex justify-between items-center py-2 md:hidden">
+              <div className="flex items-center gap-2">
+                <h2 className="text-2xl font-bold text-white tracking-tight">ตลาด <span className="text-zinc-500 text-lg font-normal">(Market)</span></h2>
+                <span className="text-sm text-zinc-400 font-medium">
+                  ({getFilteredCoins.length} {getFilteredCoins.length === 1 ? 'coin' : 'coins'})
+                </span>
+              </div>
+          </header>
+          <div className="hidden md:block mb-6">
+             <div className="flex items-center gap-3 mb-2">
+               <h1 className="text-3xl font-bold text-white">Market Trends</h1>
+               <span className="text-base text-zinc-400 font-medium">
+                 ({getFilteredCoins.length} {getFilteredCoins.length === 1 ? 'coin' : 'coins'})
+               </span>
+             </div>
+             <p className="text-zinc-400">Real-time cryptocurrency prices and charts</p>
           </div>
-        ) : (
-          <AssetList 
-            coins={[...mockCoinsWithPrices].sort((a,b) => b.change24h - a.change24h)} 
-            onSelectCoin={setSelectedCoin} 
-          />
-        )}
-    </div>
-  );
+
+          <div className="flex gap-2 overflow-x-auto no-scrollbar">
+            {[
+              { id: 'all', label: 'All' },
+              { id: 'favorites', label: 'Favorites' },
+              { id: 'top-gainers', label: 'Top Gainers' },
+              { id: 'top-losers', label: 'Top Losers' },
+              { id: 'new-listing', label: 'New Listing' },
+              { id: 'metaverse', label: 'Metaverse' }
+            ].map((filter) => (
+                <button 
+                  key={filter.id}
+                  onClick={() => setMarketFilter(filter.id as any)}
+                  className={`px-4 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-colors ${
+                    marketFilter === filter.id 
+                      ? 'bg-white text-black' 
+                      : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:border-zinc-700 hover:text-white'
+                  }`}
+                >
+                  {filter.label}
+                </button>
+            ))}
+          </div>
+
+          {balancesLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 size={32} className="animate-spin text-emerald-400" />
+            </div>
+          ) : getFilteredCoins.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <p className="text-zinc-400 text-sm mb-2">
+                {marketFilter === 'favorites' 
+                  ? 'ยังไม่มีเหรียญที่ถูกใจ กดดาวเพื่อเพิ่ม' 
+                  : 'ไม่พบเหรียญในหมวดหมู่นี้'}
+              </p>
+              {marketFilter === 'favorites' && (
+                <button
+                  onClick={() => setMarketFilter('all')}
+                  className="text-emerald-400 text-xs hover:underline mt-2"
+                >
+                  ดูเหรียญทั้งหมด
+                </button>
+              )}
+            </div>
+          ) : (
+            <AssetList 
+              coins={getFilteredCoins} 
+              onSelectCoin={setSelectedCoin}
+              onToggleFavorite={toggleFavorite}
+              favoriteCoins={favoriteCoins}
+            />
+          )}
+      </div>
+    );
+  };
 
   const renderWallet = () => (
     <div className="animate-fade-in space-y-4 sm:space-y-5 md:space-y-6 pb-24 md:pb-0">

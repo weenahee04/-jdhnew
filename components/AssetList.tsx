@@ -1,15 +1,17 @@
 import React from 'react';
 import { Coin } from '../types';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Star } from 'lucide-react';
 
 interface AssetListProps {
   coins: Coin[];
   compact?: boolean;
   onSelectCoin?: (coin: Coin) => void;
+  onToggleFavorite?: (symbol: string) => void;
+  favoriteCoins?: Set<string>;
 }
 
-export const AssetList: React.FC<AssetListProps> = ({ coins, compact = false, onSelectCoin }) => {
+export const AssetList: React.FC<AssetListProps> = ({ coins, compact = false, onSelectCoin, onToggleFavorite, favoriteCoins = new Set() }) => {
   return (
     <div className={`flex flex-col gap-3 ${!compact ? 'pb-24 md:pb-0' : ''}`}>
       <div className="flex justify-between items-end px-1 mb-2">
@@ -27,13 +29,34 @@ export const AssetList: React.FC<AssetListProps> = ({ coins, compact = false, on
       </div>
 
       <div className="grid grid-cols-1 gap-3">
-        {coins.map((coin) => (
+        {coins.map((coin) => {
+          const isFavorite = favoriteCoins.has(coin.symbol);
+          return (
           <div 
             key={coin.id} 
-            onClick={() => onSelectCoin?.(coin)}
-            className="group bg-zinc-900/40 hover:bg-zinc-800/60 active:bg-zinc-800 backdrop-blur-sm transition-all duration-200 rounded-2xl p-4 flex items-center justify-between border border-white/5 hover:border-emerald-500/20 cursor-pointer"
+            className="group bg-zinc-900/40 hover:bg-zinc-800/60 active:bg-zinc-800 backdrop-blur-sm transition-all duration-200 rounded-2xl p-4 flex items-center justify-between border border-white/5 hover:border-emerald-500/20 cursor-pointer relative"
           >
+            {/* Favorite Button */}
+            {onToggleFavorite && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFavorite(coin.symbol);
+                }}
+                className="absolute top-3 right-3 z-10 p-1.5 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 transition-colors"
+                aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              >
+                <Star 
+                  size={16} 
+                  className={isFavorite ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-400'} 
+                />
+              </button>
+            )}
             
+            <div 
+              onClick={() => onSelectCoin?.(coin)}
+              className="flex items-center justify-between w-full"
+            >
             {/* Icon & Name */}
             <div className="flex items-center gap-4 w-[40%] md:w-[30%]">
               <div className="relative">
@@ -104,8 +127,10 @@ export const AssetList: React.FC<AssetListProps> = ({ coins, compact = false, on
                 </span>
               </div>
             </div>
+            </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
