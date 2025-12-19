@@ -269,53 +269,93 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
             // Continue to try DEXScreener
           }
           
-          // Fetch from DEXScreener token-pairs API (better data for price)
-          const jdhData = await getJDHFromDEXScreenerPairs(JDH_MINT);
+          // Try getJDHPrice first (uses DEXScreener token-pairs API)
+          let jdhPriceData = await getJDHPrice();
           
-          if (jdhData) {
-            const priceTHB = jdhData.price ? convertUsdToThb(jdhData.price) : updatedCoins[jdhIndex].price;
-            const change24h = jdhData.priceChange24h || 0;
+          if (jdhPriceData && jdhPriceData.price > 0) {
+            // Use getJDHPrice result (most reliable)
+            const priceTHB = convertUsdToThb(jdhPriceData.price);
+            const change24h = jdhPriceData.priceChange24h || 0;
             
-            // Update JDH coin with real price and logo (prefer GMGN logo if available)
+            // Update JDH coin with real price and logo
             updatedCoins[jdhIndex] = {
               ...updatedCoins[jdhIndex],
               price: priceTHB,
               change24h: change24h,
-              logoURI: jdhLogoURI || jdhData.logoURI || updatedCoins[jdhIndex].logoURI,
+              logoURI: jdhLogoURI || updatedCoins[jdhIndex].logoURI,
               // Update chart data based on real price
-              chartData: jdhData.price ? [
-                { value: jdhData.price * 0.98 },
-                { value: jdhData.price * 1.01 },
-                { value: jdhData.price * 0.99 },
-                { value: jdhData.price },
-                { value: jdhData.price * 1.02 },
-                { value: jdhData.price * 0.97 },
-                { value: jdhData.price },
-              ] : updatedCoins[jdhIndex].chartData,
+              chartData: [
+                { value: jdhPriceData.price * 0.98 },
+                { value: jdhPriceData.price * 1.01 },
+                { value: jdhPriceData.price * 0.99 },
+                { value: jdhPriceData.price },
+                { value: jdhPriceData.price * 1.02 },
+                { value: jdhPriceData.price * 0.97 },
+                { value: jdhPriceData.price },
+              ],
             };
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`✅ JDH price updated: ${priceTHB.toLocaleString()} THB (${change24h.toFixed(2)}%)`);
+            }
           } else {
-            // Fallback to Jupiter Price API
-            const priceData = await getTokenPrices([JDH_MINT]);
-            const jdhPriceData = priceData[JDH_MINT];
+            // Fallback to DEXScreener token-pairs API
+            const jdhData = await getJDHFromDEXScreenerPairs(JDH_MINT);
             
-            if (jdhPriceData && jdhPriceData.price > 0) {
-              const priceTHB = convertUsdToThb(jdhPriceData.price);
-              const change24h = jdhPriceData.priceChange24h || 0;
+            if (jdhData && jdhData.price > 0) {
+              const priceTHB = convertUsdToThb(jdhData.price);
+              const change24h = jdhData.priceChange24h || 0;
               
+              // Update JDH coin with real price and logo (prefer GMGN logo if available)
               updatedCoins[jdhIndex] = {
                 ...updatedCoins[jdhIndex],
                 price: priceTHB,
                 change24h: change24h,
+                logoURI: jdhLogoURI || jdhData.logoURI || updatedCoins[jdhIndex].logoURI,
+                // Update chart data based on real price
                 chartData: [
-                  { value: jdhPriceData.price * 0.98 },
-                  { value: jdhPriceData.price * 1.01 },
-                  { value: jdhPriceData.price * 0.99 },
-                  { value: jdhPriceData.price },
-                  { value: jdhPriceData.price * 1.02 },
-                  { value: jdhPriceData.price * 0.97 },
-                  { value: jdhPriceData.price },
+                  { value: jdhData.price * 0.98 },
+                  { value: jdhData.price * 1.01 },
+                  { value: jdhData.price * 0.99 },
+                  { value: jdhData.price },
+                  { value: jdhData.price * 1.02 },
+                  { value: jdhData.price * 0.97 },
+                  { value: jdhData.price },
                 ],
               };
+              if (process.env.NODE_ENV === 'development') {
+                console.log(`✅ JDH price updated (DEXScreener): ${priceTHB.toLocaleString()} THB (${change24h.toFixed(2)}%)`);
+              }
+            } else {
+              // Final fallback to Jupiter Price API
+              const priceData = await getTokenPrices([JDH_MINT]);
+              const jdhPriceDataFromJupiter = priceData[JDH_MINT];
+              
+              if (jdhPriceDataFromJupiter && jdhPriceDataFromJupiter.price > 0) {
+                const priceTHB = convertUsdToThb(jdhPriceDataFromJupiter.price);
+                const change24h = jdhPriceDataFromJupiter.priceChange24h || 0;
+                
+                updatedCoins[jdhIndex] = {
+                  ...updatedCoins[jdhIndex],
+                  price: priceTHB,
+                  change24h: change24h,
+                  chartData: [
+                    { value: jdhPriceDataFromJupiter.price * 0.98 },
+                    { value: jdhPriceDataFromJupiter.price * 1.01 },
+                    { value: jdhPriceDataFromJupiter.price * 0.99 },
+                    { value: jdhPriceDataFromJupiter.price },
+                    { value: jdhPriceDataFromJupiter.price * 1.02 },
+                    { value: jdhPriceDataFromJupiter.price * 0.97 },
+                    { value: jdhPriceDataFromJupiter.price },
+                  ],
+                };
+                if (process.env.NODE_ENV === 'development') {
+                  console.log(`✅ JDH price updated (Jupiter): ${priceTHB.toLocaleString()} THB (${change24h.toFixed(2)}%)`);
+                }
+              } else {
+                if (process.env.NODE_ENV === 'development') {
+                  console.warn('⚠️ JDH price not available from any source, keeping default');
+                }
+              }
             }
           }
         } catch (error) {

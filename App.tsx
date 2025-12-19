@@ -196,9 +196,27 @@ const App: React.FC = () => {
   // Fetch real prices for market coins (all prices are real-time, no mock data)
   const marketCoinsWithPrices = useMockCoinPrices(MOCK_COINS);
   
+  // Default main coins: JDH, WARP, SOL, BTC (always shown when logged in or on first visit)
+  const defaultMainCoins = React.useMemo(() => {
+    const solCoin = marketCoinsWithPrices.find(c => c.symbol === 'SOL');
+    const btcCoin = marketCoinsWithPrices.find(c => c.symbol === 'BTC');
+    const warpCoin = marketCoinsWithPrices.find(c => c.symbol === 'WARP');
+    const jdhCoin = marketCoinsWithPrices.find(c => c.symbol === 'JDH');
+    
+    const mainCoins: Coin[] = [];
+    if (solCoin) mainCoins.push(solCoin);
+    if (btcCoin) mainCoins.push(btcCoin);
+    if (warpCoin) mainCoins.push(warpCoin);
+    if (jdhCoin) mainCoins.push(jdhCoin);
+    
+    return mainCoins;
+  }, [marketCoinsWithPrices]);
+  
   // In production: Only show coins with real prices
-  // Use wallet coins if connected, otherwise use market coins with real prices
-  const baseDisplayCoins = publicKey && walletCoins.length > 0 ? walletCoins : marketCoinsWithPrices;
+  // Use wallet coins if connected, otherwise use default main coins or market coins with real prices
+  const baseDisplayCoins = publicKey && walletCoins.length > 0 
+    ? walletCoins 
+    : (defaultMainCoins.length > 0 ? defaultMainCoins : marketCoinsWithPrices);
   
   // Ensure SOL, BTC, WARP and JDH are always included in display coins
   const displayCoins = React.useMemo(() => {
