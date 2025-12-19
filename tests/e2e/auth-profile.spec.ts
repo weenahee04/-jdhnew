@@ -60,10 +60,8 @@ test.describe('Authentication & Profile Flow', () => {
       await page.waitForTimeout(500);
     }
 
-    // Wait for registration form to be visible
-    // The email input has type="email" and placeholder="hello@jdh.com"
-    // Also wait for the form container to ensure it's fully rendered
-    await page.waitForSelector('form', { timeout: 10000 });
+    // Wait for email input to be visible (more reliable than waiting for form)
+    await page.waitForSelector('input[type="email"]', { state: 'visible', timeout: 15000 });
     const emailInput = page.locator('input[type="email"]').first();
     await emailInput.waitFor({ timeout: 10000, state: 'visible' });
     const passwordInput = page.locator('input[type="password"]').first();
@@ -142,8 +140,8 @@ test.describe('Authentication & Profile Flow', () => {
       await page.waitForTimeout(500);
     }
 
-    // Wait for form and email input to be visible
-    await page.waitForSelector('form', { timeout: 10000 });
+    // Wait for email input to be visible (more reliable than waiting for form)
+    await page.waitForSelector('input[type="email"]', { state: 'visible', timeout: 15000 });
     const emailInput = page.locator('input[type="email"]').first();
     await emailInput.waitFor({ timeout: 10000, state: 'visible' });
     const passwordInput = page.locator('input[type="password"]').first();
@@ -220,8 +218,8 @@ test.describe('Authentication & Profile Flow', () => {
       await page.waitForTimeout(500);
     }
 
-    // Wait for form and email input to be visible
-    await page.waitForSelector('form', { timeout: 10000 });
+    // Wait for email input to be visible (more reliable than waiting for form)
+    await page.waitForSelector('input[type="email"]', { state: 'visible', timeout: 15000 });
     const emailInput = page.locator('input[type="email"]').first();
     await emailInput.waitFor({ timeout: 10000, state: 'visible' });
     const passwordInput = page.locator('input[type="password"]').first();
@@ -313,8 +311,8 @@ test.describe('Authentication & Profile Flow', () => {
       await page.waitForTimeout(500);
     }
 
-    // Wait for form and email input to be visible
-    await page.waitForSelector('form', { timeout: 10000 });
+    // Wait for email input to be visible (more reliable than waiting for form)
+    await page.waitForSelector('input[type="email"]', { state: 'visible', timeout: 15000 });
     const emailInput = page.locator('input[type="email"]').first();
     await emailInput.waitFor({ timeout: 10000, state: 'visible' });
     const passwordInput = page.locator('input[type="password"]').first();
@@ -398,8 +396,8 @@ test.describe('Authentication & Profile Flow', () => {
       await page.waitForTimeout(500);
     }
 
-    // Wait for form and email input to be visible
-    await page.waitForSelector('form', { timeout: 10000 });
+    // Wait for email input to be visible (more reliable than waiting for form)
+    await page.waitForSelector('input[type="email"]', { state: 'visible', timeout: 15000 });
     const emailInput = page.locator('input[type="email"]').first();
     await emailInput.waitFor({ timeout: 10000, state: 'visible' });
     const passwordInput = page.locator('input[type="password"]').first();
@@ -471,8 +469,8 @@ test.describe('Authentication & Profile Flow', () => {
       await page.waitForTimeout(500);
     }
 
-    // Wait for form and email input to be visible
-    await page.waitForSelector('form', { timeout: 10000 });
+    // Wait for email input to be visible (more reliable than waiting for form)
+    await page.waitForSelector('input[type="email"]', { state: 'visible', timeout: 15000 });
     const emailInput = page.locator('input[type="email"]').first();
     await emailInput.waitFor({ timeout: 10000, state: 'visible' });
     const passwordInput = page.locator('input[type="password"]').first();
@@ -546,8 +544,8 @@ test.describe('Authentication & Profile Flow', () => {
       await page.waitForTimeout(500);
     }
 
-    // Wait for form and email input to be visible
-    await page.waitForSelector('form', { timeout: 10000 });
+    // Wait for email input to be visible (more reliable than waiting for form)
+    await page.waitForSelector('input[type="email"]', { state: 'visible', timeout: 15000 });
     const emailInput = page.locator('input[type="email"]').first();
     await emailInput.waitFor({ timeout: 10000, state: 'visible' });
     const passwordInput = page.locator('input[type="password"]').first();
