@@ -219,8 +219,8 @@ const App: React.FC = () => {
       result.push(btcCoin);
     }
     
-    // Add WARP if not already present (only if it has real price)
-    if (warpCoin && warpCoin.price > 0 && !result.some(c => c.symbol === 'WARP')) {
+    // Always add WARP if not already present (even if price is 0, it's a major coin)
+    if (warpCoin && !result.some(c => c.symbol === 'WARP')) {
       result.push(warpCoin);
     }
     
@@ -229,11 +229,11 @@ const App: React.FC = () => {
       result.push(jdhCoin);
     }
     
-    // In production: Filter out coins without real prices (except SOL and BTC which are always shown)
+    // In production: Filter out coins without real prices (except SOL, BTC, and WARP which are always shown)
     if (process.env.NODE_ENV === 'production') {
       result = result.filter(coin => {
-        // Always keep SOL and BTC (major coins)
-        if (coin.symbol === 'SOL' || coin.symbol === 'BTC') {
+        // Always keep SOL, BTC, and WARP (major coins)
+        if (coin.symbol === 'SOL' || coin.symbol === 'BTC' || coin.symbol === 'WARP') {
           return true;
         }
         // Keep coins with real prices or wallet balance > 0
