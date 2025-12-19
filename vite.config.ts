@@ -39,7 +39,7 @@ export default defineConfig(({ mode }) => {
           'crypto': 'crypto-browserify',
           'util': 'util',
         },
-        dedupe: ['eventemitter3', 'bn.js', 'jayson', 'readable-stream'],
+        dedupe: ['eventemitter3', 'bn.js', 'jayson', 'readable-stream', 'ed25519-hd-key'],
       },
       optimizeDeps: {
         include: [

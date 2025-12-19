@@ -27,7 +27,7 @@ import { getTransactionHistory } from './services/helius';
 import { getHistoryFromApi } from './services/walletApiService';
 import { getQuote, getSwapTransaction } from './services/jupiter';
 import { getSwapQuoteApi, buildSwapTransactionApi } from './services/jupiterApi';
-import { connection, explorerUrl } from './services/solanaClient';
+import { connection, explorerUrl, sendSol, sendToken } from './services/solanaClient';
 import { VersionedTransaction } from '@solana/web3.js';
 import { Buffer } from 'buffer';
 
@@ -784,7 +784,10 @@ const App: React.FC = () => {
             coinBalance: solCoin?.balance,
           });
           
-          const result = await transferSol(to.trim(), amount);
+          if (!wallet?.keypair) {
+            throw new Error('Wallet keypair not available');
+          }
+          const result = await sendSol(wallet.keypair, to.trim(), amount);
           console.log('✅ SOL transfer successful:', result);
           // Refresh balances after send
           setTimeout(() => refreshBalances(), 2000);
@@ -830,7 +833,10 @@ const App: React.FC = () => {
             coinBalance: coin?.balance,
           });
           
-          const result = await transferToken(to.trim(), finalMintAddress, amount, decimals);
+          if (!wallet?.keypair) {
+            throw new Error('Wallet keypair not available');
+          }
+          const result = await sendToken(wallet.keypair, to.trim(), finalMintAddress, amount, decimals);
           console.log('✅ Token transfer successful:', result);
           // Refresh balances after send
           setTimeout(() => refreshBalances(), 2000);
