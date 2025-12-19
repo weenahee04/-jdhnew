@@ -78,7 +78,8 @@ export const MOCK_COINS: Coin[] = [
     balanceUsd: 0,
     color: '#8B5CF6',
     about: 'Warp (WARP) is a token on BNB Chain. Price is fetched in real-time from DEXScreener API.',
-    chartData: [{ value: 15.0 }, { value: 15.05 }, { value: 15.1 }, { value: 15.07 }, { value: 15.08 }, { value: 15.06 }, { value: 15.07 }]
+    chartData: [{ value: 15.0 }, { value: 15.05 }, { value: 15.1 }, { value: 15.07 }, { value: 15.08 }, { value: 15.06 }, { value: 15.07 }],
+    logoURI: 'https://img2.pic.in.th/pic/IMG_1413b7af4379d9e4f4a8.th.jpeg'
   },
   {
     id: 'jdh',
