@@ -65,9 +65,11 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
       let coinGeckoPrices: Record<string, any> = {};
       if (coinGeckoIds.length > 0) {
         try {
+          console.log('📊 Fetching CoinGecko prices for:', coinGeckoIds);
           coinGeckoPrices = await getCoinGeckoPrices(coinGeckoIds);
+          console.log('✅ CoinGecko prices fetched:', Object.keys(coinGeckoPrices).length, 'coins');
         } catch (error) {
-          console.warn('Failed to fetch CoinGecko prices:', error);
+          console.warn('❌ Failed to fetch CoinGecko prices:', error);
         }
       }
 
@@ -93,6 +95,8 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
             { value: basePrice },
           ];
           
+          console.log(`✅ Updated ${coin.symbol} price: ${priceTHB.toLocaleString()} THB (${change24h.toFixed(2)}%)`);
+          
           updatedCoins[index] = {
             ...updatedCoins[index],
             price: priceTHB,
@@ -101,6 +105,8 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
             // Update logo if CoinGecko provides one
             logoURI: priceData.image || updatedCoins[index].logoURI,
           };
+        } else {
+          console.warn(`⚠️ No price data for ${coin.symbol} (CoinGecko ID: ${coinGeckoId})`);
         }
       });
 

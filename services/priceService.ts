@@ -190,57 +190,50 @@ export const getCoinGeckoPrices = async (coinIds: string[]): Promise<Record<stri
     // CoinGecko allows up to 250 coins per request
     const ids = coinIds.slice(0, 250).join(',');
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
     
+    // Use /coins/markets endpoint which provides price and 24h change
     const response = await fetch(
-      `${COINGECKO_API}/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=false&include_last_updated_at=false`,
-      { signal: controller.signal }
+      `${COINGECKO_API}/coins/markets?ids=${ids}&vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`,
+      { 
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+        }
+      }
     );
     
     clearTimeout(timeoutId);
     
     if (!response.ok) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(`CoinGecko API returned ${response.status}: ${response.statusText}`);
+      }
       return {};
     }
     
-    const data = await response.json();
+    const marketData = await response.json();
     const prices: Record<string, CoinGeckoPrice> = {};
     
-    // CoinGecko returns data in a different format, need to fetch with market data endpoint for 24h change
-    const marketDataResponse = await fetch(
-      `${COINGECKO_API}/coins/markets?ids=${ids}&vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`,
-      { signal: controller.signal }
-    );
-    
-    if (marketDataResponse.ok) {
-      const marketData = await marketDataResponse.json();
+    // CoinGecko returns array of coin objects
+    if (Array.isArray(marketData)) {
       for (const coin of marketData) {
-        prices[coin.id] = {
-          id: coin.id,
-          symbol: coin.symbol?.toUpperCase() || '',
-          name: coin.name || '',
-          current_price: coin.current_price || 0,
-          price_change_percentage_24h: coin.price_change_percentage_24h || 0,
-          image: coin.image,
-        };
-      }
-    } else {
-      // Fallback to simple price endpoint
-      for (const [id, priceData] of Object.entries(data)) {
-        const p = priceData as any;
-        prices[id] = {
-          id,
-          symbol: id.toUpperCase(),
-          name: id,
-          current_price: p.usd || 0,
-          price_change_percentage_24h: 0,
-        };
+        if (coin.id && coin.current_price !== undefined) {
+          prices[coin.id] = {
+            id: coin.id,
+            symbol: coin.symbol?.toUpperCase() || '',
+            name: coin.name || '',
+            current_price: coin.current_price || 0,
+            price_change_percentage_24h: coin.price_change_percentage_24h || 0,
+            image: coin.image,
+          };
+        }
       }
     }
     
     return prices;
   } catch (error: any) {
-    // Silently fail for network errors
+    // Log errors in development for debugging
     if (error.name !== 'AbortError' && process.env.NODE_ENV === 'development') {
       console.warn('CoinGecko price fetch error:', error.message || error);
     }
