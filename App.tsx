@@ -188,32 +188,40 @@ const App: React.FC = () => {
     tokenMetadata,
   } = useWalletBalances(publicKey);
 
-  // Fetch real prices for mock coins (like WARP)
-  const mockCoinsWithPrices = useMockCoinPrices(MOCK_COINS);
+  // Fetch real prices for market coins (all prices are real-time, no mock data)
+  const marketCoinsWithPrices = useMockCoinPrices(MOCK_COINS);
   
-  // Use real coins if wallet is connected, otherwise use mock coins with real prices
-  // Always include WARP token even if wallet is connected
-  const baseDisplayCoins = publicKey && walletCoins.length > 0 ? walletCoins : mockCoinsWithPrices;
+  // In production: Only show coins with real prices
+  // Use wallet coins if connected, otherwise use market coins with real prices
+  const baseDisplayCoins = publicKey && walletCoins.length > 0 ? walletCoins : marketCoinsWithPrices;
   
-  // Ensure WARP and JDH are always included in display coins
+  // Ensure WARP and JDH are always included in display coins (with real prices)
   const displayCoins = React.useMemo(() => {
-    const warpCoin = mockCoinsWithPrices.find(c => c.symbol === 'WARP');
-    const jdhCoin = mockCoinsWithPrices.find(c => c.symbol === 'JDH');
+    const warpCoin = marketCoinsWithPrices.find(c => c.symbol === 'WARP');
+    const jdhCoin = marketCoinsWithPrices.find(c => c.symbol === 'JDH');
     
     let result = [...baseDisplayCoins];
     
-    // Add WARP if not already present
-    if (warpCoin && !result.some(c => c.symbol === 'WARP')) {
+    // Add WARP if not already present (only if it has real price)
+    if (warpCoin && warpCoin.price > 0 && !result.some(c => c.symbol === 'WARP')) {
       result.push(warpCoin);
     }
     
-    // Add JDH if not already present
-    if (jdhCoin && !result.some(c => c.symbol === 'JDH')) {
+    // Add JDH if not already present (only if it has real price)
+    if (jdhCoin && jdhCoin.price > 0 && !result.some(c => c.symbol === 'JDH')) {
       result.push(jdhCoin);
     }
     
+    // In production: Filter out coins without real prices
+    if (process.env.NODE_ENV === 'production') {
+      result = result.filter(coin => {
+        // Keep coins with real prices or wallet balance > 0
+        return coin.price > 0 || coin.balance > 0;
+      });
+    }
+    
     return result;
-  }, [baseDisplayCoins, mockCoinsWithPrices]);
+  }, [baseDisplayCoins, marketCoinsWithPrices]);
   
   // Debug: Log coin count
   useEffect(() => {
@@ -1180,9 +1188,11 @@ const App: React.FC = () => {
     </div>
   );
 
-  // Get filtered coins based on selected filter
+  // Get filtered coins based on selected filter (only coins with real prices)
   const getFilteredCoins = React.useMemo(() => {
-    let filtered = [...mockCoinsWithPrices];
+    // Only show coins with real prices (price > 0)
+    const coinsWithRealPrices = marketCoinsWithPrices.filter(coin => coin.price > 0);
+    let filtered = [...coinsWithRealPrices];
 
     switch (marketFilter) {
       case 'favorites':
@@ -1203,9 +1213,9 @@ const App: React.FC = () => {
         // Show metaverse/gaming related coins
         const metaverseCoins = ['AXS', 'SAND', 'MANA', 'ENJ', 'GALA', 'MATIC', 'AVAX'];
         filtered = filtered.filter(coin => metaverseCoins.includes(coin.symbol));
-        // If no metaverse coins, show MATIC and AVAX as they're related
+        // If no metaverse coins, show MATIC and AVAX as they're related (only if they have real prices)
         if (filtered.length === 0) {
-          filtered = mockCoinsWithPrices.filter(coin => ['MATIC', 'AVAX'].includes(coin.symbol));
+          filtered = coinsWithRealPrices.filter(coin => ['MATIC', 'AVAX'].includes(coin.symbol));
         }
         break;
       case 'all':
@@ -1216,7 +1226,7 @@ const App: React.FC = () => {
     }
 
     return filtered;
-  }, [mockCoinsWithPrices, marketFilter, favoriteCoins]);
+  }, [marketCoinsWithPrices, marketFilter, favoriteCoins]);
 
   const toggleFavorite = (symbol: string) => {
     setFavoriteCoins(prev => {

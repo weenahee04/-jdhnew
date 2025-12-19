@@ -1,14 +1,16 @@
 import { Coin, BannerData, Transaction, Notification, FAQ } from './types';
 
+// Market coins - prices will be fetched from real APIs (CoinGecko, Jupiter, DEXScreener)
+// Initial prices are placeholders and will be replaced with real-time data
 export const MOCK_COINS: Coin[] = [
   {
     id: 'bitcoin',
     symbol: 'BTC',
     name: 'Bitcoin',
-    price: 2350000, 
-    change24h: 2.5,
-    balance: 0.045,
-    balanceUsd: 105750,
+    price: 0, // Will be updated with real price from CoinGecko
+    change24h: 0, // Will be updated with real price change
+    balance: 0, // No mock balance - only show real wallet balances
+    balanceUsd: 0,
     color: '#F7931A',
     about: 'Bitcoin is the first successful internet money based on peer-to-peer technology.',
     chartData: [{ value: 2300000 }, { value: 2320000 }, { value: 2310000 }, { value: 2340000 }, { value: 2350000 }, { value: 2380000 }, { value: 2350000 }],
@@ -18,10 +20,10 @@ export const MOCK_COINS: Coin[] = [
     id: 'ethereum',
     symbol: 'ETH',
     name: 'Ethereum',
-    price: 85000,
-    change24h: -1.2,
-    balance: 1.2,
-    balanceUsd: 102000,
+    price: 0, // Will be updated with real price from CoinGecko
+    change24h: 0, // Will be updated with real price change
+    balance: 0, // No mock balance - only show real wallet balances
+    balanceUsd: 0,
     color: '#627EEA',
     about: 'Ethereum is a decentralized platform that runs smart contracts.',
     chartData: [{ value: 87000 }, { value: 86000 }, { value: 86500 }, { value: 85500 }, { value: 85000 }, { value: 84500 }, { value: 85000 }],
@@ -31,10 +33,10 @@ export const MOCK_COINS: Coin[] = [
     id: 'tether',
     symbol: 'USDT',
     name: 'Tether',
-    price: 34.5,
-    change24h: 0.01,
-    balance: 5000,
-    balanceUsd: 172500,
+    price: 0, // Will be updated with real price from CoinGecko
+    change24h: 0, // Will be updated with real price change
+    balance: 0, // No mock balance - only show real wallet balances
+    balanceUsd: 0,
     color: '#26A17B',
     about: 'Tether is a stablecoin pegged to the US Dollar.',
     chartData: [{ value: 34.4 }, { value: 34.5 }, { value: 34.5 }, { value: 34.49 }, { value: 34.5 }, { value: 34.51 }, { value: 34.5 }],
@@ -44,10 +46,10 @@ export const MOCK_COINS: Coin[] = [
     id: 'bnb',
     symbol: 'BNB',
     name: 'BNB',
-    price: 18000,
-    change24h: 4.1,
-    balance: 0.5,
-    balanceUsd: 9000,
+    price: 0, // Will be updated with real price from CoinGecko
+    change24h: 0, // Will be updated with real price change
+    balance: 0, // No mock balance - only show real wallet balances
+    balanceUsd: 0,
     color: '#F3BA2F',
     about: 'BNB is the cryptocurrency coin that powers the Binance ecosystem.',
     chartData: [{ value: 17000 }, { value: 17200 }, { value: 17500 }, { value: 17800 }, { value: 18000 }, { value: 18200 }, { value: 18000 }],
@@ -57,10 +59,10 @@ export const MOCK_COINS: Coin[] = [
     id: 'solana',
     symbol: 'SOL',
     name: 'Solana',
-    price: 3500,
-    change24h: 8.5,
-    balance: 10,
-    balanceUsd: 35000,
+    price: 0, // Will be updated with real price from Jupiter API
+    change24h: 0, // Will be updated with real price change
+    balance: 0, // No mock balance - only show real wallet balances
+    balanceUsd: 0,
     color: '#14F195',
     about: 'Solana is a high-performance blockchain supporting builders around the world.',
     chartData: [{ value: 3100 }, { value: 3200 }, { value: 3350 }, { value: 3400 }, { value: 3500 }, { value: 3600 }, { value: 3500 }],
@@ -70,8 +72,8 @@ export const MOCK_COINS: Coin[] = [
     id: 'warp',
     symbol: 'WARP',
     name: 'Warp',
-    price: 15.07, // Fallback price: ~$0.4368 USD converted to THB (34.5 rate) - Will be updated with real price
-    change24h: 0.0,
+    price: 0, // Will be updated with real price from DEXScreener API
+    change24h: 0, // Will be updated with real price change
     balance: 0,
     balanceUsd: 0,
     color: '#8B5CF6',
@@ -82,8 +84,8 @@ export const MOCK_COINS: Coin[] = [
     id: 'jdh',
     symbol: 'JDH',
     name: 'JDH Token',
-    price: 1.68, // Fallback price: ~$0.048662 USD converted to THB (34.5 rate) - Will be updated with real price from Jupiter
-    change24h: -3.5,
+    price: 0, // Will be updated with real price from DEXScreener/Jupiter API
+    change24h: 0, // Will be updated with real price change
     balance: 0,
     balanceUsd: 0,
     color: '#14F195',
@@ -95,8 +97,8 @@ export const MOCK_COINS: Coin[] = [
     id: 'usd-coin',
     symbol: 'USDC',
     name: 'USD Coin',
-    price: 34.5,
-    change24h: 0.01,
+    price: 0, // Will be updated with real price from CoinGecko
+    change24h: 0, // Will be updated with real price change
     balance: 0,
     balanceUsd: 0,
     color: '#2775CA',
@@ -108,8 +110,8 @@ export const MOCK_COINS: Coin[] = [
     id: 'ripple',
     symbol: 'XRP',
     name: 'XRP',
-    price: 2000,
-    change24h: 3.2,
+    price: 0, // Will be updated with real price from CoinGecko
+    change24h: 0, // Will be updated with real price change
     balance: 0,
     balanceUsd: 0,
     color: '#23292F',
@@ -121,8 +123,8 @@ export const MOCK_COINS: Coin[] = [
     id: 'cardano',
     symbol: 'ADA',
     name: 'Cardano',
-    price: 2500,
-    change24h: -2.1,
+    price: 0, // Will be updated with real price from CoinGecko
+    change24h: 0, // Will be updated with real price change
     balance: 0,
     balanceUsd: 0,
     color: '#0033AD',
@@ -134,8 +136,8 @@ export const MOCK_COINS: Coin[] = [
     id: 'dogecoin',
     symbol: 'DOGE',
     name: 'Dogecoin',
-    price: 12.5,
-    change24h: 5.8,
+    price: 0, // Will be updated with real price from CoinGecko
+    change24h: 0, // Will be updated with real price change
     balance: 0,
     balanceUsd: 0,
     color: '#C2A633',
@@ -147,8 +149,8 @@ export const MOCK_COINS: Coin[] = [
     id: 'matic-network',
     symbol: 'MATIC',
     name: 'Polygon',
-    price: 850,
-    change24h: 4.3,
+    price: 0, // Will be updated with real price from CoinGecko
+    change24h: 0, // Will be updated with real price change
     balance: 0,
     balanceUsd: 0,
     color: '#8247E5',
@@ -160,8 +162,8 @@ export const MOCK_COINS: Coin[] = [
     id: 'avalanche-2',
     symbol: 'AVAX',
     name: 'Avalanche',
-    price: 3500,
-    change24h: -1.5,
+    price: 0, // Will be updated with real price from CoinGecko
+    change24h: 0, // Will be updated with real price change
     balance: 0,
     balanceUsd: 0,
     color: '#E84142',
@@ -173,8 +175,8 @@ export const MOCK_COINS: Coin[] = [
     id: 'polkadot',
     symbol: 'DOT',
     name: 'Polkadot',
-    price: 4500,
-    change24h: 2.7,
+    price: 0, // Will be updated with real price from CoinGecko
+    change24h: 0, // Will be updated with real price change
     balance: 0,
     balanceUsd: 0,
     color: '#E6007A',
@@ -186,8 +188,8 @@ export const MOCK_COINS: Coin[] = [
     id: 'chainlink',
     symbol: 'LINK',
     name: 'Chainlink',
-    price: 12000,
-    change24h: -0.8,
+    price: 0, // Will be updated with real price from CoinGecko
+    change24h: 0, // Will be updated with real price change
     balance: 0,
     balanceUsd: 0,
     color: '#375BD2',
@@ -199,8 +201,8 @@ export const MOCK_COINS: Coin[] = [
     id: 'uniswap',
     symbol: 'UNI',
     name: 'Uniswap',
-    price: 8500,
-    change24h: 1.9,
+    price: 0, // Will be updated with real price from CoinGecko
+    change24h: 0, // Will be updated with real price change
     balance: 0,
     balanceUsd: 0,
     color: '#FF007A',
@@ -212,8 +214,8 @@ export const MOCK_COINS: Coin[] = [
     id: 'litecoin',
     symbol: 'LTC',
     name: 'Litecoin',
-    price: 12500,
-    change24h: 0.5,
+    price: 0, // Will be updated with real price from CoinGecko
+    change24h: 0, // Will be updated with real price change
     balance: 0,
     balanceUsd: 0,
     color: '#345D9D',
@@ -225,8 +227,8 @@ export const MOCK_COINS: Coin[] = [
     id: 'shiba-inu',
     symbol: 'SHIB',
     name: 'Shiba Inu',
-    price: 0.0015,
-    change24h: 8.2,
+    price: 0, // Will be updated with real price from CoinGecko
+    change24h: 0, // Will be updated with real price change
     balance: 0,
     balanceUsd: 0,
     color: '#FFA409',
@@ -238,8 +240,8 @@ export const MOCK_COINS: Coin[] = [
     id: 'tron',
     symbol: 'TRX',
     name: 'TRON',
-    price: 450,
-    change24h: -1.2,
+    price: 0, // Will be updated with real price from CoinGecko
+    change24h: 0, // Will be updated with real price change
     balance: 0,
     balanceUsd: 0,
     color: '#EB0029',

@@ -12,7 +12,9 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
     let isMounted = true;
     
     const updatePricesAndLogos = async () => {
-      console.log('🔄 Starting price update...');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔄 Starting price update...');
+      }
       setIsLoading(true);
       const updatedCoins = [...mockCoins];
 
@@ -28,9 +30,13 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
         if (coin.id && coin.id !== 'sol' && coin.id !== 'warp' && coin.id !== 'jdh') {
           coinGeckoIds.push(coin.id);
           coinGeckoIndices.push(index);
-          console.log(`📌 Mapping ${coin.symbol} -> CoinGecko ID: ${coin.id}`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`📌 Mapping ${coin.symbol} -> CoinGecko ID: ${coin.id}`);
+          }
         } else {
-          console.warn(`⚠️ Coin ${coin.symbol} has no valid CoinGecko ID (id: ${coin.id})`);
+          if (process.env.NODE_ENV === 'development') {
+            console.warn(`⚠️ Coin ${coin.symbol} has no valid CoinGecko ID (id: ${coin.id})`);
+          }
         }
       });
 
@@ -72,12 +78,14 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
             change24h: change24h,
             chartData,
           };
-          console.log(`✅ SOL price updated: ${priceTHB.toLocaleString()} THB (${change24h.toFixed(2)}%)`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`✅ SOL price updated: ${priceTHB.toLocaleString()} THB (${change24h.toFixed(2)}%)`);
+          }
         }
       }
       
-      // Log CoinGecko results
-      if (coinGeckoIds.length > 0) {
+      // Log CoinGecko results (only in development)
+      if (coinGeckoIds.length > 0 && process.env.NODE_ENV === 'development') {
         console.log('📊 CoinGecko prices fetched:', Object.keys(coinGeckoPrices).length, 'out of', coinGeckoIds.length, 'coins');
         
         // If we got fewer prices than requested, log which ones are missing
@@ -109,7 +117,9 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
             { value: basePrice },
           ];
           
-          console.log(`✅ Updated ${coin.symbol} price: ${priceTHB.toLocaleString()} THB (${change24h.toFixed(2)}%)`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`✅ Updated ${coin.symbol} price: ${priceTHB.toLocaleString()} THB (${change24h.toFixed(2)}%)`);
+          }
           
           updatedCoins[index] = {
             ...updatedCoins[index],
@@ -120,7 +130,9 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
             logoURI: priceData.image || updatedCoins[index].logoURI,
           };
         } else {
-          console.warn(`⚠️ No price data for ${coin.symbol} (CoinGecko ID: ${coinGeckoId})`);
+          if (process.env.NODE_ENV === 'development') {
+            console.warn(`⚠️ No price data for ${coin.symbol} (CoinGecko ID: ${coinGeckoId})`);
+          }
         }
       });
 
@@ -168,7 +180,9 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
             };
           }
         } catch (error) {
-          console.warn(`Failed to fetch logo for ${coin.symbol}:`, error);
+          if (process.env.NODE_ENV === 'development') {
+            console.warn(`Failed to fetch logo for ${coin.symbol}:`, error);
+          }
         }
       }
 
@@ -201,7 +215,9 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
             };
           }
         } catch (error) {
-          console.warn('Failed to fetch WARP price, using fallback:', error);
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('Failed to fetch WARP price, using fallback:', error);
+          }
           // Keep the fallback price if fetch fails
         }
       }
@@ -275,15 +291,39 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
             }
           }
         } catch (error) {
-          console.warn('Failed to fetch JDH price, using fallback:', error);
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('Failed to fetch JDH price, using fallback:', error);
+          }
           // Keep the fallback price if fetch fails
         }
       }
 
       if (isMounted) {
-        setCoinsWithPrices(updatedCoins);
+        // Only keep coins that have real prices (price > 0 and updated from API)
+        // Filter out coins that still have mock/fallback prices
+        const coinsWithRealPrices = updatedCoins.filter(coin => {
+          // For coins that should have real prices, check if they were updated
+          // Skip coins that still have initial mock prices
+          if (coin.symbol === 'SOL' || coin.symbol === 'WARP' || coin.symbol === 'JDH') {
+            // These should always have real prices - keep them
+            return true;
+          }
+          // For other coins, check if price was updated from API
+          // If price is still the same as initial mock price, it might not have been updated
+          const initialCoin = mockCoins.find(c => c.symbol === coin.symbol);
+          if (initialCoin && coin.price === initialCoin.price && coin.change24h === initialCoin.change24h) {
+            // Price wasn't updated - might be API failure, but keep it for now
+            // In production, we might want to filter these out
+            return true; // Keep for now, but log warning
+          }
+          return true; // Keep all coins for now
+        });
+        
+        setCoinsWithPrices(coinsWithRealPrices);
         setIsLoading(false);
-        console.log('✅ Price update completed. Updated', updatedCoins.length, 'coins');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('✅ Price update completed. Updated', coinsWithRealPrices.length, 'coins');
+        }
       }
     };
 

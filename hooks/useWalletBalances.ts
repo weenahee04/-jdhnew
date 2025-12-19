@@ -72,8 +72,8 @@ export const useWalletBalances = (publicKey: PublicKey | null) => {
         const symbol = meta?.symbol || token.symbol || token.mint.slice(0, 4).toUpperCase();
         const name = meta?.name || token.name || `Token ${token.mint.slice(0, 8)}`;
         
-        // Debug for GkDEVLZP
-        if (token.mint === gkdevlzpMint) {
+        // Debug for GkDEVLZP (only in development)
+        if (process.env.NODE_ENV === 'development' && token.mint === 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR') {
           console.log('🔍 GkDEVLZP Enrichment:', {
             mint: token.mint,
             metaSymbol: meta?.symbol,
@@ -108,12 +108,14 @@ export const useWalletBalances = (publicKey: PublicKey | null) => {
       // Update new tokens if any were detected
       if (detectedNewTokens.length > 0) {
         setNewTokens(detectedNewTokens);
-        console.log('🆕 New tokens detected:', detectedNewTokens.map(t => ({
-          mint: t.mint,
-          symbol: t.symbol,
-          name: t.name,
-          amount: t.uiAmount,
-        })));
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🆕 New tokens detected:', detectedNewTokens.map(t => ({
+            mint: t.mint,
+            symbol: t.symbol,
+            name: t.name,
+            amount: t.uiAmount,
+          })));
+        }
       }
       
       // Update previous token mints for next comparison
@@ -130,31 +132,38 @@ export const useWalletBalances = (publicKey: PublicKey | null) => {
       // Build coins array
       const coinsList: Coin[] = [];
 
-      // Add SOL - use fallback price if API fails
+      // Add SOL - only add if we have real price data (no fallback in production)
       const solPrice = priceData[TOKEN_MINTS.SOL];
-      const fallbackSolPrice = 150; // Fallback to ~$150 USD if price fetch fails
       if (sol > 0) {
-        const effectiveSolPrice = solPrice || {
-          id: TOKEN_MINTS.SOL,
-          symbol: 'SOL',
-          name: 'Solana',
-          price: fallbackSolPrice,
-          priceChange24h: 0,
-          decimals: 9,
-        };
-        const solUsd = sol * effectiveSolPrice.price;
-        coinsList.push({
-          id: 'sol',
-          symbol: 'SOL',
-          name: 'Solana',
-          price: convertUsdToThb(effectiveSolPrice.price),
-          change24h: effectiveSolPrice.priceChange24h,
-          balance: sol,
-          balanceUsd: solUsd,
-          color: '#14F195',
-          chartData: [{ value: effectiveSolPrice.price }, { value: effectiveSolPrice.price * 1.01 }, { value: effectiveSolPrice.price * 0.99 }, { value: effectiveSolPrice.price }],
-          about: 'Solana is a high-performance blockchain supporting builders around the world.',
-        });
+        // In production, only show SOL if we have real price data
+        if (!solPrice && process.env.NODE_ENV === 'production') {
+          // Skip SOL if no price data in production
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('⚠️ SOL price not available, skipping SOL coin');
+          }
+        } else {
+          const effectiveSolPrice = solPrice || {
+            id: TOKEN_MINTS.SOL,
+            symbol: 'SOL',
+            name: 'Solana',
+            price: 150, // Fallback only in development
+            priceChange24h: 0,
+            decimals: 9,
+          };
+          const solUsd = sol * effectiveSolPrice.price;
+          coinsList.push({
+            id: 'sol',
+            symbol: 'SOL',
+            name: 'Solana',
+            price: convertUsdToThb(effectiveSolPrice.price),
+            change24h: effectiveSolPrice.priceChange24h,
+            balance: sol,
+            balanceUsd: solUsd,
+            color: '#14F195',
+            chartData: [{ value: effectiveSolPrice.price }, { value: effectiveSolPrice.price * 1.01 }, { value: effectiveSolPrice.price * 0.99 }, { value: effectiveSolPrice.price }],
+            about: 'Solana is a high-performance blockchain supporting builders around the world.',
+          });
+        }
       }
 
       // Add SPL tokens - skip if price not available (non-critical)
@@ -238,7 +247,10 @@ export const useWalletBalances = (publicKey: PublicKey | null) => {
       const total = coinsList.reduce((sum, coin) => sum + coin.balanceUsd, 0);
       setTotalBalanceUSD(total);
     } catch (err: any) {
-      console.error('Balance fetch error:', err);
+      // Always log errors (even in production) for debugging
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Balance fetch error:', err);
+      }
       setError(err.message || 'Failed to fetch balances');
     } finally {
       setLoading(false);

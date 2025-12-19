@@ -239,7 +239,9 @@ export const getCoinGeckoPrices = async (coinIds: string[]): Promise<Record<stri
     
     // CoinGecko returns array of coin objects
     if (Array.isArray(marketData)) {
-      console.log(`✅ CoinGecko returned ${marketData.length} coins`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`✅ CoinGecko returned ${marketData.length} coins`);
+      }
       for (const coin of marketData) {
         if (coin.id && coin.current_price !== undefined) {
           prices[coin.id] = {
@@ -256,7 +258,9 @@ export const getCoinGeckoPrices = async (coinIds: string[]): Promise<Record<stri
         }
       }
     } else {
-      console.warn('⚠️ CoinGecko returned non-array data:', typeof marketData);
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('⚠️ CoinGecko returned non-array data:', typeof marketData);
+      }
     }
     
     return prices;

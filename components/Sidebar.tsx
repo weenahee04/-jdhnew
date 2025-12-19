@@ -28,8 +28,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLog
     { id: NavTab.HELP, label: 'ช่วยเหลือ (Help)', icon: HelpCircle },
   ];
 
-  // Debug: Log to ensure Staking is in the array
-  console.log('🔍 Sidebar secondaryNav:', secondaryNav.map(n => n.id));
+  // Debug: Log to ensure Staking is in the array (only in development)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 Sidebar secondaryNav:', secondaryNav.map(n => n.id));
+  }
 
   return (
     <div className="hidden md:flex flex-col w-64 h-screen fixed left-0 top-0 bg-zinc-950 border-r border-white/5 p-6 z-40">
@@ -64,15 +66,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLog
       <div className="space-y-1">
          <p className="text-xs text-zinc-500 font-semibold uppercase tracking-wider px-2 mb-2">System</p>
          {secondaryNav.map((item) => {
-           // Debug: Log each item being rendered
-           if (item.id === NavTab.STAKING) {
+           // Debug: Log each item being rendered (only in development)
+           if (process.env.NODE_ENV === 'development' && item.id === NavTab.STAKING) {
              console.log('🔍 Rendering Staking menu item:', item);
            }
            return (
              <button
                key={item.id}
                onClick={() => {
-                 console.log('🔍 Clicked menu item:', item.id);
+                 if (process.env.NODE_ENV === 'development') {
+                   console.log('🔍 Clicked menu item:', item.id);
+                 }
                  setActiveTab(item.id);
                }}
                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
