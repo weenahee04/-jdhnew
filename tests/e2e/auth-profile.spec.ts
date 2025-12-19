@@ -93,7 +93,12 @@ test.describe('Authentication & Profile Flow', () => {
       }
     }
 
-    // Wait for navigation to wallet creation or app
+    // Step 5: Wait for wallet creation screen and complete it
+    await page.waitForSelector('text=/สร้าง Wallet|Seed Phrase|จดบันทึก|Generating/i', { timeout: 15000 });
+    const seedWords = await completeWalletCreation(page);
+    console.log(`✅ Wallet created with seed: ${seedWords.slice(0, 3).join(' ')}...`);
+    
+    // Wait for dashboard/app to load
     await page.waitForTimeout(2000);
 
     // Verify user is registered in localStorage
@@ -152,6 +157,10 @@ test.describe('Authentication & Profile Flow', () => {
     // Accept terms if shown
     await acceptTermsIfShown(page);
 
+    // Complete wallet creation
+    await page.waitForSelector('text=/สร้าง Wallet|Seed Phrase|จดบันทึก|Generating/i', { timeout: 15000 });
+    await completeWalletCreation(page);
+    
     await page.waitForTimeout(2000);
 
     // Get user data from storage
@@ -226,6 +235,10 @@ test.describe('Authentication & Profile Flow', () => {
     // Accept terms if shown
     await acceptTermsIfShown(page);
 
+    // Complete wallet creation
+    await page.waitForSelector('text=/สร้าง Wallet|Seed Phrase|จดบันทึก|Generating/i', { timeout: 15000 });
+    await completeWalletCreation(page);
+    
     await page.waitForTimeout(2000);
 
     // Get initial user data
@@ -315,6 +328,10 @@ test.describe('Authentication & Profile Flow', () => {
     // Accept terms if shown
     await acceptTermsIfShown(page);
 
+    // Complete wallet creation
+    await page.waitForSelector('text=/สร้าง Wallet|Seed Phrase|จดบันทึก|Generating/i', { timeout: 15000 });
+    await completeWalletCreation(page);
+    
     await page.waitForTimeout(2000);
 
     // Verify first registration succeeded
@@ -396,6 +413,10 @@ test.describe('Authentication & Profile Flow', () => {
     // Accept terms if shown
     await acceptTermsIfShown(page);
 
+    // Complete wallet creation
+    await page.waitForSelector('text=/สร้าง Wallet|Seed Phrase|จดบันทึก|Generating/i', { timeout: 15000 });
+    await completeWalletCreation(page);
+    
     await page.waitForTimeout(2000);
 
     // Step 2: Logout (clear session)
@@ -465,6 +486,10 @@ test.describe('Authentication & Profile Flow', () => {
     // Accept terms if shown
     await acceptTermsIfShown(page);
 
+    // Complete wallet creation
+    await page.waitForSelector('text=/สร้าง Wallet|Seed Phrase|จดบันทึก|Generating/i', { timeout: 15000 });
+    await completeWalletCreation(page);
+    
     await page.waitForTimeout(2000);
 
     // Step 2: Clear session and navigate to login
@@ -534,6 +559,11 @@ test.describe('Authentication & Profile Flow', () => {
     await page.waitForTimeout(1000);
 
     await acceptTermsIfShown(page);
+    
+    // Complete wallet creation
+    await page.waitForSelector('text=/สร้าง Wallet|Seed Phrase|จดบันทึก|Generating/i', { timeout: 15000 });
+    await completeWalletCreation(page);
+    
     await page.waitForTimeout(2000);
 
     // Step 2: Navigate to Settings
