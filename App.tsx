@@ -1204,10 +1204,12 @@ const App: React.FC = () => {
     </div>
   );
 
-  // Get filtered coins based on selected filter (only coins with real prices)
+  // Get filtered coins based on selected filter (only coins with real prices, except SOL and BTC)
   const getFilteredCoins = React.useMemo(() => {
-    // Only show coins with real prices (price > 0)
-    const coinsWithRealPrices = marketCoinsWithPrices.filter(coin => coin.price > 0);
+    // Show coins with real prices (price > 0), but always include SOL and BTC (major coins)
+    const coinsWithRealPrices = marketCoinsWithPrices.filter(coin => 
+      coin.price > 0 || coin.symbol === 'SOL' || coin.symbol === 'BTC'
+    );
     let filtered = [...coinsWithRealPrices];
 
     switch (marketFilter) {
