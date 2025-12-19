@@ -120,9 +120,11 @@ export const useWalletBalances = (publicKey: PublicKey | null) => {
       setPreviousTokenMints(currentTokenMints);
       setTokenBalances(enrichedTokens);
 
-      // Fetch prices for all tokens
+      // Fetch prices for all tokens (remove duplicates)
       const allMints = [TOKEN_MINTS.SOL, ...tokens.map(t => t.mint)];
-      const priceData = await getTokenPrices(allMints);
+      // Remove duplicates before calling API
+      const uniqueMints = Array.from(new Set(allMints));
+      const priceData = await getTokenPrices(uniqueMints);
       setPrices(priceData);
 
       // Build coins array

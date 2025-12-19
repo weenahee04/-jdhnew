@@ -25,8 +25,15 @@ export const TOKEN_MINTS: Record<string, string> = {
 
 export const getTokenPrices = async (mints: string[]): Promise<Record<string, TokenPrice>> => {
   try {
+    if (!mints || mints.length === 0) {
+      return {};
+    }
+
+    // First, remove duplicates from the input array
+    const uniqueMints = Array.from(new Set(mints));
+    
     // Filter out invalid mints (like extremely long SOL addresses)
-    const validMints = mints.filter(mint => {
+    const validMints = uniqueMints.filter(mint => {
       // Validate mint address format
       // Solana addresses are base58 encoded and should be 32-44 characters
       if (!mint || typeof mint !== 'string') {
@@ -58,22 +65,27 @@ export const getTokenPrices = async (mints: string[]): Promise<Record<string, To
       return {};
     }
 
-    // Limit number of mints to prevent URL from being too long
-    // Max URL length is typically 2048 characters
-    // Each mint is ~44 chars + comma = ~45 chars
-    // So max ~40 mints per request
-    const maxMints = 40;
-    const mintsToFetch = validMints.slice(0, maxMints);
+    // Remove duplicates again after validation (just to be safe)
+    const deduplicatedMints = Array.from(new Set(validMints));
     
-    // Build URL and check length
+    // Limit number of mints to prevent URL from being too long
+    // Max URL length is typically 2048 characters, but we'll use 1500 to be safe
+    // Each mint is ~44 chars + comma = ~45 chars
+    // So max ~30 mints per request for GET, unlimited for POST
+    const maxMints = 30;
+    const mintsToFetch = deduplicatedMints.slice(0, maxMints);
+    
+    // Build URL and check length - use POST if URL would be too long
     const url = `${JUPITER_PRICE_API}/price?ids=${mintsToFetch.join(',')}`;
     
-    // If URL is too long, use POST instead
-    if (url.length > 2000) {
+    // Use POST for URLs longer than 1500 characters or if we have many mints
+    // This prevents "hostname not found" errors
+    if (url.length > 1500 || mintsToFetch.length > 20) {
       // Use POST for long URLs
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000);
       
+      // Use POST to avoid URL length issues
       const response = await fetch(`${JUPITER_PRICE_API}/price`, {
         method: 'POST',
         headers: {
@@ -83,6 +95,10 @@ export const getTokenPrices = async (mints: string[]): Promise<Record<string, To
         signal: controller.signal,
         mode: 'cors',
       });
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`📤 POST request to Jupiter API with ${mintsToFetch.length} mints`);
+      }
       
       clearTimeout(timeoutId);
       
@@ -111,6 +127,10 @@ export const getTokenPrices = async (mints: string[]): Promise<Record<string, To
     // Add timeout to prevent hanging requests
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📤 GET request to Jupiter API: ${mintsToFetch.length} mints, URL length: ${url.length}`);
+    }
     
     const response = await fetch(url, {
       signal: controller.signal,
