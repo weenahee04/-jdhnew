@@ -407,18 +407,62 @@ test.describe('Authentication & Profile Flow', () => {
     expect(firstUser).not.toBeNull();
     console.log('First user registered:', firstUser.user.email);
 
-    // Step 2: Try to register with same email again
-    // Navigate back to registration
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
+    // Step 2: Explicitly logout before trying to register again
+    // After registration, user is logged in on Dashboard - we need to logout first
+    console.log('🔓 Logging out before attempting duplicate registration...');
+    
+    // Click Settings button (using JS dispatch to bypass overlays)
+    const settingsButton = page.locator('button:has-text("Settings"), button:has-text("ตั้งค่า"), [data-testid="settings"]').first();
+    if (await settingsButton.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await settingsButton.evaluate((btn) => (btn as HTMLElement).click());
+      await page.waitForTimeout(1000);
+    }
+    
+    // Click Logout button (using JS dispatch to bypass overlays)
+    const logoutButton = page.locator('button:has-text("Logout"), button:has-text("ออกจากระบบ"), button:has-text("Log out"), [data-testid="logout"]').first();
+    if (await logoutButton.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await logoutButton.evaluate((btn) => (btn as HTMLElement).click());
+      await page.waitForTimeout(1000);
+    } else {
+      // Fallback: Clear session manually if logout button not found
+      await page.evaluate(() => {
+        sessionStorage.clear();
+      });
+      await page.reload();
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+    }
+    
+    // Wait for login page to appear (not on dashboard anymore)
+    await page.waitForURL(url => !url.toString().includes('dashboard'), { timeout: 10000 });
+    
+    // Verify we're on login/landing page (Sign Up or Login button should be visible)
+    const loginOrSignUpVisible = await page.locator('button:has-text("Login"), button:has-text("Open account"), button:has-text("Sign Up")').first().isVisible({ timeout: 5000 }).catch(() => false);
+    if (!loginOrSignUpVisible) {
+      // Navigate to home page if not already there
+      await page.goto('/');
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+    }
 
+    // Step 3: Navigate to registration form
+    console.log('📝 Navigating to registration form for duplicate email test...');
     const signUpButton2 = page.locator('button:has-text("Open account"), button:has-text("Sign Up"), button:has-text("สมัครสมาชิก")').first();
-    if (await signUpButton2.isVisible({ timeout: 3000 }).catch(() => false)) {
+    if (await signUpButton2.isVisible({ timeout: 5000 }).catch(() => false)) {
       await signUpButton2.click();
+      await page.waitForTimeout(500);
+    } else {
+      // If button not found, navigate directly
+      await page.goto('/');
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+      const signUpButton3 = page.locator('button:has-text("Open account"), button:has-text("Sign Up"), button:has-text("สมัครสมาชิก")').first();
+      await signUpButton3.waitFor({ timeout: 5000, state: 'visible' });
+      await signUpButton3.click();
       await page.waitForTimeout(500);
     }
 
+    // Wait for email input to be visible (registration form loaded)
     await page.waitForSelector('input[type="email"]', { state: 'visible', timeout: 15000 });
 
     const emailInput2 = page.locator('input[type="email"]').first();
