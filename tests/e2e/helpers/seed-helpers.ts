@@ -329,57 +329,26 @@ export async function completeWalletCreation(page: Page): Promise<string[]> {
   // Button text: "เริ่มใช้งาน" (Get Started)
   const getStartedButton = page.locator('button:has-text("เริ่มใช้งาน"), button:has-text("Get Started"), button:has-text("Go to Dashboard"), button:has-text("Done"), button:has-text("Start Trading"), button:has-text("Close")').first();
   
+  // Wait for button to be visible and stable
   await getStartedButton.waitFor({ timeout: 10000, state: 'visible' });
-  console.log('✅ WelcomeModal appeared, attempting to dismiss...');
+  console.log('✅ WelcomeModal appeared, waiting for stability...');
   
-  // Robust dismissal loop - click until button is gone
-  const maxRetries = 5;
-  for (let i = 0; i < maxRetries; i++) {
-    const isVisible = await getStartedButton.isVisible({ timeout: 1000 }).catch(() => false);
-    
-    if (isVisible) {
-      console.log(`🔄 Attempt ${i + 1}/${maxRetries} to dismiss Welcome Modal...`);
-      
-      // Try both JS click and Playwright Force click for maximum reliability
-      try {
-        await getStartedButton.evaluate((btn) => (btn as HTMLElement).click());
-      } catch (e) {
-        console.log(`⚠️ JS click failed, trying force click...`);
-      }
-      
-      // Also try force click as backup
-      await getStartedButton.click({ force: true }).catch(() => {
-        // Ignore errors, we'll check visibility next
-      });
-      
-      // Short wait to allow UI update
-      await page.waitForTimeout(1000);
-    } else {
-      console.log(`✅ WelcomeModal dismissed on attempt ${i + 1}`);
-      break; // Button is gone, exit loop
-    }
-  }
+  // Wait for any entry animation to finish (critical for stability)
+  await page.waitForTimeout(2000);
   
-  // Step 6: Final assertion - verify the button/modal is completely gone
-  await expect(getStartedButton).toBeHidden({ timeout: 10000 });
+  // Single, surgical click using JavaScript Dispatch (most reliable for overlays)
+  console.log('🖱️ Clicking "เริ่มใช้งาน" button (single JS click)...');
+  await getStartedButton.evaluate((btn) => (btn as HTMLElement).click());
   
-  // Also verify the overlay is gone
-  const overlay = page.locator('div.fixed.inset-0.z-\\[50\\], div.fixed.inset-0.z-\\[200\\]').first();
-  const isOverlayVisible = await overlay.isVisible({ timeout: 2000 }).catch(() => false);
+  // Step 6: Verify dismissal - wait for button to be hidden
+  console.log('⏳ Verifying WelcomeModal dismissal...');
+  await expect(getStartedButton).toBeHidden({ timeout: 15000 });
   
-  if (isOverlayVisible) {
-    // Try alternative: check if WelcomeModal text is gone
-    const welcomeText = page.locator('text=/ยินดีต้อนรับ|Welcome|พร้อมใช้งาน/i');
-    const isWelcomeVisible = await welcomeText.isVisible({ timeout: 2000 }).catch(() => false);
-    if (isWelcomeVisible) {
-      throw new Error('WelcomeModal overlay did not close after multiple click attempts');
-    }
-  }
+  // Step 7: Verify navigation - ensure we're on dashboard/app page (not register/wallet-setup)
+  console.log('⏳ Verifying navigation to dashboard...');
+  await page.waitForURL(url => !url.includes('register') && !url.includes('wallet-setup'), { timeout: 10000 });
   
-  console.log('✅ WelcomeModal overlay dismissed successfully');
-  
-  // Additional wait to ensure UI is ready
-  await page.waitForTimeout(1000);
+  console.log('✅ WelcomeModal dismissed and navigation verified');
   
   return seedWords;
 }

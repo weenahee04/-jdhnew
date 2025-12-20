@@ -24,6 +24,9 @@ import { extractSeedPhrase, solveSeedChallenge, completeWalletCreation } from '.
  * 5. Duplicate email validation
  */
 
+// Set timeout to 2 minutes for long registration + wallet creation flow
+test.setTimeout(120000);
+
 test.describe('Authentication & Profile Flow', () => {
   let testEmail: string;
   let testPassword: string;
