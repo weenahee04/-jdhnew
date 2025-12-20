@@ -3,7 +3,7 @@
  * Handles seed phrase extraction and verification quiz solving
  */
 
-import { Page } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 
 /**
  * Extract seed phrase words from the backup/display screen
@@ -331,28 +331,22 @@ export async function completeWalletCreation(page: Page): Promise<string[]> {
   
   await getStartedButton.waitFor({ timeout: 10000, state: 'visible' });
   console.log('✅ Clicking "เริ่มใช้งาน" button to dismiss WelcomeModal...');
-  await getStartedButton.click({ timeout: 10000 });
+  
+  // Use force: true to bypass overlay interception (backdrop/animation wrapper may block clicks)
+  await getStartedButton.click({ force: true, timeout: 10000 });
   
   // Wait for modal to close
   await page.waitForTimeout(1000);
   
-  // Step 6: Verify the overlay is completely gone before returning
-  // Check that the fixed overlay div is hidden
+  // Step 6: Verify the button/modal is completely gone before returning
+  // Ensure the button is hidden (which means modal is closed)
+  await expect(getStartedButton).toBeHidden({ timeout: 10000 });
+  
+  // Also verify the overlay is gone
   const overlay = page.locator('div.fixed.inset-0.z-\\[50\\], div.fixed.inset-0.z-\\[200\\]').first();
+  const isOverlayVisible = await overlay.isVisible({ timeout: 2000 }).catch(() => false);
   
-  // Wait for overlay to be hidden (with retry logic)
-  let overlayHidden = false;
-  for (let i = 0; i < 5; i++) {
-    const isVisible = await overlay.isVisible({ timeout: 2000 }).catch(() => false);
-    if (!isVisible) {
-      overlayHidden = true;
-      break;
-    }
-    console.log(`⏳ Overlay still visible, waiting... (attempt ${i + 1}/5)`);
-    await page.waitForTimeout(500);
-  }
-  
-  if (!overlayHidden) {
+  if (isOverlayVisible) {
     // Try alternative: check if WelcomeModal text is gone
     const welcomeText = page.locator('text=/ยินดีต้อนรับ|Welcome|พร้อมใช้งาน/i');
     const isWelcomeVisible = await welcomeText.isVisible({ timeout: 2000 }).catch(() => false);
