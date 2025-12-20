@@ -287,7 +287,9 @@ export async function solveSeedChallenge(page: Page, seedWords: string[]): Promi
  * 1. Extract seed phrase
  * 2. Click "ฉันจดบันทึกเรียบร้อยแล้ว"
  * 3. Solve verification quiz
- * 4. Wait for success
+ * 4. Wait for success overlay (WelcomeModal)
+ * 5. Click "เริ่มใช้งาน" to dismiss overlay
+ * 6. Verify overlay is gone
  */
 export async function completeWalletCreation(page: Page): Promise<string[]> {
   // Step 1: Extract seed phrase (this will click Eye Icon to reveal seed words)
@@ -313,9 +315,56 @@ export async function completeWalletCreation(page: Page): Promise<string[]> {
   // Step 3: Solve the verification quiz
   await solveSeedChallenge(page, seedWords);
   
-  // Step 4: Wait for success screen
-  await page.waitForSelector('text=/สำเร็จ|Success|พร้อมใช้งาน/i', { timeout: 15000 });
-  await page.waitForTimeout(2000);
+  // Step 4: Wait for WelcomeModal (success overlay) to appear
+  // WelcomeModal has class "fixed inset-0" with z-50 and contains "ยินดีต้อนรับสู่ JDH Wallet"
+  console.log('⏳ Waiting for WelcomeModal (success overlay) to appear...');
+  
+  // Wait for the overlay/modal to appear
+  const welcomeModal = page.locator('div.fixed.inset-0:has-text("ยินดีต้อนรับ"), div.fixed.inset-0:has-text("Welcome"), div.fixed.inset-0:has-text("พร้อมใช้งาน")').first();
+  await welcomeModal.waitFor({ timeout: 15000, state: 'visible' });
+  
+  console.log('✅ WelcomeModal appeared, looking for "เริ่มใช้งาน" button...');
+  
+  // Step 5: Find and click the "เริ่มใช้งาน" (Get Started) button to dismiss the overlay
+  // Button text: "เริ่มใช้งาน" (Get Started)
+  const getStartedButton = page.locator('button:has-text("เริ่มใช้งาน"), button:has-text("Get Started"), button:has-text("Go to Dashboard"), button:has-text("Done"), button:has-text("Start Trading"), button:has-text("Close")').first();
+  
+  await getStartedButton.waitFor({ timeout: 10000, state: 'visible' });
+  console.log('✅ Clicking "เริ่มใช้งาน" button to dismiss WelcomeModal...');
+  await getStartedButton.click({ timeout: 10000 });
+  
+  // Wait for modal to close
+  await page.waitForTimeout(1000);
+  
+  // Step 6: Verify the overlay is completely gone before returning
+  // Check that the fixed overlay div is hidden
+  const overlay = page.locator('div.fixed.inset-0.z-\\[50\\], div.fixed.inset-0.z-\\[200\\]').first();
+  
+  // Wait for overlay to be hidden (with retry logic)
+  let overlayHidden = false;
+  for (let i = 0; i < 5; i++) {
+    const isVisible = await overlay.isVisible({ timeout: 2000 }).catch(() => false);
+    if (!isVisible) {
+      overlayHidden = true;
+      break;
+    }
+    console.log(`⏳ Overlay still visible, waiting... (attempt ${i + 1}/5)`);
+    await page.waitForTimeout(500);
+  }
+  
+  if (!overlayHidden) {
+    // Try alternative: check if WelcomeModal text is gone
+    const welcomeText = page.locator('text=/ยินดีต้อนรับ|Welcome|พร้อมใช้งาน/i');
+    const isWelcomeVisible = await welcomeText.isVisible({ timeout: 2000 }).catch(() => false);
+    if (isWelcomeVisible) {
+      throw new Error('WelcomeModal overlay did not close after clicking "เริ่มใช้งาน" button');
+    }
+  }
+  
+  console.log('✅ WelcomeModal overlay dismissed successfully');
+  
+  // Additional wait to ensure UI is ready
+  await page.waitForTimeout(1000);
   
   return seedWords;
 }

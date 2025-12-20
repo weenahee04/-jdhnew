@@ -33,6 +33,17 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    /* Increase timeout for full registration + wallet creation flow */
+    actionTimeout: 90000, // 90 seconds for actions
+    navigationTimeout: 90000, // 90 seconds for navigation
+  },
+
+  /* Global test timeout */
+  timeout: 90000, // 90 seconds for full test execution
+
+  /* Expect timeout */
+  expect: {
+    timeout: 10000, // 10 seconds for assertions
   },
 
   /* Configure projects for major browsers */
