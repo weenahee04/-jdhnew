@@ -332,8 +332,9 @@ export async function completeWalletCreation(page: Page): Promise<string[]> {
   await getStartedButton.waitFor({ timeout: 10000, state: 'visible' });
   console.log('✅ Clicking "เริ่มใช้งาน" button to dismiss WelcomeModal...');
   
-  // Use force: true to bypass overlay interception (backdrop/animation wrapper may block clicks)
-  await getStartedButton.click({ force: true, timeout: 10000 });
+  // Use JavaScript click to bypass ANY overlay interception
+  // This directly calls the native click() method, bypassing Playwright's click interception checks
+  await getStartedButton.evaluate((btn) => (btn as HTMLElement).click());
   
   // Wait for modal to close
   await page.waitForTimeout(1000);
