@@ -346,7 +346,8 @@ export async function completeWalletCreation(page: Page): Promise<string[]> {
   
   // Step 7: Verify navigation - ensure we're on dashboard/app page (not register/wallet-setup)
   console.log('⏳ Verifying navigation to dashboard...');
-  await page.waitForURL(url => !url.includes('register') && !url.includes('wallet-setup'), { timeout: 10000 });
+  // Playwright passes URL object, not string - convert to string first
+  await page.waitForURL(url => !url.toString().includes('register') && !url.toString().includes('wallet-setup'), { timeout: 20000 });
   
   console.log('✅ WelcomeModal dismissed and navigation verified');
   
