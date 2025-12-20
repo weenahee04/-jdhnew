@@ -330,17 +330,37 @@ export async function completeWalletCreation(page: Page): Promise<string[]> {
   const getStartedButton = page.locator('button:has-text("เริ่มใช้งาน"), button:has-text("Get Started"), button:has-text("Go to Dashboard"), button:has-text("Done"), button:has-text("Start Trading"), button:has-text("Close")').first();
   
   await getStartedButton.waitFor({ timeout: 10000, state: 'visible' });
-  console.log('✅ Clicking "เริ่มใช้งาน" button to dismiss WelcomeModal...');
+  console.log('✅ WelcomeModal appeared, attempting to dismiss...');
   
-  // Use JavaScript click to bypass ANY overlay interception
-  // This directly calls the native click() method, bypassing Playwright's click interception checks
-  await getStartedButton.evaluate((btn) => (btn as HTMLElement).click());
+  // Robust dismissal loop - click until button is gone
+  const maxRetries = 5;
+  for (let i = 0; i < maxRetries; i++) {
+    const isVisible = await getStartedButton.isVisible({ timeout: 1000 }).catch(() => false);
+    
+    if (isVisible) {
+      console.log(`🔄 Attempt ${i + 1}/${maxRetries} to dismiss Welcome Modal...`);
+      
+      // Try both JS click and Playwright Force click for maximum reliability
+      try {
+        await getStartedButton.evaluate((btn) => (btn as HTMLElement).click());
+      } catch (e) {
+        console.log(`⚠️ JS click failed, trying force click...`);
+      }
+      
+      // Also try force click as backup
+      await getStartedButton.click({ force: true }).catch(() => {
+        // Ignore errors, we'll check visibility next
+      });
+      
+      // Short wait to allow UI update
+      await page.waitForTimeout(1000);
+    } else {
+      console.log(`✅ WelcomeModal dismissed on attempt ${i + 1}`);
+      break; // Button is gone, exit loop
+    }
+  }
   
-  // Wait for modal to close
-  await page.waitForTimeout(1000);
-  
-  // Step 6: Verify the button/modal is completely gone before returning
-  // Ensure the button is hidden (which means modal is closed)
+  // Step 6: Final assertion - verify the button/modal is completely gone
   await expect(getStartedButton).toBeHidden({ timeout: 10000 });
   
   // Also verify the overlay is gone
@@ -352,7 +372,7 @@ export async function completeWalletCreation(page: Page): Promise<string[]> {
     const welcomeText = page.locator('text=/ยินดีต้อนรับ|Welcome|พร้อมใช้งาน/i');
     const isWelcomeVisible = await welcomeText.isVisible({ timeout: 2000 }).catch(() => false);
     if (isWelcomeVisible) {
-      throw new Error('WelcomeModal overlay did not close after clicking "เริ่มใช้งาน" button');
+      throw new Error('WelcomeModal overlay did not close after multiple click attempts');
     }
   }
   
