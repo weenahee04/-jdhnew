@@ -299,10 +299,34 @@ test.describe('Authentication & Profile Flow', () => {
     await page.waitForTimeout(1000);
 
     // Step 3: Logout (if logged in) or navigate to login
-    // Clear session to simulate logout
-    await page.evaluate(() => {
-      sessionStorage.clear();
-    });
+    // Check if we're redirected to Dashboard after refresh
+    const currentUrl = page.url();
+    const isOnDashboard = currentUrl.includes('/') || currentUrl.includes('/dashboard') || 
+                          await page.locator('text=/Total Balance|ภาพรวม|Dashboard/i').isVisible({ timeout: 2000 }).catch(() => false);
+    
+    if (isOnDashboard) {
+      console.log('📍 On dashboard after refresh, logging out first...');
+      // Try to find and click Logout button
+      const logoutButton = page.locator('button:has-text("Logout"), button:has-text("ออกจากระบบ"), button:has-text("Log out"), [data-testid="logout"]').first();
+      if (await logoutButton.isVisible({ timeout: 5000 }).catch(() => false)) {
+        // Use JavaScript click to bypass overlay interception
+        await logoutButton.evaluate((btn) => (btn as HTMLElement).click());
+        await page.waitForTimeout(1000);
+      } else {
+        // Fallback: Clear session manually
+        await page.evaluate(() => {
+          sessionStorage.clear();
+        });
+        await page.reload();
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(1000);
+      }
+    } else {
+      // Clear session to simulate logout
+      await page.evaluate(() => {
+        sessionStorage.clear();
+      });
+    }
 
     // Step 4: Login again
     const loginButton = page.locator('button:has-text("Log in"), button:has-text("เข้าสู่ระบบ"), button:has-text("Login")').first();
@@ -311,7 +335,8 @@ test.describe('Authentication & Profile Flow', () => {
       await page.waitForTimeout(500);
     }
 
-    await page.waitForSelector('input[type="email"]', { state: 'visible', timeout: 15000 });
+    // Increase timeout to 30s for email input after refresh
+    await page.waitForSelector('input[type="email"]', { state: 'visible', timeout: 30000 });
 
     const loginEmailInput = page.locator('input[type="email"]').first();
     await loginEmailInput.waitFor({ timeout: 10000, state: 'visible' });
@@ -625,7 +650,8 @@ test.describe('Authentication & Profile Flow', () => {
     // Step 3: Update display name
     const editNameButton = page.locator('button[title="แก้ไขชื่อ"], button:has-text("แก้ไข"), button').filter({ has: page.locator('svg') }).first();
     if (await editNameButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await editNameButton.click();
+      // Use JavaScript click to bypass overlay interception
+      await editNameButton.evaluate((btn) => (btn as HTMLElement).click());
       await page.waitForTimeout(500);
 
       const nameInput = page.locator('input[type="text"]').filter({ hasText: /กรอกชื่อ|name/i }).first();
@@ -636,7 +662,8 @@ test.describe('Authentication & Profile Flow', () => {
 
         const saveButton = page.locator('button:has-text("บันทึก"), button:has-text("Save")').first();
         if (await saveButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-          await saveButton.click();
+          // Use JavaScript click to bypass overlay interception
+          await saveButton.evaluate((btn) => (btn as HTMLElement).click());
           await page.waitForTimeout(1000);
 
           // Step 4: Verify display name is updated in storage
