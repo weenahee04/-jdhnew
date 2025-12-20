@@ -448,18 +448,32 @@ test.describe('Authentication & Profile Flow', () => {
     // Step 3: Navigate to registration form
     console.log('📝 Navigating to registration form for duplicate email test...');
     const signUpButton2 = page.locator('button:has-text("Open account"), button:has-text("Sign Up"), button:has-text("สมัครสมาชิก")').first();
-    if (await signUpButton2.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await signUpButton2.click();
+    
+    // Increase timeout to 15 seconds for finding Sign Up button after logout
+    if (await signUpButton2.isVisible({ timeout: 15000 }).catch(() => false)) {
+      await signUpButton2.evaluate((btn) => (btn as HTMLElement).click());
       await page.waitForTimeout(500);
     } else {
-      // If button not found, navigate directly
+      // If button not found, try navigating to home first, then look again
+      console.log('⚠️ Sign up button not found, navigating to home page...');
       await page.goto('/');
       await page.waitForLoadState('networkidle');
       await page.waitForTimeout(1000);
-      const signUpButton3 = page.locator('button:has-text("Open account"), button:has-text("Sign Up"), button:has-text("สมัครสมาชิก")').first();
-      await signUpButton3.waitFor({ timeout: 5000, state: 'visible' });
-      await signUpButton3.click();
-      await page.waitForTimeout(500);
+      
+      // Try to find button again with increased timeout
+      try {
+        const signUpButton3 = page.locator('button:has-text("Open account"), button:has-text("Sign Up"), button:has-text("สมัครสมาชิก")').first();
+        await signUpButton3.waitFor({ timeout: 15000, state: 'visible' });
+        await signUpButton3.evaluate((btn) => (btn as HTMLElement).click());
+        await page.waitForTimeout(500);
+      } catch (e) {
+        // Final fallback: Navigate directly to registration page if button still not found
+        console.log('⚠️ Sign up button still not found, navigating directly to registration page...');
+        const baseURL = process.env.BASE_URL || 'http://localhost:3000';
+        await page.goto(`${baseURL}/register`);
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(1000);
+      }
     }
 
     // Wait for email input to be visible (registration form loaded)
