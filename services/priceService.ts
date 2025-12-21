@@ -5,7 +5,7 @@ const JUPITER_PRICE_API_V6 = 'https://price.jup.ag/v6'; // For token symbols (BT
 // FORCE MOCK MODE: Set to true to completely bypass ALL API calls (Jupiter, CoinGecko, etc.)
 // This prevents crash loops from rate limiting (429 errors)
 // NOTE: This is also declared later for CoinGecko - both should be true
-const FORCE_USE_MOCK_JUPITER = true; // Set to false to enable Jupiter API v6 (currently using mock for stability)
+const FORCE_USE_MOCK_JUPITER = false; // Set to false to enable Jupiter API v6 (currently using mock for stability)
 
 export interface TokenPrice {
   id: string;

@@ -14,9 +14,9 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
     let isMounted = true;
     let hasInitialLoad = false; // Track if we've done initial load
     
-    // FORCE MOCK MODE: Always use mock data to prevent crash loops
+    // FORCE MOCK MODE: Set to false to enable Jupiter API v6 for real prices
     // FORCE_USE_MOCK is defined in priceService.ts - if true, all API calls are bypassed
-    const shouldUseMockOnly = true; // Always use mock to prevent crash loops and API rate limits
+    const shouldUseMockOnly = false; // Set to false to enable Jupiter API v6 for real prices
     
     const updatePricesAndLogos = async () => {
       // Skip if we're in development and have already loaded once (to avoid rate limits on refresh)
