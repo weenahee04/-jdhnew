@@ -1,10 +1,11 @@
 // Price service for fetching real-time cryptocurrency prices
-const JUPITER_PRICE_API = 'https://price.jup.ag/v4';
+const JUPITER_PRICE_API_V4 = 'https://price.jup.ag/v4'; // For Solana mint addresses
+const JUPITER_PRICE_API_V6 = 'https://price.jup.ag/v6'; // For token symbols (BTC, ETH, SOL, etc.)
 
 // FORCE MOCK MODE: Set to true to completely bypass ALL API calls (Jupiter, CoinGecko, etc.)
 // This prevents crash loops from rate limiting (429 errors)
 // NOTE: This is also declared later for CoinGecko - both should be true
-const FORCE_USE_MOCK_JUPITER = true;
+const FORCE_USE_MOCK_JUPITER = true; // Set to false to enable Jupiter API v6 (currently using mock for stability)
 
 export interface TokenPrice {
   id: string;
@@ -66,6 +67,161 @@ const MOCK_TOKEN_PRICES: Record<string, TokenPrice> = {
     decimals: 6,
   },
 };
+
+/**
+ * Static metadata for supported tokens
+ * This replaces CoinGecko metadata - names, symbols, and images are hardcoded
+ * Prices are fetched dynamically from Jupiter API v6
+ */
+export interface SupportedToken {
+  id: string; // CoinGecko ID or internal ID
+  symbol: string;
+  name: string;
+  image: string;
+  jupiterSymbol?: string; // Symbol to use for Jupiter API (if different)
+}
+
+export const SUPPORTED_TOKENS: SupportedToken[] = [
+  { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin', image: 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png', jupiterSymbol: 'BTC' },
+  { id: 'ethereum', symbol: 'ETH', name: 'Ethereum', image: 'https://assets.coingecko.com/coins/images/279/large/ethereum.png', jupiterSymbol: 'ETH' },
+  { id: 'tether', symbol: 'USDT', name: 'Tether', image: 'https://assets.coingecko.com/coins/images/325/large/Tether.png', jupiterSymbol: 'USDT' },
+  { id: 'binancecoin', symbol: 'BNB', name: 'BNB', image: 'https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png', jupiterSymbol: 'BNB' },
+  { id: 'solana', symbol: 'SOL', name: 'Solana', image: 'https://assets.coingecko.com/coins/images/4128/large/solana.png', jupiterSymbol: 'SOL' },
+  { id: 'usd-coin', symbol: 'USDC', name: 'USD Coin', image: 'https://assets.coingecko.com/coins/images/6319/large/USD_Coin_icon.png', jupiterSymbol: 'USDC' },
+  { id: 'ripple', symbol: 'XRP', name: 'XRP', image: 'https://assets.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png', jupiterSymbol: 'XRP' },
+  { id: 'cardano', symbol: 'ADA', name: 'Cardano', image: 'https://assets.coingecko.com/coins/images/975/large/cardano.png', jupiterSymbol: 'ADA' },
+  { id: 'dogecoin', symbol: 'DOGE', name: 'Dogecoin', image: 'https://assets.coingecko.com/coins/images/5/large/dogecoin.png', jupiterSymbol: 'DOGE' },
+  { id: 'jdh', symbol: 'JDH', name: 'JDH Token', image: 'https://img2.pic.in.th/pic/IMG_13847b26fb6a73c061f7.th.jpeg', jupiterSymbol: 'JDH' },
+  { id: 'warp', symbol: 'WARP', name: 'Warp', image: 'https://img2.pic.in.th/pic/IMG_1413b7af4379d9e4f4a8.th.jpeg', jupiterSymbol: 'WARP' },
+];
+
+/**
+ * Get token metadata by symbol or ID
+ */
+export function getTokenMetadata(symbolOrId: string): SupportedToken | undefined {
+  return SUPPORTED_TOKENS.find(
+    token => token.symbol.toUpperCase() === symbolOrId.toUpperCase() || 
+            token.id.toLowerCase() === symbolOrId.toLowerCase()
+  );
+}
+
+/**
+ * Fetch prices from Jupiter API v6 using token symbols
+ * This replaces CoinGecko API for major cryptocurrencies
+ * 
+ * Note: Jupiter API v6 may only support Solana tokens (mint addresses)
+ * For non-Solana tokens (BTC, ETH, etc.), we'll use mock prices
+ */
+async function fetchJupiterV6Prices(symbols: string[]): Promise<Record<string, { price: number; priceChange24h?: number }>> {
+  if (!symbols || symbols.length === 0) {
+    return {};
+  }
+
+  try {
+    // Map symbols to Solana mint addresses for tokens that have them
+    const symbolToMint: Record<string, string> = {
+      'SOL': TOKEN_MINTS.SOL,
+      'USDC': TOKEN_MINTS.USDC,
+      'USDT': TOKEN_MINTS.USDT,
+      'JDH': TOKEN_MINTS.JDH,
+    };
+    
+    // Separate Solana tokens (have mint addresses) from non-Solana tokens
+    const solanaMints: string[] = [];
+    const solanaSymbols: string[] = [];
+    const nonSolanaSymbols: string[] = [];
+    
+    for (const symbol of symbols) {
+      const upperSymbol = symbol.toUpperCase();
+      if (symbolToMint[upperSymbol]) {
+        solanaMints.push(symbolToMint[upperSymbol]);
+        solanaSymbols.push(upperSymbol);
+      } else {
+        nonSolanaSymbols.push(upperSymbol);
+      }
+    }
+    
+    const prices: Record<string, { price: number; priceChange24h?: number }> = {};
+    
+    // Fetch Solana token prices using Jupiter API v4 (mint addresses)
+    if (solanaMints.length > 0) {
+      try {
+        const mintsParam = solanaMints.join(',');
+        const url = `${JUPITER_PRICE_API_V4}/price?ids=${mintsParam}`;
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
+        const response = await fetch(url, {
+          signal: controller.signal,
+          mode: 'cors',
+          headers: {
+            'Accept': 'application/json',
+          },
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Jupiter API v4 response format: { data: { "mint": { price: 123.45, symbol: "SOL", ... } } }
+          if (data.data && typeof data.data === 'object') {
+            for (let i = 0; i < solanaMints.length; i++) {
+              const mint = solanaMints[i];
+              const symbol = solanaSymbols[i];
+              const priceData = (data.data as Record<string, any>)[mint];
+              
+              if (priceData) {
+                prices[symbol] = {
+                  price: priceData.price || 0,
+                  priceChange24h: priceData.priceChange24h || priceData.price_change_24h || 0,
+                };
+              }
+            }
+          }
+        }
+      } catch (error: any) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('⚠️ Jupiter API v4 fetch error for Solana tokens:', error.message || error);
+        }
+      }
+    }
+    
+    // For non-Solana tokens (BTC, ETH, BNB, etc.), use mock prices
+    // Jupiter API doesn't support these tokens directly
+    for (const symbol of nonSolanaSymbols) {
+      // Map symbol to coin ID for mock prices
+      const symbolToCoinId: Record<string, string> = {
+        'BTC': 'bitcoin',
+        'ETH': 'ethereum',
+        'BNB': 'binancecoin',
+        'XRP': 'ripple',
+        'ADA': 'cardano',
+        'DOGE': 'dogecoin',
+        'USDC': 'usd-coin',
+      };
+      
+      const coinId = symbolToCoinId[symbol];
+      if (coinId) {
+        const mockPrice = MOCK_FALLBACK_PRICES[coinId];
+        if (mockPrice) {
+          prices[symbol] = {
+            price: mockPrice.price,
+            priceChange24h: mockPrice.change24h,
+          };
+        }
+      }
+    }
+    
+    return prices;
+  } catch (error: any) {
+    if (error.name !== 'AbortError' && process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ Jupiter API v6 fetch error:', error.message || error);
+    }
+    return {};
+  }
+}
 
 export const getTokenPrices = async (mints: string[]): Promise<Record<string, TokenPrice>> => {
   // FORCE MOCK MODE: Completely bypass API calls to prevent crash loops
@@ -135,7 +291,7 @@ export const getTokenPrices = async (mints: string[]): Promise<Record<string, To
     const mintsToFetch = deduplicatedMints.slice(0, maxMints);
     
     // Build URL and check length - use POST if URL would be too long
-    const url = `${JUPITER_PRICE_API}/price?ids=${mintsToFetch.join(',')}`;
+    const url = `${JUPITER_PRICE_API_V4}/price?ids=${mintsToFetch.join(',')}`;
     
     // Use POST for URLs longer than 1500 characters or if we have many mints
     // This prevents "hostname not found" errors
@@ -145,7 +301,7 @@ export const getTokenPrices = async (mints: string[]): Promise<Record<string, To
       const timeoutId = setTimeout(() => controller.abort(), 8000);
       
       // Use POST to avoid URL length issues
-      const response = await fetch(`${JUPITER_PRICE_API}/price`, {
+      const response = await fetch(`${JUPITER_PRICE_API_V4}/price`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -267,9 +423,9 @@ const CACHE_KEY = 'coingecko_prices_cache';
 const CACHE_TIMESTAMP_KEY = 'coingecko_prices_cache_timestamp';
 const CACHE_DURATION_MS = 60000; // 60 seconds cache
 
-// FORCE MOCK MODE: ALWAYS TRUE - CoinGecko API is completely disabled
+// FORCE MOCK MODE: Set to false to enable Jupiter API v6 (replaces CoinGecko)
 // This prevents crash loops from rate limiting (429 errors)
-const FORCE_USE_MOCK = true; // PERMANENTLY DISABLED - CoinGecko API will never be called
+const FORCE_USE_MOCK = false; // Set to false to enable Jupiter API v6 for major tokens
 
 export interface CoinGeckoPrice {
   id: string;
@@ -378,9 +534,13 @@ function getMockFallbackPrices(coinIds: string[]): Record<string, CoinGeckoPrice
  * - Error Handling: All errors are caught and handled gracefully
  */
 /**
- * Get CoinGecko prices - PERMANENTLY DISABLED
- * This function ALWAYS returns mock data - NO API calls are made
- * CoinGecko API is completely disabled to prevent rate limiting and crash loops
+ * Get token prices using Jupiter API v6 (replaces CoinGecko)
+ * Uses hybrid approach: Static metadata + Dynamic pricing from Jupiter API v6
+ * 
+ * This function:
+ * 1. Maps coin IDs to token symbols using SUPPORTED_TOKENS
+ * 2. Fetches prices from Jupiter API v6 using symbols
+ * 3. Combines static metadata with dynamic prices
  */
 export const getCoinGeckoPrices = async (coinIds: string[]): Promise<Record<string, CoinGeckoPrice>> => {
   // Always return empty object if no coin IDs provided
@@ -388,12 +548,105 @@ export const getCoinGeckoPrices = async (coinIds: string[]): Promise<Record<stri
     return {};
   }
   
-  // COINGECKO API IS PERMANENTLY DISABLED
-  // Always return mock data - NO fetch calls will be made
-  if (process.env.NODE_ENV === 'development') {
-    console.log('🔒 CoinGecko API DISABLED: Returning mock prices (no API calls)');
+  // FORCE MOCK MODE: Return mock data if enabled
+  if (FORCE_USE_MOCK) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔒 FORCE MOCK MODE: Returning mock prices (no API calls)');
+    }
+    return getMockFallbackPrices(coinIds);
   }
-  return getMockFallbackPrices(coinIds);
+  
+  try {
+    // Step 1: Map coin IDs to Jupiter symbols using SUPPORTED_TOKENS
+    const symbolsToFetch: string[] = [];
+    const coinIdToSymbol: Record<string, string> = {};
+    const coinIdToMetadata: Record<string, SupportedToken> = {};
+    
+    for (const coinId of coinIds) {
+      const token = getTokenMetadata(coinId);
+      if (token && token.jupiterSymbol) {
+        const symbol = token.jupiterSymbol.toUpperCase();
+        if (!symbolsToFetch.includes(symbol)) {
+          symbolsToFetch.push(symbol);
+        }
+        coinIdToSymbol[coinId] = symbol;
+        coinIdToMetadata[coinId] = token;
+      }
+    }
+    
+    if (symbolsToFetch.length === 0) {
+      // No supported tokens found - return mock data
+      return getMockFallbackPrices(coinIds);
+    }
+    
+    // Step 2: Fetch prices from Jupiter API v6
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🌐 Fetching prices from Jupiter API v6 for: ${symbolsToFetch.join(', ')}`);
+    }
+    
+    const jupiterPrices = await fetchJupiterV6Prices(symbolsToFetch);
+    
+    // Step 3: Combine static metadata with dynamic prices
+    const result: Record<string, CoinGeckoPrice> = {};
+    
+    for (const coinId of coinIds) {
+      const metadata = coinIdToMetadata[coinId];
+      const symbol = coinIdToSymbol[coinId];
+      
+      if (metadata && symbol) {
+        const priceData = jupiterPrices[symbol];
+        
+        if (priceData && priceData.price > 0) {
+          // Use real price from Jupiter API v6
+          result[coinId] = {
+            id: coinId,
+            symbol: metadata.symbol,
+            name: metadata.name,
+            current_price: priceData.price,
+            price_change_percentage_24h: priceData.priceChange24h || 0,
+            image: metadata.image,
+          };
+        } else {
+          // Fallback to mock price if Jupiter API doesn't have data
+          const mockPrice = MOCK_FALLBACK_PRICES[coinId];
+          if (mockPrice) {
+            result[coinId] = {
+              id: coinId,
+              symbol: metadata.symbol,
+              name: metadata.name,
+              current_price: mockPrice.price,
+              price_change_percentage_24h: mockPrice.change24h,
+              image: metadata.image,
+            };
+          }
+        }
+      } else {
+        // Token not in SUPPORTED_TOKENS - use mock fallback
+        const mockPrice = MOCK_FALLBACK_PRICES[coinId];
+        if (mockPrice) {
+          result[coinId] = {
+            id: coinId,
+            symbol: coinId.toUpperCase().split('-')[0],
+            name: coinId.charAt(0).toUpperCase() + coinId.slice(1).replace(/-/g, ' '),
+            current_price: mockPrice.price,
+            price_change_percentage_24h: mockPrice.change24h,
+          };
+        }
+      }
+    }
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`✅ Jupiter API v6: Got prices for ${Object.keys(result).length} out of ${coinIds.length} tokens`);
+    }
+    
+    return result;
+  } catch (error: any) {
+    // On error, return mock fallback
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ Jupiter API v6 error, using mock fallback:', error.message || error);
+    }
+    return getMockFallbackPrices(coinIds);
+  }
 };
 
 // BNB Chain token price fetching

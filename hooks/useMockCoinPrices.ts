@@ -73,14 +73,23 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
       });
 
 
-      // CoinGecko API is PERMANENTLY DISABLED - always use mock data
-      // This prevents crash loops from rate limiting (429 errors)
+      // Use Jupiter API v6 instead of CoinGecko (hybrid approach: static metadata + dynamic pricing)
+      // getCoinGeckoPrices() now uses Jupiter API v6 with static metadata
       let coinGeckoPromise: Promise<Record<string, any>>;
-      // Always use mock data - CoinGecko API is completely disabled
-      coinGeckoPromise = Promise.resolve({});
       
-      // NOTE: getCoinGeckoPrices() is disabled via FORCE_USE_MOCK flag
-      // It will always return mock data without making any API calls
+      if (coinGeckoIds.length > 0 && !shouldUseMockOnly) {
+        // Fetch prices from Jupiter API v6 (replaces CoinGecko)
+        coinGeckoPromise = getCoinGeckoPrices(coinGeckoIds).catch((error: any) => {
+          // Fallback to empty object on error
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('⚠️ Jupiter API v6 error, using fallback:', error);
+          }
+          return {};
+        });
+      } else {
+        // Use mock data if shouldUseMockOnly is true
+        coinGeckoPromise = Promise.resolve({});
+      }
       
       // Fetch SOL price from backend API or Jupiter API (in parallel with CoinGecko)
       // Skip if rate limited or in development mode with rate limit flag
