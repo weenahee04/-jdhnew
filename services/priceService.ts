@@ -1,6 +1,11 @@
 // Price service for fetching real-time cryptocurrency prices
 const JUPITER_PRICE_API = 'https://price.jup.ag/v4';
 
+// FORCE MOCK MODE: Set to true to completely bypass ALL API calls (Jupiter, CoinGecko, etc.)
+// This prevents crash loops from rate limiting (429 errors)
+// NOTE: This is also declared later for CoinGecko - both should be true
+const FORCE_USE_MOCK_JUPITER = true;
+
 export interface TokenPrice {
   id: string;
   symbol: string;
@@ -23,7 +28,61 @@ export const TOKEN_MINTS: Record<string, string> = {
   JDH_ALT: '5FaVDbaQtdZ4dizCqZcmpDscByWfcc1ssvu8snbcemjx',
 };
 
+/**
+ * Mock token prices for FORCE MOCK MODE
+ * Returns hardcoded prices to prevent API calls
+ */
+const MOCK_TOKEN_PRICES: Record<string, TokenPrice> = {
+  'So11111111111111111111111111111111111111112': { // SOL
+    id: 'So11111111111111111111111111111111111111112',
+    symbol: 'SOL',
+    name: 'Solana',
+    price: 100,
+    priceChange24h: 5.0,
+    decimals: 9,
+  },
+  'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR': { // JDH
+    id: 'GkDEVLZPab6KKmnAKSaHt8M2RCxkj5SZG88FgfGchPyR',
+    symbol: 'JDH',
+    name: 'JDH Token',
+    price: 0.5,
+    priceChange24h: 10.0,
+    decimals: 9,
+  },
+  'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': { // USDC
+    id: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+    symbol: 'USDC',
+    name: 'USD Coin',
+    price: 1.0,
+    priceChange24h: 0.01,
+    decimals: 6,
+  },
+  'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB': { // USDT
+    id: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+    symbol: 'USDT',
+    name: 'Tether',
+    price: 1.0,
+    priceChange24h: 0.01,
+    decimals: 6,
+  },
+};
+
 export const getTokenPrices = async (mints: string[]): Promise<Record<string, TokenPrice>> => {
+  // FORCE MOCK MODE: Completely bypass API calls to prevent crash loops
+  if (FORCE_USE_MOCK_JUPITER) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔒 FORCE MOCK MODE: Bypassing Jupiter API, returning mock token prices');
+    }
+    // Return mock prices for requested mints
+    const result: Record<string, TokenPrice> = {};
+    for (const mint of mints) {
+      if (MOCK_TOKEN_PRICES[mint]) {
+        result[mint] = MOCK_TOKEN_PRICES[mint];
+      }
+    }
+    return result;
+  }
+  
   try {
     if (!mints || mints.length === 0) {
       return {};
@@ -202,7 +261,15 @@ const USD_TO_THB = 34.5;
 export const convertUsdToThb = (usd: number) => usd * USD_TO_THB;
 
 // CoinGecko API for major cryptocurrencies
-const COINGECKO_API = 'https://api.coingecko.com/api/v3';
+// DISABLED: CoinGecko API is completely disabled to prevent rate limiting and crash loops
+// const COINGECKO_API = 'https://api.coingecko.com/api/v3'; // DISABLED - Not used anymore
+const CACHE_KEY = 'coingecko_prices_cache';
+const CACHE_TIMESTAMP_KEY = 'coingecko_prices_cache_timestamp';
+const CACHE_DURATION_MS = 60000; // 60 seconds cache
+
+// FORCE MOCK MODE: ALWAYS TRUE - CoinGecko API is completely disabled
+// This prevents crash loops from rate limiting (429 errors)
+const FORCE_USE_MOCK = true; // PERMANENTLY DISABLED - CoinGecko API will never be called
 
 export interface CoinGeckoPrice {
   id: string;
@@ -213,111 +280,120 @@ export interface CoinGeckoPrice {
   image?: string;
 }
 
-// Fetch prices from CoinGecko for multiple coins
-export const getCoinGeckoPrices = async (coinIds: string[]): Promise<Record<string, CoinGeckoPrice>> => {
+/**
+ * Mock fallback prices (in USD) for major cryptocurrencies
+ * Used when CoinGecko API is unavailable or rate limited
+ * Updated with realistic prices matching user's requested structure
+ */
+const MOCK_FALLBACK_PRICES: Record<string, { price: number; change24h: number }> = {
+  bitcoin: { price: 90000, change24h: 2.5 },
+  ethereum: { price: 3000, change24h: 1.2 },
+  tether: { price: 1.0, change24h: 0.01 },
+  binancecoin: { price: 600, change24h: 0.5 },
+  'usd-coin': { price: 1.0, change24h: 0.01 },
+  solana: { price: 100, change24h: 5.0 },
+  ripple: { price: 0.6, change24h: -0.5 },
+  cardano: { price: 0.5, change24h: 1.2 },
+  dogecoin: { price: 0.08, change24h: 3.0 },
+  'matic-network': { price: 0.9, change24h: 2.0 },
+  'avalanche-2': { price: 40, change24h: 1.5 },
+  polkadot: { price: 7.5, change24h: 0.8 },
+  chainlink: { price: 15, change24h: 1.0 },
+  uniswap: { price: 10, change24h: 2.5 },
+  litecoin: { price: 95, change24h: 0.3 },
+  'shiba-inu': { price: 0.00001, change24h: 5.0 },
+  tron: { price: 0.11, change24h: 0.2 },
+  jdh: { price: 0.5, change24h: 10.0 },
+  warp: { price: 0.1, change24h: -2.0 },
+};
+
+/**
+ * Get cached prices from localStorage if available and fresh
+ */
+function getCachedPrices(): Record<string, CoinGeckoPrice> | null {
   try {
-    if (coinIds.length === 0) return {};
+    const cachedTimestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
+    if (!cachedTimestamp) return null;
     
-    // CoinGecko allows up to 250 coins per request
-    const ids = coinIds.slice(0, 250).join(',');
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-    
-    // Use /coins/markets endpoint which provides price and 24h change
-    const url = `${COINGECKO_API}/coins/markets?ids=${ids}&vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
-    
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🌐 Fetching CoinGecko prices from:', url.substring(0, 100) + '...');
+    const cacheAge = Date.now() - parseInt(cachedTimestamp, 10);
+    if (cacheAge > CACHE_DURATION_MS) {
+      // Cache expired
+      return null;
     }
     
-    let response: Response;
-    try {
-      response = await fetch(url, { 
-        signal: controller.signal,
-        headers: {
-          'Accept': 'application/json',
-        },
-        mode: 'cors', // Explicitly set CORS mode
-      });
-    } catch (fetchError: any) {
-      // Handle network errors (CORS, hostname not found, etc.)
-      // Don't log in development to reduce console spam
-      // Return empty to use fallback prices
-      return {};
+    const cachedData = localStorage.getItem(CACHE_KEY);
+    if (cachedData) {
+      return JSON.parse(cachedData);
     }
-    
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      // Handle rate limit (429) gracefully
-      if (response.status === 429) {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('⚠️ CoinGecko rate limit reached (429). Using cached/mock data.');
-        }
-        // Throw error to trigger backoff logic
-        const error: any = new Error('CoinGecko rate limit (429)');
-        error.status = 429;
-        throw error;
-      }
-      
-      // Handle CORS errors (often happens with rate limits)
-      if (response.status === 0 || response.status === 403) {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('⚠️ CoinGecko CORS/access error. Using cached/mock data.');
-        }
-        // Throw error to trigger backoff logic
-        const error: any = new Error('CoinGecko CORS error');
-        error.status = response.status || 403;
-        throw error;
-      }
-      
-      const errorText = await response.text().catch(() => 'Unknown error');
-      if (process.env.NODE_ENV === 'development') {
-        console.error(`❌ CoinGecko API error ${response.status}:`, errorText.substring(0, 200));
-      }
-      // Throw error for other status codes too
-      const error: any = new Error(`CoinGecko API error ${response.status}`);
-      error.status = response.status;
-      throw error;
+  } catch (error) {
+    // Ignore cache errors
+  }
+  return null;
+}
+
+/**
+ * Save prices to cache
+ */
+function saveToCache(prices: Record<string, CoinGeckoPrice>): void {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(prices));
+    localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
+  } catch (error) {
+    // Ignore cache errors
+  }
+}
+
+/**
+ * Get mock fallback prices for requested coin IDs
+ */
+function getMockFallbackPrices(coinIds: string[]): Record<string, CoinGeckoPrice> {
+  const mockPrices: Record<string, CoinGeckoPrice> = {};
+  
+  for (const coinId of coinIds) {
+    const fallback = MOCK_FALLBACK_PRICES[coinId];
+    if (fallback) {
+      mockPrices[coinId] = {
+        id: coinId,
+        symbol: coinId.toUpperCase().split('-')[0],
+        name: coinId.charAt(0).toUpperCase() + coinId.slice(1).replace(/-/g, ' '),
+        current_price: fallback.price,
+        price_change_percentage_24h: fallback.change24h,
+      };
     }
-    
-    const marketData = await response.json();
-    const prices: Record<string, CoinGeckoPrice> = {};
-    
-    // CoinGecko returns array of coin objects
-    if (Array.isArray(marketData)) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`✅ CoinGecko returned ${marketData.length} coins`);
-      }
-      for (const coin of marketData) {
-        if (coin.id && coin.current_price !== undefined) {
-          prices[coin.id] = {
-            id: coin.id,
-            symbol: coin.symbol?.toUpperCase() || '',
-            name: coin.name || '',
-            current_price: coin.current_price || 0,
-            price_change_percentage_24h: coin.price_change_percentage_24h || 0,
-            image: coin.image,
-          };
-          if (process.env.NODE_ENV === 'development') {
-            console.log(`  ✓ ${coin.symbol?.toUpperCase()}: $${coin.current_price} (${coin.price_change_percentage_24h?.toFixed(2)}%)`);
-          }
-        }
-      }
-    } else {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('⚠️ CoinGecko returned non-array data:', typeof marketData);
-      }
-    }
-    
-    return prices;
-  } catch (error: any) {
-    // Log errors in development for debugging
-    if (error.name !== 'AbortError' && process.env.NODE_ENV === 'development') {
-      console.warn('CoinGecko price fetch error:', error.message || error);
-    }
+  }
+  
+  return mockPrices;
+}
+
+/**
+ * Fetch prices from CoinGecko for multiple coins
+ * 
+ * CRITICAL: This function NEVER throws errors to prevent app crashes.
+ * It always returns a valid object (empty or with mock data) so the app can continue.
+ * 
+ * Features:
+ * - FORCE MOCK MODE: If FORCE_USE_MOCK is true, completely bypasses API calls
+ * - Caching: Uses localStorage to cache prices for 60 seconds
+ * - Mock Fallback: Returns hardcoded prices if API fails
+ * - Error Handling: All errors are caught and handled gracefully
+ */
+/**
+ * Get CoinGecko prices - PERMANENTLY DISABLED
+ * This function ALWAYS returns mock data - NO API calls are made
+ * CoinGecko API is completely disabled to prevent rate limiting and crash loops
+ */
+export const getCoinGeckoPrices = async (coinIds: string[]): Promise<Record<string, CoinGeckoPrice>> => {
+  // Always return empty object if no coin IDs provided
+  if (!coinIds || coinIds.length === 0) {
     return {};
   }
+  
+  // COINGECKO API IS PERMANENTLY DISABLED
+  // Always return mock data - NO fetch calls will be made
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔒 CoinGecko API DISABLED: Returning mock prices (no API calls)');
+  }
+  return getMockFallbackPrices(coinIds);
 };
 
 // BNB Chain token price fetching

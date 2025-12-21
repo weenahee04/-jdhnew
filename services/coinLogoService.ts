@@ -1,9 +1,13 @@
 // Service for fetching cryptocurrency logos
 // Supports multiple APIs for better coverage
 
-// CoinGecko API (free, no API key needed for basic usage)
-const COINGECKO_API = 'https://api.coingecko.com/api/v3';
-const COINGECKO_CDN = 'https://assets.coingecko.com/coins/images';
+// FORCE MOCK MODE: ALWAYS TRUE - CoinGecko API is completely disabled
+// This prevents crash loops from rate limiting (429 errors)
+const FORCE_USE_MOCK = true; // PERMANENTLY DISABLED - CoinGecko API will never be called
+
+// CoinGecko API (DISABLED - not used anymore)
+const COINGECKO_API = 'https://api.coingecko.com/api/v3'; // Not used - API is disabled
+const COINGECKO_CDN = 'https://assets.coingecko.com/coins/images'; // CDN URLs still work for static images
 
 // CryptoCompare API
 const CRYPTOCOMPARE_API = 'https://www.cryptocompare.com';
@@ -29,6 +33,12 @@ const COINGECKO_IDS: Record<string, string> = {
 // Note: CoinGecko has CORS restrictions and rate limits (429)
 // This function will fail silently and return null to avoid console errors
 export const getCoinGeckoLogo = async (symbol: string): Promise<string | null> => {
+  // FORCE MOCK MODE: Completely bypass API calls to prevent crash loops
+  if (FORCE_USE_MOCK) {
+    // Return null - logos are not critical, app can work without them
+    return null;
+  }
+  
   try {
     const coinId = COINGECKO_IDS[symbol.toUpperCase()];
     if (!coinId) return null;

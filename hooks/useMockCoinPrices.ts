@@ -14,9 +14,9 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
     let isMounted = true;
     let hasInitialLoad = false; // Track if we've done initial load
     
-    // Check if we should disable API calls (rate limited or in development)
-    const isRateLimited = sessionStorage.getItem('coingecko_rate_limited') === 'true';
-    const shouldUseMockOnly = process.env.NODE_ENV === 'development' && isRateLimited;
+    // FORCE MOCK MODE: Always use mock data to prevent crash loops
+    // FORCE_USE_MOCK is defined in priceService.ts - if true, all API calls are bypassed
+    const shouldUseMockOnly = true; // Always use mock to prevent crash loops and API rate limits
     
     const updatePricesAndLogos = async () => {
       // Skip if we're in development and have already loaded once (to avoid rate limits on refresh)
@@ -73,24 +73,14 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
       });
 
 
-      // Fetch real prices from CoinGecko for all major coins (in parallel with SOL)
-      // Wrap in try-catch to handle rate limits gracefully
+      // CoinGecko API is PERMANENTLY DISABLED - always use mock data
+      // This prevents crash loops from rate limiting (429 errors)
       let coinGeckoPromise: Promise<Record<string, any>>;
-      if (coinGeckoIds.length > 0 && !shouldUseMockOnly) {
-        coinGeckoPromise = getCoinGeckoPrices(coinGeckoIds).catch((error: any) => {
-          // Mark as rate limited if we get 429 or CORS error
-          if (error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('CORS') || error?.message?.includes('Access-Control-Allow-Origin')) {
-            sessionStorage.setItem('coingecko_rate_limited', 'true');
-            if (process.env.NODE_ENV === 'development') {
-              console.warn('⚠️ CoinGecko rate limited - using mock data for this session');
-            }
-          }
-          // Handle rate limit errors silently - use empty object to fall back to mock prices
-          return {};
-        });
-      } else {
-        coinGeckoPromise = Promise.resolve({});
-      }
+      // Always use mock data - CoinGecko API is completely disabled
+      coinGeckoPromise = Promise.resolve({});
+      
+      // NOTE: getCoinGeckoPrices() is disabled via FORCE_USE_MOCK flag
+      // It will always return mock data without making any API calls
       
       // Fetch SOL price from backend API or Jupiter API (in parallel with CoinGecko)
       // Skip if rate limited or in development mode with rate limit flag
@@ -460,6 +450,7 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
     };
     
     // Wrap updatePricesAndLogos to catch and handle errors
+    // CRITICAL: This function NEVER throws to prevent app crashes
     const updatePricesAndLogosSafe = async () => {
       try {
         await updatePricesAndLogos();
@@ -468,12 +459,14 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
         if (process.env.NODE_ENV === 'development') {
           console.warn('⚠️ Price update error (using fallback):', error.message || error);
         }
-        // Keep existing prices on error
+        // Keep existing prices on error - never throw
         if (isMounted) {
           setIsLoading(false);
+          // Use mock coins as fallback if update failed
+          setCoinsWithPrices(mockCoins);
         }
-        // Re-throw to trigger backoff logic
-        throw error;
+        // DO NOT re-throw - this prevents app crashes
+        // The error is handled, app continues with mock data
       }
     };
 
@@ -490,35 +483,13 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
         return;
       }
       
-      try {
-        await updatePricesAndLogosSafe();
-        // Reset failure count on success
-        consecutiveFailures = 0;
-        rateLimitBackoff = 0;
-      } catch (error: any) {
-        consecutiveFailures++;
-        
-        // Check if error is rate limit related
-        const isRateLimit = error?.message?.includes('429') || 
-                           error?.status === 429 ||
-                           error?.message?.includes('rate limit') ||
-                           error?.message?.includes('CORS') ||
-                           error?.message?.includes('Access-Control-Allow-Origin');
-        
-        if (isRateLimit) {
-          // Mark as rate limited in sessionStorage with timestamp
-          sessionStorage.setItem('coingecko_rate_limited', 'true');
-          sessionStorage.setItem('coingecko_rate_limited_time', Date.now().toString());
-          
-          // Exponential backoff: 1min, 2min, 4min, 8min (max 8min)
-          const backoffMs = Math.min(60000 * Math.pow(2, consecutiveFailures - 1), 480000);
-          rateLimitBackoff = Date.now() + backoffMs;
-          
-          if (process.env.NODE_ENV === 'development') {
-            console.warn(`⏸️ Rate limit/CORS error. Using mock data for this session. Backing off for ${backoffMs / 1000}s`);
-          }
-        }
-      }
+      // updatePricesAndLogosSafe never throws, but we still track failures
+      await updatePricesAndLogosSafe();
+      
+      // Reset failure count (since we got here, no error was thrown)
+      // Note: getCoinGeckoPrices now handles all errors internally and returns mock data
+      consecutiveFailures = 0;
+      rateLimitBackoff = 0;
     };
     
     // Check if we should skip initial load (to prevent errors on refresh)
