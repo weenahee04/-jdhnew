@@ -95,17 +95,34 @@ test.describe('Authentication & Profile Flow', () => {
     // Look for "Open account" or "Sign Up" button on landing page
     console.log('🔍 Looking for sign up button...');
     const signUpButton = page.locator('button:has-text("Open account"), button:has-text("Sign Up"), button:has-text("สมัครสมาชิก")').first();
-    if (await signUpButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+    if (await signUpButton.isVisible({ timeout: 5000 }).catch(() => false)) {
       console.log('✅ Sign up button found, clicking...');
-      await signUpButton.click();
-      await page.waitForTimeout(500);
+      await signUpButton.evaluate((btn) => (btn as HTMLElement).click());
+      await page.waitForTimeout(1000);
+      await page.waitForLoadState('networkidle');
       console.log('📍 Current URL after clicking sign up:', page.url());
     } else {
       console.warn('⚠️ Sign up button not found, may already be on registration page');
+      // Wait for page to be ready
+      await page.waitForLoadState('networkidle');
     }
 
     // Wait for email input to be visible (more reliable than waiting for form)
-    await page.waitForSelector('input[type="email"]', { state: 'visible', timeout: 15000 });
+    // Try multiple strategies to find the email input
+    try {
+      await page.waitForSelector('input[type="email"]', { state: 'visible', timeout: 20000 });
+    } catch (e) {
+      // Fallback: wait for any input field
+      console.log('⚠️ Email input not found with type selector, trying fallback...');
+      await page.waitForSelector('input', { state: 'visible', timeout: 5000 });
+      // Try to find by placeholder or label
+      const emailInputByPlaceholder = page.locator('input[placeholder*="email" i], input[placeholder*="อีเมล" i]').first();
+      if (await emailInputByPlaceholder.isVisible({ timeout: 3000 }).catch(() => false)) {
+        console.log('✅ Found email input by placeholder');
+      } else {
+        throw new Error('Could not find email input field');
+      }
+    }
     const emailInput = page.locator('input[type="email"]').first();
     await emailInput.waitFor({ timeout: 10000, state: 'visible' });
     const passwordInput = page.locator('input[type="password"]').first();

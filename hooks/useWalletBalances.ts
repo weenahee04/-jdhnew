@@ -126,7 +126,21 @@ export const useWalletBalances = (publicKey: PublicKey | null) => {
       const allMints = [TOKEN_MINTS.SOL, ...tokens.map(t => t.mint)];
       // Remove duplicates before calling API
       const uniqueMints = Array.from(new Set(allMints));
-      const priceData = await getTokenPrices(uniqueMints);
+      
+      // Suppress errors for Jupiter Price API (hostname not found is common in development)
+      let priceData: Record<string, TokenPrice> = {};
+      try {
+        priceData = await getTokenPrices(uniqueMints);
+      } catch (error: any) {
+        // Silently handle Jupiter API errors (hostname not found, network errors)
+        if (process.env.NODE_ENV === 'development') {
+          // Only log if it's not a network/hostname error
+          if (!error.message?.includes('hostname') && !error.message?.includes('Failed to fetch')) {
+            console.warn('⚠️ Jupiter Price API error:', error.message || error);
+          }
+        }
+        // Use empty price data - fallback prices will be used
+      }
       setPrices(priceData);
 
       // Build coins array

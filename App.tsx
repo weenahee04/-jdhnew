@@ -113,6 +113,51 @@ const AnimatedBackground = ({ intensity = 'high', theme = 'emerald' }: { intensi
 };
 
 const App: React.FC = () => {
+  // Suppress network errors in console (development only)
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      const originalError = console.error;
+      const originalWarn = console.warn;
+      
+      // Override console.error to filter out network/CORS errors
+      console.error = (...args: any[]) => {
+        const message = args.join(' ');
+        // Suppress CoinGecko and Jupiter API errors
+        if (
+          message.includes('Failed to load resource') ||
+          message.includes('Access-Control-Allow-Origin') ||
+          message.includes('429') ||
+          message.includes('hostname could not be found') ||
+          message.includes('price.jup.ag') ||
+          message.includes('api.coingecko.com')
+        ) {
+          return; // Suppress these errors
+        }
+        originalError.apply(console, args);
+      };
+      
+      // Override console.warn to filter out network warnings
+      console.warn = (...args: any[]) => {
+        const message = args.join(' ');
+        // Suppress CoinGecko and Jupiter API warnings
+        if (
+          message.includes('CoinGecko') ||
+          message.includes('Jupiter') ||
+          message.includes('rate limit') ||
+          message.includes('CORS')
+        ) {
+          return; // Suppress these warnings
+        }
+        originalWarn.apply(console, args);
+      };
+      
+      return () => {
+        console.error = originalError;
+        console.warn = originalWarn;
+      };
+    }
+  }, []);
+  
   // Navigation State
   const [currentView, setCurrentView] = useState<AppView>('LANDING');
   const [activeTab, setActiveTab] = useState<NavTab>(NavTab.HOME);
@@ -401,7 +446,7 @@ const App: React.FC = () => {
   }, []);
 
   // --- View Handlers ---
-  const handleAuthComplete = async (email?: string, password?: string) => {
+  const handleAuthComplete = React.useCallback(async (email?: string, password?: string) => {
     setAuthError(null);
     setAuthLoading(true);
 
@@ -427,16 +472,16 @@ const App: React.FC = () => {
               const testMnemonic = await createWallet();
               console.log('✅ Test wallet created:', testMnemonic);
               
-              // Save wallet for test user
-              if (USE_BACKEND_API) {
-                await saveWallet(result.user.id, testMnemonic);
-              } else {
-                localStorage.setItem(`jdh_wallet_${result.user.id}`, testMnemonic);
-              }
-              
-              // Update user wallet address
+              // Update user wallet address first to get publicKey
               const walletPublicKey = wallet.publicKey || publicKey?.toBase58();
               if (walletPublicKey) {
+                // Save wallet for test user
+                if (USE_BACKEND_API) {
+                  await saveWallet(result.user.id, testMnemonic, walletPublicKey);
+                } else {
+                  localStorage.setItem(`jdh_wallet_${result.user.id}`, testMnemonic);
+                }
+                
                 await updateUserWallet(result.user.email, walletPublicKey);
                 const updatedUser = {
                   ...result.user,
@@ -595,7 +640,7 @@ const App: React.FC = () => {
     } finally {
       setAuthLoading(false);
     }
-  };
+  }, [currentView, currentUser, wallet, publicKey]);
 
   const handleTermsAccept = () => {
     setTermsAccepted(true);
@@ -807,9 +852,9 @@ const App: React.FC = () => {
       }
       
       console.log('📤 handleSendAsset called:', { symbol, amount, to: to.trim(), mintAddress });
-      
-      // Check if sending SOL or SPL token
-      if (symbol === 'SOL') {
+    
+    // Check if sending SOL or SPL token
+    if (symbol === 'SOL') {
         try {
           // Double-check SOL balance from blockchain before sending
           const solCoin = displayCoins.find(c => c.symbol === 'SOL');
@@ -828,23 +873,23 @@ const App: React.FC = () => {
           }
           const result = await sendSol(wallet.keypair, to.trim(), amount);
           console.log('✅ SOL transfer successful:', result);
-          // Refresh balances after send
-          setTimeout(() => refreshBalances(), 2000);
-          return result;
+      // Refresh balances after send
+      setTimeout(() => refreshBalances(), 2000);
+      return result;
         } catch (solError: any) {
           console.error('❌ SOL transfer error:', solError);
           const errorMessage = solError?.message || solError?.toString() || 'การโอน SOL ล้มเหลว';
           throw new Error(errorMessage);
         }
-      } else {
-        // SPL Token transfer
+    } else {
+      // SPL Token transfer
         try {
           let finalMintAddress = mintAddress;
           
           if (!finalMintAddress) {
-            // Try to find mint address from current coins
-            const coin = displayCoins.find(c => c.symbol === symbol);
-            if (!coin || !coin.id || coin.id === 'sol') {
+        // Try to find mint address from current coins
+        const coin = displayCoins.find(c => c.symbol === symbol);
+        if (!coin || !coin.id || coin.id === 'sol') {
               throw new Error(`ไม่พบที่อยู่เหรียญ (Mint Address) สำหรับ ${symbol}`);
             }
             finalMintAddress = coin.id;
@@ -877,9 +922,9 @@ const App: React.FC = () => {
           }
           const result = await sendToken(wallet.keypair, to.trim(), finalMintAddress, amount, decimals);
           console.log('✅ Token transfer successful:', result);
-          // Refresh balances after send
-          setTimeout(() => refreshBalances(), 2000);
-          return result;
+        // Refresh balances after send
+        setTimeout(() => refreshBalances(), 2000);
+        return result;
         } catch (tokenError: any) {
           console.error('❌ Token transfer error:', tokenError);
           const errorMessage = tokenError?.message || tokenError?.toString() || 'การโอนเหรียญล้มเหลว';
@@ -920,12 +965,12 @@ const App: React.FC = () => {
         try {
           quote = await getSwapQuoteApi({
             userPublicKey: publicKey,
-            inputMint: fromMint,
-            outputMint: toMint,
+        inputMint: fromMint,
+        outputMint: toMint,
             amount: amountLamports.toString(),
-            slippageBps: slippage || 100,
-          });
-          
+        slippageBps: slippage || 100,
+      });
+
           // Build swap transaction via API
           swapResponse = await buildSwapTransactionApi(publicKey, quote);
         } catch (apiError) {
@@ -940,12 +985,12 @@ const App: React.FC = () => {
             slippageBps: slippage || 100,
           });
           swapResponse = await getSwapTransaction({
-            userPublicKey: publicKey.toBase58(),
-            quoteResponse: quote,
-            wrapAndUnwrapSol: true,
-            dynamicComputeUnitLimit: true,
-            dynamicSlippage: true,
-          });
+        userPublicKey: publicKey.toBase58(),
+        quoteResponse: quote,
+        wrapAndUnwrapSol: true,
+        dynamicComputeUnitLimit: true,
+        dynamicSlippage: true,
+      });
         }
       } else {
         // Direct Jupiter
@@ -1045,22 +1090,118 @@ const App: React.FC = () => {
     </div>
   );
 
-  const AuthScreen = ({ type }: { type: 'login' | 'register' }) => {
+  const AuthScreen = React.memo(({ type }: { type: 'login' | 'register' }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    // Local loading and error state to prevent parent re-renders from affecting input
+    const [localLoading, setLocalLoading] = useState(false);
+    const [localError, setLocalError] = useState<string | null>(null);
+    
+    // Use refs to persist values across re-renders
+    const emailRef = React.useRef(email);
+    const passwordRef = React.useRef(password);
+    // Store handleAuthComplete in ref to avoid dependency on it
+    const handleAuthCompleteRef = React.useRef(handleAuthComplete);
+    // Store setCurrentView in ref to avoid dependency
+    const setCurrentViewRef = React.useRef(setCurrentView);
+    const setAuthErrorRef = React.useRef(setAuthError);
 
-    const handleSubmit = async (e?: React.FormEvent) => {
-      if (e) e.preventDefault();
-      await handleAuthComplete(email, password);
-    };
+    // Update refs when state changes (only when actually changed)
+    React.useEffect(() => {
+      emailRef.current = email;
+    }, [email]);
+
+    React.useEffect(() => {
+      passwordRef.current = password;
+    }, [password]);
+    
+    // Update function refs when they change (but don't trigger re-render)
+    React.useEffect(() => {
+      handleAuthCompleteRef.current = handleAuthComplete;
+      setCurrentViewRef.current = setCurrentView;
+      setAuthErrorRef.current = setAuthError;
+    }, [handleAuthComplete, setCurrentView, setAuthError]);
+    
+    // Sync with parent state but use batching to prevent unnecessary re-renders
+    const lastAuthLoadingRef = React.useRef(authLoading);
+    const lastAuthErrorRef = React.useRef(authError);
+    
+    // Batch state updates to prevent flashing
+    React.useEffect(() => {
+      let needsUpdate = false;
+      const updates: (() => void)[] = [];
+      
+      if (lastAuthLoadingRef.current !== authLoading) {
+        lastAuthLoadingRef.current = authLoading;
+        updates.push(() => setLocalLoading(authLoading));
+        needsUpdate = true;
+      }
+      
+      if (lastAuthErrorRef.current !== authError) {
+        lastAuthErrorRef.current = authError;
+        updates.push(() => setLocalError(authError));
+        needsUpdate = true;
+      }
+      
+      // Batch all updates together
+      if (needsUpdate) {
+        // Use requestAnimationFrame to batch updates and prevent flashing
+        requestAnimationFrame(() => {
+          updates.forEach(update => update());
+        });
+      }
+    }, [authLoading, authError]);
+
+    // Stable handleSubmit that doesn't depend on any external functions
+    const handleSubmit = React.useCallback(async (e: React.FormEvent) => {
+      e.preventDefault(); // Always prevent default form submission
+      e.stopPropagation(); // Stop event bubbling
+      
+      // Use refs to get latest values without causing re-renders
+      const currentEmail = emailRef.current;
+      const currentPassword = passwordRef.current;
+      
+      // Only proceed if we have values
+      if (!currentEmail || !currentPassword) {
+        return;
+      }
+      
+      setLocalLoading(true);
+      setLocalError(null);
+      
+      try {
+        // Use ref to call handleAuthComplete to avoid dependency
+        await handleAuthCompleteRef.current(currentEmail, currentPassword);
+      } catch (error: any) {
+        // Error is handled in handleAuthComplete, but sync local error state
+        setLocalError(error?.message || 'เกิดข้อผิดพลาด');
+      } finally {
+        // Don't set loading to false here - let handleAuthComplete handle it
+        // This prevents the input from being reset
+      }
+    }, []); // No dependencies - use refs instead
+    
+    // Stable handler for switching between login/register
+    const handleSwitchAuth = React.useCallback(() => {
+      setEmail('');
+      setPassword('');
+      setLocalError(null);
+      setAuthErrorRef.current(null); // Use ref to avoid dependency
+      setCurrentViewRef.current(type === 'login' ? 'AUTH_REGISTER' : 'AUTH_LOGIN');
+    }, [type]);
+    
+    // Memoize AnimatedBackground to prevent re-renders
+    const background = React.useMemo(() => (
+      <AnimatedBackground intensity="high" theme="emerald" />
+    ), []);
 
     return (
       <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 md:p-8 relative overflow-hidden">
-         {/* Use Emerald Theme Background */}
-         <AnimatedBackground intensity="high" theme="emerald" />
+         {/* Use Emerald Theme Background - Memoized to prevent re-renders */}
+         {background}
          
          <div className="absolute top-4 left-4 sm:top-6 sm:left-6 md:top-8 md:left-8 z-20">
-            <button onClick={() => setCurrentView('LANDING')} className="flex items-center gap-1 text-zinc-400 hover:text-white transition-colors text-sm sm:text-base">
+            <button onClick={() => setCurrentViewRef.current('LANDING')} className="flex items-center gap-1 text-zinc-400 hover:text-white transition-colors text-sm sm:text-base">
                <ChevronLeft size={18} className="sm:w-5 sm:h-5" /> <span className="hidden sm:inline">Back</span>
             </button>
          </div>
@@ -1083,7 +1224,7 @@ const App: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    disabled={authLoading}
+                    disabled={localLoading}
                     className="w-full bg-zinc-950/50 border border-white/5 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50 text-sm sm:text-base" 
                   />
                </div>
@@ -1096,14 +1237,14 @@ const App: React.FC = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={6}
-                    disabled={authLoading}
+                    disabled={localLoading}
                     className="w-full bg-zinc-950/50 border border-white/5 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50 text-sm sm:text-base" 
                   />
                </div>
                
-               {authError && (
+               {localError && (
                   <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-xs sm:text-sm">
-                     {authError}
+                     {localError}
                   </div>
                )}
                
@@ -1115,10 +1256,10 @@ const App: React.FC = () => {
 
                <button 
                  type="submit"
-                 disabled={authLoading || !email || !password}
+                 disabled={localLoading || !email || !password}
                  className="w-full py-3 sm:py-4 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm sm:text-base rounded-xl sm:rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.3)] mt-2 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                >
-                  {authLoading ? (
+                  {localLoading ? (
                     <>
                       <Loader2 size={16} className="sm:w-[18px] sm:h-[18px] animate-spin" />
                       <span className="text-xs sm:text-base">{type === 'login' ? 'Signing In...' : 'Creating Account...'}</span>
@@ -1131,19 +1272,17 @@ const App: React.FC = () => {
             
             <div className="mt-6 sm:mt-8 text-center text-xs sm:text-sm text-zinc-500">
                {type === 'login' ? 'New user?' : 'Already have an account?'}{' '}
-               <button onClick={() => {
-                 setEmail('');
-                 setPassword('');
-                 setAuthError(null);
-                 setCurrentView(type === 'login' ? 'AUTH_REGISTER' : 'AUTH_LOGIN');
-               }} className="text-emerald-500 hover:text-emerald-400 font-medium transition-colors">
+               <button onClick={handleSwitchAuth} className="text-emerald-500 hover:text-emerald-400 font-medium transition-colors">
                  {type === 'login' ? 'Create account' : 'Log in'}
                </button>
             </div>
          </div>
       </div>
     );
-  };
+  }, (prevProps, nextProps) => {
+    // Only re-render if type actually changes
+    return prevProps.type === nextProps.type;
+  });
 
   const renderDashboard = () => (
     <div className="space-y-6 animate-fade-in">
@@ -1409,26 +1548,26 @@ const App: React.FC = () => {
   const renderMarket = () => {
 
     return (
-      <div className="animate-fade-in space-y-6 pb-24 md:pb-0">
-          <header className="flex justify-between items-center py-2 md:hidden">
-              <div className="flex items-center gap-2">
-                <h2 className="text-2xl font-bold text-white tracking-tight">ตลาด <span className="text-zinc-500 text-lg font-normal">(Market)</span></h2>
-                <span className="text-sm text-zinc-400 font-medium">
+    <div className="animate-fade-in space-y-6 pb-24 md:pb-0">
+        <header className="flex justify-between items-center py-2 md:hidden">
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-bold text-white tracking-tight">ตลาด <span className="text-zinc-500 text-lg font-normal">(Market)</span></h2>
+              <span className="text-sm text-zinc-400 font-medium">
                   ({getFilteredCoins.length} {getFilteredCoins.length === 1 ? 'coin' : 'coins'})
-                </span>
-              </div>
-          </header>
-          <div className="hidden md:block mb-6">
-             <div className="flex items-center gap-3 mb-2">
-               <h1 className="text-3xl font-bold text-white">Market Trends</h1>
-               <span className="text-base text-zinc-400 font-medium">
+              </span>
+            </div>
+        </header>
+        <div className="hidden md:block mb-6">
+           <div className="flex items-center gap-3 mb-2">
+             <h1 className="text-3xl font-bold text-white">Market Trends</h1>
+             <span className="text-base text-zinc-400 font-medium">
                  ({getFilteredCoins.length} {getFilteredCoins.length === 1 ? 'coin' : 'coins'})
-               </span>
-             </div>
-             <p className="text-zinc-400">Real-time cryptocurrency prices and charts</p>
-          </div>
+             </span>
+           </div>
+           <p className="text-zinc-400">Real-time cryptocurrency prices and charts</p>
+        </div>
 
-          <div className="flex gap-2 overflow-x-auto no-scrollbar">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar">
             {[
               { id: 'all', label: 'All' },
               { id: 'favorites', label: 'Favorites' },
@@ -1447,14 +1586,14 @@ const App: React.FC = () => {
                   }`}
                 >
                   {filter.label}
-                </button>
-            ))}
-          </div>
+              </button>
+          ))}
+        </div>
 
-          {balancesLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 size={32} className="animate-spin text-emerald-400" />
-            </div>
+        {balancesLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 size={32} className="animate-spin text-emerald-400" />
+          </div>
           ) : getFilteredCoins.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <p className="text-zinc-400 text-sm mb-2">
@@ -1470,17 +1609,17 @@ const App: React.FC = () => {
                   ดูเหรียญทั้งหมด
                 </button>
               )}
-            </div>
-          ) : (
+          </div>
+        ) : (
             <AssetList 
               coins={getFilteredCoins} 
               onSelectCoin={setSelectedCoin}
               onToggleFavorite={toggleFavorite}
               favoriteCoins={favoriteCoins}
             />
-          )}
-      </div>
-    );
+        )}
+    </div>
+  );
   };
 
   const renderWallet = () => (
@@ -1824,7 +1963,7 @@ const App: React.FC = () => {
   if (currentView === 'AUTH_LOGIN') {
     return (
       <>
-        <AuthScreen type="login" />
+        <AuthScreen key="login" type="login" />
         {globalModals}
       </>
     );
@@ -1832,7 +1971,7 @@ const App: React.FC = () => {
   if (currentView === 'AUTH_REGISTER') {
     return (
       <>
-        <AuthScreen type="register" />
+        <AuthScreen key="register" type="register" />
         {globalModals}
       </>
     );

@@ -12,8 +12,38 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
 
   useEffect(() => {
     let isMounted = true;
+    let hasInitialLoad = false; // Track if we've done initial load
+    
+    // Check if we should disable API calls (rate limited or in development)
+    const isRateLimited = sessionStorage.getItem('coingecko_rate_limited') === 'true';
+    const shouldUseMockOnly = process.env.NODE_ENV === 'development' && isRateLimited;
     
     const updatePricesAndLogos = async () => {
+      // Skip if we're in development and have already loaded once (to avoid rate limits on refresh)
+      if (hasInitialLoad && process.env.NODE_ENV === 'development') {
+        // Only update if it's been more than 5 minutes since last update
+        const lastUpdate = sessionStorage.getItem('lastPriceUpdate');
+        if (lastUpdate) {
+          const timeSinceUpdate = Date.now() - parseInt(lastUpdate, 10);
+          if (timeSinceUpdate < 300000) { // 5 minutes
+            if (process.env.NODE_ENV === 'development') {
+              console.log('⏸️ Skipping price update (recently updated)');
+            }
+            return;
+          }
+        }
+      }
+      
+      // If rate limited, skip API calls and use mock data only
+      if (shouldUseMockOnly) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('⏸️ Using mock data only (rate limited)');
+        }
+        setIsLoading(false);
+        setCoinsWithPrices(mockCoins);
+        return;
+      }
+      
       if (process.env.NODE_ENV === 'development') {
         console.log('🔄 Starting price update...');
       }
@@ -44,12 +74,38 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
 
 
       // Fetch real prices from CoinGecko for all major coins (in parallel with SOL)
-      const coinGeckoPromise = coinGeckoIds.length > 0 ? getCoinGeckoPrices(coinGeckoIds) : Promise.resolve({});
+      // Wrap in try-catch to handle rate limits gracefully
+      let coinGeckoPromise: Promise<Record<string, any>>;
+      if (coinGeckoIds.length > 0 && !shouldUseMockOnly) {
+        coinGeckoPromise = getCoinGeckoPrices(coinGeckoIds).catch((error: any) => {
+          // Mark as rate limited if we get 429 or CORS error
+          if (error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('CORS') || error?.message?.includes('Access-Control-Allow-Origin')) {
+            sessionStorage.setItem('coingecko_rate_limited', 'true');
+            if (process.env.NODE_ENV === 'development') {
+              console.warn('⚠️ CoinGecko rate limited - using mock data for this session');
+            }
+          }
+          // Handle rate limit errors silently - use empty object to fall back to mock prices
+          return {};
+        });
+      } else {
+        coinGeckoPromise = Promise.resolve({});
+      }
       
       // Fetch SOL price from backend API or Jupiter API (in parallel with CoinGecko)
+      // Skip if rate limited or in development mode with rate limit flag
       const solIndex = updatedCoins.findIndex(coin => coin.symbol === 'SOL');
-      const solPricePromise = solIndex !== -1 
-        ? (USE_WALLET_API ? getTokenPricesApi([TOKEN_MINTS.SOL]) : getTokenPrices([TOKEN_MINTS.SOL]))
+      const solPricePromise = solIndex !== -1 && !shouldUseMockOnly
+        ? (USE_WALLET_API ? getTokenPricesApi([TOKEN_MINTS.SOL]) : getTokenPrices([TOKEN_MINTS.SOL])).catch((error: any) => {
+            // Silently handle Jupiter API errors (hostname not found, network errors)
+            if (process.env.NODE_ENV === 'development') {
+              // Only log if it's not a network/hostname error
+              if (!error?.message?.includes('hostname') && !error?.message?.includes('Failed to fetch')) {
+                console.warn('⚠️ Jupiter Price API error:', error.message || error);
+              }
+            }
+            return {};
+          })
         : Promise.resolve({});
       
       // Fetch both in parallel for faster loading
@@ -389,21 +445,126 @@ export const useMockCoinPrices = (mockCoins: Coin[]): Coin[] => {
         
         setCoinsWithPrices(coinsWithRealPrices);
         setIsLoading(false);
+        hasInitialLoad = true;
+        sessionStorage.setItem('lastPriceUpdate', Date.now().toString());
+        // Cache prices in sessionStorage for use on refresh
+        try {
+          sessionStorage.setItem('cachedCoinPrices', JSON.stringify(coinsWithRealPrices));
+        } catch (e) {
+          // Ignore storage errors
+        }
         if (process.env.NODE_ENV === 'development') {
           console.log('✅ Price update completed. Updated', coinsWithRealPrices.length, 'coins');
         }
       }
     };
-
-    // Fetch immediately on mount
-    updatePricesAndLogos();
     
-    // Refresh price every 15 seconds (more frequent updates)
+    // Wrap updatePricesAndLogos to catch and handle errors
+    const updatePricesAndLogosSafe = async () => {
+      try {
+        await updatePricesAndLogos();
+      } catch (error: any) {
+        // Log error but don't crash - use fallback prices
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('⚠️ Price update error (using fallback):', error.message || error);
+        }
+        // Keep existing prices on error
+        if (isMounted) {
+          setIsLoading(false);
+        }
+        // Re-throw to trigger backoff logic
+        throw error;
+      }
+    };
+
+    // Track rate limit to implement backoff
+    let rateLimitBackoff = 0;
+    let consecutiveFailures = 0;
+    
+    const updatePricesWithBackoff = async () => {
+      // Skip if we're in backoff period
+      if (rateLimitBackoff > Date.now()) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('⏸️ Skipping price update (rate limit backoff)');
+        }
+        return;
+      }
+      
+      try {
+        await updatePricesAndLogosSafe();
+        // Reset failure count on success
+        consecutiveFailures = 0;
+        rateLimitBackoff = 0;
+      } catch (error: any) {
+        consecutiveFailures++;
+        
+        // Check if error is rate limit related
+        const isRateLimit = error?.message?.includes('429') || 
+                           error?.status === 429 ||
+                           error?.message?.includes('rate limit') ||
+                           error?.message?.includes('CORS') ||
+                           error?.message?.includes('Access-Control-Allow-Origin');
+        
+        if (isRateLimit) {
+          // Mark as rate limited in sessionStorage with timestamp
+          sessionStorage.setItem('coingecko_rate_limited', 'true');
+          sessionStorage.setItem('coingecko_rate_limited_time', Date.now().toString());
+          
+          // Exponential backoff: 1min, 2min, 4min, 8min (max 8min)
+          const backoffMs = Math.min(60000 * Math.pow(2, consecutiveFailures - 1), 480000);
+          rateLimitBackoff = Date.now() + backoffMs;
+          
+          if (process.env.NODE_ENV === 'development') {
+            console.warn(`⏸️ Rate limit/CORS error. Using mock data for this session. Backing off for ${backoffMs / 1000}s`);
+          }
+        }
+      }
+    };
+    
+    // Check if we should skip initial load (to prevent errors on refresh)
+    const skipInitialLoad = process.env.NODE_ENV === 'development' && 
+                            sessionStorage.getItem('lastPriceUpdate') !== null;
+    
+    // Reset rate limit flag if it's been more than 1 hour
+    const rateLimitTime = sessionStorage.getItem('coingecko_rate_limited_time');
+    if (rateLimitTime) {
+      const timeSinceRateLimit = Date.now() - parseInt(rateLimitTime, 10);
+      if (timeSinceRateLimit > 3600000) { // 1 hour
+        sessionStorage.removeItem('coingecko_rate_limited');
+        sessionStorage.removeItem('coingecko_rate_limited_time');
+      }
+    }
+    
+    if (!skipInitialLoad) {
+      // Fetch immediately on mount (first load only)
+      updatePricesWithBackoff();
+    } else {
+      // Use cached prices from sessionStorage if available
+      const cachedPrices = sessionStorage.getItem('cachedCoinPrices');
+      if (cachedPrices) {
+        try {
+          const parsed = JSON.parse(cachedPrices);
+          setCoinsWithPrices(parsed);
+          setIsLoading(false);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('📦 Using cached prices (skipping API call on refresh)');
+          }
+        } catch (e) {
+          // If cache is invalid, fetch anyway
+          updatePricesWithBackoff();
+        }
+      } else {
+        updatePricesWithBackoff();
+      }
+    }
+    
+    // Refresh price every 60 seconds (reduced frequency to avoid rate limits)
+    // Increase to 120 seconds if rate limits persist
     const interval = setInterval(() => {
       if (isMounted) {
-        updatePricesAndLogos();
+        updatePricesWithBackoff();
       }
-    }, 15000);
+    }, 60000); // Changed from 15000 to 60000 (1 minute)
     
     return () => {
       isMounted = false;

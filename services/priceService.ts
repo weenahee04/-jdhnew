@@ -163,10 +163,21 @@ export const getTokenPrices = async (mints: string[]): Promise<Record<string, To
     return prices;
   } catch (error: any) {
     // Silently fail for network errors to avoid console spam
-    // Only log unexpected errors
-    if (error.name !== 'AbortError' && error.name !== 'TypeError') {
-      // Suppress network/hostname errors
+    // Suppress common network errors (hostname not found, CORS, etc.)
+    if (error.name === 'AbortError' || 
+        error.name === 'TypeError' ||
+        error.message?.includes('hostname') ||
+        error.message?.includes('Failed to fetch') ||
+        error.message?.includes('network')) {
+      // Suppress these errors - they're expected in development
+      return {};
     }
+    
+    // Only log unexpected errors in development
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Jupiter Price API error:', error.message || error);
+    }
+    
     // Return empty object - calling code should handle missing prices gracefully
     return {};
   }
@@ -219,19 +230,55 @@ export const getCoinGeckoPrices = async (coinIds: string[]): Promise<Record<stri
       console.log('🌐 Fetching CoinGecko prices from:', url.substring(0, 100) + '...');
     }
     
-    const response = await fetch(url, { 
-      signal: controller.signal,
-      headers: {
-        'Accept': 'application/json',
-      }
-    });
+    let response: Response;
+    try {
+      response = await fetch(url, { 
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+        },
+        mode: 'cors', // Explicitly set CORS mode
+      });
+    } catch (fetchError: any) {
+      // Handle network errors (CORS, hostname not found, etc.)
+      // Don't log in development to reduce console spam
+      // Return empty to use fallback prices
+      return {};
+    }
     
     clearTimeout(timeoutId);
     
     if (!response.ok) {
+      // Handle rate limit (429) gracefully
+      if (response.status === 429) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('⚠️ CoinGecko rate limit reached (429). Using cached/mock data.');
+        }
+        // Throw error to trigger backoff logic
+        const error: any = new Error('CoinGecko rate limit (429)');
+        error.status = 429;
+        throw error;
+      }
+      
+      // Handle CORS errors (often happens with rate limits)
+      if (response.status === 0 || response.status === 403) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('⚠️ CoinGecko CORS/access error. Using cached/mock data.');
+        }
+        // Throw error to trigger backoff logic
+        const error: any = new Error('CoinGecko CORS error');
+        error.status = response.status || 403;
+        throw error;
+      }
+      
       const errorText = await response.text().catch(() => 'Unknown error');
-      console.error(`❌ CoinGecko API error ${response.status}:`, errorText.substring(0, 200));
-      return {};
+      if (process.env.NODE_ENV === 'development') {
+        console.error(`❌ CoinGecko API error ${response.status}:`, errorText.substring(0, 200));
+      }
+      // Throw error for other status codes too
+      const error: any = new Error(`CoinGecko API error ${response.status}`);
+      error.status = response.status;
+      throw error;
     }
     
     const marketData = await response.json();

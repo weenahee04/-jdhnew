@@ -12,13 +12,13 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests/e2e',
   /* Run tests in files in parallel */
-  fullyParallel: true,
+  fullyParallel: false, // Disable parallel to prevent browser crashes
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  workers: 1, // Use single worker to prevent browser crashes
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ['html'],
@@ -48,19 +48,30 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
+    // Use WebKit (Safari) instead of Chromium to avoid crash issues
+    // WebKit doesn't have the same permissions/crashpad issues as Chrome
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
     },
 
+    // Chromium disabled due to crash issues (SIGSEGV/SIGABRT)
+    // Uncomment if you want to use Chromium after fixing permissions
     // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
-    // },
-
-    // {
-    //   name: 'webkit',
-    //   use: { ...devices['Desktop Safari'] },
+    //   name: 'chromium',
+    //   use: { 
+    //     ...devices['Desktop Chrome'],
+    //     launchOptions: {
+    //       args: [
+    //         '--disable-dev-shm-usage',
+    //         '--disable-gpu',
+    //         '--no-sandbox',
+    //         '--disable-setuid-sandbox',
+    //         '--disable-crashpad',
+    //         '--disable-breakpad',
+    //       ],
+    //     },
+    //   },
     // },
 
     /* Test against mobile viewports. */
